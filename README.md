@@ -1,7 +1,7 @@
 # Copilot Agents Dojo 🥋
 
 <p align="center">
-  <img src="images/dojo-banner.png" alt="Copilot Agents Dojo" width="100%">
+  <span style="font-size: 80px;">🏯</span>
 </p>
 
 **Your AI agents are untrained. Time to put them through the dojo.**
