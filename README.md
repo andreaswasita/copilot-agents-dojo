@@ -1,5 +1,9 @@
 # Copilot Agents Dojo 🥋
 
+<p align="center">
+  <img src="images/dojo-banner.png" alt="Copilot Agents Dojo" width="100%">
+</p>
+
 **Your AI agents are untrained. Time to put them through the dojo.**
 
 Most teams using GitHub Copilot agents let them run wild — no discipline, no form, no kata. Drop a prompt, hope for the best, clean up the wreckage. That's not engineering. That's sparring with a blindfold on.
