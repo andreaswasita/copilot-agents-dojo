@@ -43,16 +43,24 @@ Customize this section for your stack. Examples for common fighting styles:
 
 ## Agent Behavioral Governance
 
-See [skills.md](../skills.md) for the full behavioral skills framework. Key principles:
+See [skills.md](../skills.md) for the full skills index. Each skill is a self-contained folder under `skills/` with a `SKILL.md` file. Load the relevant skill when its trigger conditions are met.
 
-- **Plan first**: Enter plan mode for any non-trivial task (3+ steps). Write plan to `tasks/todo.md`.
-- **Verify before done**: Run tests, check logs, diff against main. Never mark complete without proof.
-- **Subagents for scale**: Offload research and parallel analysis to subagents. Keep context clean.
-- **Self-improvement**: Capture lessons in `tasks/lessons.md` after any correction. Review at session start.
-- **Elegance over hacks**: Challenge shortcuts on non-trivial changes. Skip for simple fixes — don't over-engineer.
-- **Autonomous bug fixing**: Reproduce → diagnose → fix → verify. Zero hand-holding. No context switching from the user.
-- **Senior-level discipline**: Find root causes. No temporary fixes. No laziness.
-- **Rollback on failure**: If a fix breaks verification, rollback immediately and re-plan.
+### Core Disciplines (always active)
+- **[Plan before code](../skills/plan-before-code/SKILL.md)**: Enter plan mode for any non-trivial task (3+ steps). Write plan to `tasks/todo.md`.
+- **[Verify before done](../skills/verify-before-done/SKILL.md)**: Run tests, check logs, diff against main. Never mark complete without proof.
+- **[Subagent strategy](../skills/subagent-strategy/SKILL.md)**: Offload research and parallel analysis to subagents. Keep context clean.
+- **[Self-improvement](../skills/self-improvement/SKILL.md)**: Capture lessons in `tasks/lessons.md` after any correction. Review at session start.
+- **[Demand elegance](../skills/demand-elegance/SKILL.md)**: Challenge shortcuts on non-trivial changes. Skip for simple fixes — don't over-engineer.
+- **[Autonomous bug fix](../skills/autonomous-bug-fix/SKILL.md)**: Reproduce → diagnose → fix → verify. Zero hand-holding. No context switching from the user.
+
+### Practical Skills (load on demand)
+- **[Code review](../skills/code-review/SKILL.md)**: For reviewing PRs or diffs
+- **[Refactoring](../skills/refactoring/SKILL.md)**: For restructuring code safely
+- **[Test writing](../skills/test-writing/SKILL.md)**: For writing meaningful tests
+- **[PR workflow](../skills/pr-workflow/SKILL.md)**: For preparing merge-ready PRs
+- **[Debugging](../skills/debugging/SKILL.md)**: For systematic complex debugging
+- **[Codebase onboarding](../skills/codebase-onboarding/SKILL.md)**: For understanding unfamiliar repos
+- **[Skill creator](../skills/skill-creator/SKILL.md)**: For creating new custom skills
 
 ## Task Management
 
