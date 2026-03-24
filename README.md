@@ -4,7 +4,7 @@
 
 **Your AI agents are untrained. Time to put them through the dojo.**
 
-The canonical GitHub Copilot edition of the [superpowers](https://github.com/obra/superpowers) methodology. Same mandatory workflow, same discipline, same self-improving loop — adapted for GitHub Copilot agents with auto-discovery via repo root, no marketplace needed, and `scripts/` for automated gates.
+A skills & discipline framework for GitHub Copilot agents. Drop structured skills into any repo, enforce a mandatory workflow, and let agents self-improve — with auto-discovery via repo root, no marketplace needed, and `scripts/` for automated gates. Orchestration pipeline inspired by [obra/superpowers](https://github.com/obra/superpowers).
 
 Drop `skills/` + `.github/copilot-instructions.md` into any repo root → Copilot agents auto-discover and enforce the full workflow.
 
@@ -301,7 +301,9 @@ Pick your style. Delete the others. The Six Disciplines are **style-agnostic**.
 
 ## Origin Story
 
-Built on the methodology from [obra/superpowers](https://github.com/obra/superpowers) — the agentic skills framework that proved disciplined agents outperform freestyle ones. This repo is the canonical GitHub Copilot adaptation: same mandatory workflow, same enforcement rules, adapted for Copilot's auto-discovery (`skills/` + `.github/copilot-instructions.md` at repo root, no marketplace install needed) and `scripts/` for automated gates.
+The Copilot Agents Dojo started as a training ground for disciplined AI agents — a place where untrained models learn to plan before they code, verify before they declare victory, and improve after every session.
+
+The orchestration pipeline (BRAINSTORM → WORKTREE → PLAN → EXECUTE → TEST → REVIEW → FINISH → LEARN) is inspired by [obra/superpowers](https://github.com/obra/superpowers), which proved that a mandatory workflow turns chaotic agents into reliable ones. The dojo adapts that pipeline for GitHub Copilot's native auto-discovery (`skills/` + `.github/copilot-instructions.md` at repo root), adds `scripts/` for automated gates, and wraps everything in a martial-arts skill progression system.
 
 Agents will behave identically: disciplined, testable, self-improving, no hand-holding.
 

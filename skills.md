@@ -1,6 +1,6 @@
 # Copilot Agents Dojo — Skills Index
 
-The canonical GitHub Copilot edition of the [superpowers](https://github.com/obra/superpowers) methodology. 22 production skills. Mandatory workflow. Self-improving.
+A skills & discipline framework for GitHub Copilot agents. 22 production skills. Mandatory workflow. Self-improving. Orchestration pipeline inspired by [obra/superpowers](https://github.com/obra/superpowers).
 
 Skills are self-contained folders of instructions, examples, and resources that Copilot agents load to improve performance on specialized tasks. Each skill has a `SKILL.md` with YAML frontmatter and markdown instructions.
 
