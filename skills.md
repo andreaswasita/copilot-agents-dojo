@@ -1,8 +1,20 @@
 # Copilot Agents Dojo — Skills Index
 
+The canonical GitHub Copilot edition of the [superpowers](https://github.com/obra/superpowers) methodology. 22 production skills. Mandatory workflow. Self-improving.
+
 Skills are self-contained folders of instructions, examples, and resources that Copilot agents load to improve performance on specialized tasks. Each skill has a `SKILL.md` with YAML frontmatter and markdown instructions.
 
 For the full specification, see [`spec/copilot-skills-spec.md`](spec/copilot-skills-spec.md). To create new skills, see [`skills/skill-creator`](skills/skill-creator/SKILL.md) or start from [`template/SKILL.md`](template/SKILL.md).
+
+---
+
+## The Mandatory Workflow
+
+Every non-trivial task follows this pipeline:
+
+```
+BRAINSTORM → WORKTREE → PLAN → EXECUTE → TEST → REVIEW → FINISH → LEARN
+```
 
 ---
 
@@ -30,6 +42,33 @@ Behavioral skills that govern *how* the agent thinks and operates. Style-agnosti
 
 ---
 
+## Workflow Skills — The Pipeline
+
+Skills that orchestrate the mandatory development pipeline. Adapted from [superpowers](https://github.com/obra/superpowers) for GitHub Copilot agents.
+
+### [`skills/brainstorming`](skills/brainstorming/SKILL.md) — Brainstorming
+🔄 Activates before writing code. Refines rough ideas through Socratic questioning, explores alternatives, presents design in chunks for validation. Saves approved design document.
+
+### [`skills/using-git-worktrees`](skills/using-git-worktrees/SKILL.md) — Using Git Worktrees
+🔄 Activates after design approval. Creates isolated workspace on a dedicated feature branch, runs project setup, verifies clean test baseline.
+
+### [`skills/executing-plans`](skills/executing-plans/SKILL.md) — Executing Plans
+🔄 Activates with an approved plan. Takes one task from `tasks/todo.md`, executes it, verifies completion, moves to the next. Never skips. Never freelances.
+
+### [`skills/requesting-code-review`](skills/requesting-code-review/SKILL.md) — Requesting Code Review
+🔄 Activates between tasks. Reviews the agent's own work against the original plan. Flags issues by severity — critical issues block progress.
+
+### [`skills/receiving-code-review`](skills/receiving-code-review/SKILL.md) — Receiving Code Review
+🔄 Activates when feedback arrives. Processes every comment, fixes issues, re-verifies, and requests re-review. Nothing gets ignored.
+
+### [`skills/finishing-a-development-branch`](skills/finishing-a-development-branch/SKILL.md) — Finishing a Development Branch
+🔄 Activates when all tasks are complete. Runs full verification, presents merge options (merge/PR/keep/discard), cleans up worktree, logs lessons.
+
+### [`skills/dispatching-parallel-agents`](skills/dispatching-parallel-agents/SKILL.md) — Dispatching Parallel Agents
+🔄 Activates when independent subtasks can run concurrently. One sub-agent per task with clear specs, non-overlapping boundaries, integration verification after.
+
+---
+
 ## Practical Skills
 
 Task-specific skills that teach the agent *how to do* particular kinds of work.
@@ -52,8 +91,18 @@ Systematic debugging for complex issues — evidence gathering, hypothesis testi
 ### [`skills/codebase-onboarding`](skills/codebase-onboarding/SKILL.md) — Codebase Onboarding
 Rapidly understanding an unfamiliar codebase — structure, conventions, dependencies, and key patterns. Read before you write.
 
+---
+
+## Meta Skills
+
 ### [`skills/skill-creator`](skills/skill-creator/SKILL.md) — Skill Creator
 A meta-skill for creating new dojo skills. Captures intent, writes SKILL.md files, and tests skill effectiveness.
+
+### [`skills/writing-skills`](skills/writing-skills/SKILL.md) — Writing Skills
+SKILL.md template and spec compliance. Use exact YAML frontmatter + triggers + steps + enforcement. Test in a branch before committing.
+
+### [`skills/using-superpowers`](skills/using-superpowers/SKILL.md) — Using Superpowers
+The framework activator. Loads all skills, enforces the mandatory workflow, reviews lessons at session start.
 
 ---
 
@@ -63,3 +112,4 @@ A meta-skill for creating new dojo skills. Captures intent, writes SKILL.md file
 - **No Laziness**: Find root causes. No temporary fixes. Senior developer standards. Every shortcut is technical debt.
 - **Zero Hand-Holding**: The user provides intent; the agent handles execution. No asking "which file?", "what command?", or "how do I run tests?" — figure it out.
 - **Continuous Evolution**: The dojo is not static. Lessons feed back into skills. Skills get sharper over time. Measure improvement or it didn't happen.
+- **Mandatory Workflow**: The pipeline is not optional. Brainstorm → Plan → Execute → Review → Finish. Every time.

@@ -4,13 +4,40 @@
 
 **Your AI agents are untrained. Time to put them through the dojo.**
 
-Most teams using GitHub Copilot agents let them run wild — no discipline, no form, no kata. Drop a prompt, hope for the best, clean up the wreckage. That's not engineering. That's sparring with a blindfold on.
+The canonical GitHub Copilot edition of the [superpowers](https://github.com/obra/superpowers) methodology. Same mandatory workflow, same discipline, same self-improving loop — adapted for GitHub Copilot agents with auto-discovery via repo root, no marketplace needed, and `scripts/` for automated gates.
 
-This dojo contains **modular skills**, helper scripts, and automation that turn reckless agents into disciplined black belts. Each skill is a self-contained folder with a `SKILL.md` file — portable, composable, and easy to extend.
+Drop `skills/` + `.github/copilot-instructions.md` into any repo root → Copilot agents auto-discover and enforce the full workflow.
+
+Includes:
+- **22 production skills** (6 core disciplines + 9 workflow skills + 7 practical skills)
+- Mandatory **BRAINSTORM → PLAN → TDD → REVIEW → FINISH** pipeline
+- Git worktree isolation
+- Self-improving `tasks/lessons.md`
+- `scripts/verify.sh` enforcement gates
+- GitHub Actions PR enforcement
+
+## The Mandatory Workflow
+
+Every non-trivial task follows this pipeline — no skipping, no improvising:
+
+```
+BRAINSTORM → WORKTREE → PLAN → EXECUTE → TEST → REVIEW → FINISH → LEARN
+```
+
+| Step | Skill | What Happens |
+|------|-------|-------------|
+| 1 | [`brainstorming`](skills/brainstorming/SKILL.md) | Socratic refinement → approved design |
+| 2 | [`using-git-worktrees`](skills/using-git-worktrees/SKILL.md) | Isolated workspace on feature branch |
+| 3 | [`plan-before-code`](skills/plan-before-code/SKILL.md) | Bite-sized tasks in `tasks/todo.md` |
+| 4 | [`executing-plans`](skills/executing-plans/SKILL.md) | One task at a time, verify each |
+| 5 | [`test-writing`](skills/test-writing/SKILL.md) | RED-GREEN-REFACTOR for every change |
+| 6 | [`requesting-code-review`](skills/requesting-code-review/SKILL.md) | Self-review against plan |
+| 7 | [`finishing-a-development-branch`](skills/finishing-a-development-branch/SKILL.md) | Verify + merge decision + cleanup |
+| 8 | [`self-improvement`](skills/self-improvement/SKILL.md) | Log lessons, update metrics |
 
 ## Skill Sets
 
-- **[`skills/`](skills/)** — Individual skill folders (core disciplines + practical skills)
+- **[`skills/`](skills/)** — Individual skill folders (core disciplines + workflow + practical)
 - **[`agents/`](agents/)** — Specialized agent personas for different roles
 - **[`skills.md`](skills.md)** — The master index — auto-discovered by Copilot agents
 - **[`spec/`](spec/)** — The Copilot Skills specification
@@ -41,7 +68,28 @@ Task-specific skills for common engineering workflows.
 | [`pr-workflow`](skills/pr-workflow/SKILL.md) | Clean commits, good descriptions, merge-ready PRs |
 | [`debugging`](skills/debugging/SKILL.md) | Systematic debugging — evidence, hypotheses, divide-and-conquer |
 | [`codebase-onboarding`](skills/codebase-onboarding/SKILL.md) | Rapidly understand unfamiliar codebases |
+
+## Workflow Skills (from superpowers)
+
+Skills that orchestrate the mandatory pipeline — brainstorm to finish.
+
+| Skill | Purpose |
+|-------|---------|
+| [`brainstorming`](skills/brainstorming/SKILL.md) | Socratic design refinement before any code |
+| [`using-git-worktrees`](skills/using-git-worktrees/SKILL.md) | Isolated workspace for every session |
+| [`executing-plans`](skills/executing-plans/SKILL.md) | Dispatch and execute tasks from `tasks/todo.md` |
+| [`requesting-code-review`](skills/requesting-code-review/SKILL.md) | Self-review against plan between tasks |
+| [`receiving-code-review`](skills/receiving-code-review/SKILL.md) | Process feedback and iterate |
+| [`finishing-a-development-branch`](skills/finishing-a-development-branch/SKILL.md) | Final verification + merge decision + cleanup |
+| [`dispatching-parallel-agents`](skills/dispatching-parallel-agents/SKILL.md) | Concurrent sub-agent work when beneficial |
+
+## Meta Skills
+
+| Skill | Purpose |
+|-------|---------|
 | [`skill-creator`](skills/skill-creator/SKILL.md) | Meta-skill for creating new dojo skills |
+| [`writing-skills`](skills/writing-skills/SKILL.md) | SKILL.md template and spec compliance |
+| [`using-superpowers`](skills/using-superpowers/SKILL.md) | Framework activator — loads everything |
 
 ## Creating a Skill
 
@@ -190,6 +238,20 @@ your-repo/
 │   │   └── SKILL.md                   # 🥋 Core Discipline
 │   ├── autonomous-bug-fix/
 │   │   └── SKILL.md                   # 🥋 Core Discipline
+│   ├── brainstorming/
+│   │   └── SKILL.md                   # 🔄 Workflow Skill
+│   ├── using-git-worktrees/
+│   │   └── SKILL.md                   # 🔄 Workflow Skill
+│   ├── executing-plans/
+│   │   └── SKILL.md                   # 🔄 Workflow Skill
+│   ├── requesting-code-review/
+│   │   └── SKILL.md                   # 🔄 Workflow Skill
+│   ├── receiving-code-review/
+│   │   └── SKILL.md                   # 🔄 Workflow Skill
+│   ├── finishing-a-development-branch/
+│   │   └── SKILL.md                   # 🔄 Workflow Skill
+│   ├── dispatching-parallel-agents/
+│   │   └── SKILL.md                   # 🔄 Workflow Skill
 │   ├── code-review/
 │   │   └── SKILL.md                   # Practical Skill
 │   ├── refactoring/
@@ -202,8 +264,12 @@ your-repo/
 │   │   └── SKILL.md                   # Practical Skill
 │   ├── codebase-onboarding/
 │   │   └── SKILL.md                   # Practical Skill
-│   └── skill-creator/
-│       └── SKILL.md                   # Meta Skill
+│   ├── skill-creator/
+│   │   └── SKILL.md                   # Meta Skill
+│   ├── writing-skills/
+│   │   └── SKILL.md                   # Meta Skill
+│   └── using-superpowers/
+│       └── SKILL.md                   # Meta Skill (Activator)
 ├── spec/
 │   └── copilot-skills-spec.md         # Skill format specification
 ├── template/
@@ -235,7 +301,9 @@ Pick your style. Delete the others. The Six Disciplines are **style-agnostic**.
 
 ## Origin Story
 
-Forged in real-world AI delivery. These disciplines emerged from running agents across production projects and learning what separates chaotic AI-assisted development from disciplined, battle-tested delivery.
+Built on the methodology from [obra/superpowers](https://github.com/obra/superpowers) — the agentic skills framework that proved disciplined agents outperform freestyle ones. This repo is the canonical GitHub Copilot adaptation: same mandatory workflow, same enforcement rules, adapted for Copilot's auto-discovery (`skills/` + `.github/copilot-instructions.md` at repo root, no marketplace install needed) and `scripts/` for automated gates.
+
+Agents will behave identically: disciplined, testable, self-improving, no hand-holding.
 
 ## Contributing
 
