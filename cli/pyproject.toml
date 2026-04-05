@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dojo-cli"
+version = "1.0.0"
+description = "Copilot Agents Dojo — Skill Marketplace CLI"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+dependencies = [
+    "rich>=13.0",
+    "InquirerPy>=0.3.4",
+    "pyyaml>=6.0",
+]
+
+[project.scripts]
+dojo = "dojo_cli.app:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
