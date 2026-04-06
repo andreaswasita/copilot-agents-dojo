@@ -91,6 +91,9 @@ Systematic debugging for complex issues — evidence gathering, hypothesis testi
 ### [`skills/codebase-onboarding`](skills/codebase-onboarding/SKILL.md) — Codebase Onboarding
 Rapidly understanding an unfamiliar codebase — structure, conventions, dependencies, and key patterns. Read before you write.
 
+### [`skills/requirements-elicitation`](skills/requirements-elicitation/SKILL.md) — Requirements Elicitation
+Structured requirements elicitation — Socratic questioning, user stories, Given/When/Then acceptance criteria, ambiguity elimination, and Definition of Ready gate. Role-neutral technique invoked by both TPM (business elicitation) and Architect (system specification).
+
 ---
 
 ## Meta Dō — 道
