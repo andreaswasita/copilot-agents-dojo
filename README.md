@@ -9,7 +9,7 @@ A skills & discipline framework for GitHub Copilot agents. Drop structured skill
 Drop `skills/` + `.github/copilot-instructions.md` into any repo root → Copilot agents auto-discover and enforce the full workflow.
 
 Includes:
-- **22 production skills** (6 core kata + 7 flow waza + 6 practical kumite + 3 meta dō)
+- **23 production skills** (6 core kata + 7 flow waza + 7 practical kumite + 3 meta dō)
 - Mandatory **BRAINSTORM → PLAN → TDD → REVIEW → FINISH** pipeline
 - Git worktree isolation
 - Self-improving `tasks/lessons.md`
@@ -68,6 +68,7 @@ Task-specific skills for common engineering workflows.
 | [`pr-workflow`](skills/pr-workflow/SKILL.md) | Clean commits, good descriptions, merge-ready PRs |
 | [`debugging`](skills/debugging/SKILL.md) | Systematic debugging — evidence, hypotheses, divide-and-conquer |
 | [`codebase-onboarding`](skills/codebase-onboarding/SKILL.md) | Rapidly understand unfamiliar codebases |
+| [`requirements-elicitation`](skills/requirements-elicitation/SKILL.md) | Structured elicitation, user stories, acceptance criteria, Definition of Ready gate |
 
 ## Flow Waza — 流れ技
 
@@ -153,10 +154,10 @@ Agents are specialized personas bundled in the [`agents/`](agents/) directory. E
 
 | Agent | Focus Area |
 |-------|-----------|
-| [`architect.md`](agents/architect.md) | System design, technical strategy, and long-term architecture decisions |
+| [`architect.md`](agents/architect.md) | System design, technical strategy, and the engineering half of requirements — impact analysis, specification, traceability |
 | [`security-engineer.md`](agents/security-engineer.md) | Security compliance, vulnerability identification, and secure practices |
 | [`software-engineer.md`](agents/software-engineer.md) | Feature development, bug fixes, and production-quality code |
-| [`technical-program-manager.md`](agents/technical-program-manager.md) | Project planning, timeline coordination, and cross-team communication |
+| [`technical-program-manager.md`](agents/technical-program-manager.md) | Project planning, timeline coordination, and the business half of requirements — elicitation, user stories, Definition of Ready gate |
 | [`test-engineer.md`](agents/test-engineer.md) | Test strategy, test implementation, and quality assurance |
 
 Agents activate based on context and task type, dynamically loading the appropriate skills for the job.
@@ -263,6 +264,8 @@ your-repo/
 │   ├── debugging/
 │   │   └── SKILL.md                   # ⚔️ Practical Kumite
 │   ├── codebase-onboarding/
+│   │   └── SKILL.md                   # ⚔️ Practical Kumite
+│   ├── requirements-elicitation/
 │   │   └── SKILL.md                   # ⚔️ Practical Kumite
 │   ├── skill-creator/
 │   │   └── SKILL.md                   # 🧘 Meta Dō
