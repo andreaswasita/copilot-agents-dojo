@@ -11,8 +11,9 @@ Drop `skills/` + `.github/copilot-instructions.md` into any repo root → Copilo
 Includes:
 - **23 production skills** (6 core kata + 7 flow waza + 7 practical kumite + 3 meta dō)
 - Mandatory **BRAINSTORM → PLAN → TDD → REVIEW → FINISH** pipeline
+- **Memory vault** — persistent, linked knowledge graph (replaces flat-file memory)
 - Git worktree isolation
-- Self-improving `tasks/lessons.md`
+- Self-improving `tasks/lessons.md` → promoted to `memory/patterns/`
 - `scripts/verify.sh` enforcement gates
 - GitHub Actions PR enforcement
 
@@ -33,7 +34,7 @@ BRAINSTORM → WORKTREE → PLAN → EXECUTE → TEST → REVIEW → FINISH → 
 | 5 | [`test-writing`](skills/test-writing/SKILL.md) | RED-GREEN-REFACTOR for every change |
 | 6 | [`requesting-code-review`](skills/requesting-code-review/SKILL.md) | Self-review against plan |
 | 7 | [`finishing-a-development-branch`](skills/finishing-a-development-branch/SKILL.md) | Verify + merge decision + cleanup |
-| 8 | [`self-improvement`](skills/self-improvement/SKILL.md) | Log lessons, update metrics |
+| 8 | [`self-improvement`](skills/self-improvement/SKILL.md) | Log lessons, promote patterns, update memory vault |
 
 ## Skill Sets
 
@@ -171,6 +172,9 @@ Reusable scripts in `/scripts/` to reduce token burn and enforce consistency:
 | [`scripts/init.sh`](scripts/init.sh) | Scaffolds `tasks/todo.md` and `tasks/lessons.md` on first clone |
 | [`scripts/lesson-updater.sh`](scripts/lesson-updater.sh) | Scans lessons for recurring patterns (3+), proposes skill amendments |
 | [`scripts/verify.sh`](scripts/verify.sh) | Pre-PR verification: tests, clean tree, plan check |
+| [`scripts/link-index.sh`](scripts/link-index.sh) | Builds memory vault link graph, backlinks, and INDEX.md stats |
+| [`scripts/memory-query.sh`](scripts/memory-query.sh) | Query memory by tag, type, date, status, or backlinks |
+| [`scripts/obsidian-sync.sh`](scripts/obsidian-sync.sh) | Promotes 3+ occurrence lessons to `memory/patterns/` |
 
 ```bash
 # Initialize the dojo in your repo
@@ -181,6 +185,17 @@ bash scripts/lesson-updater.sh
 
 # Verify before submitting a PR
 bash scripts/verify.sh
+
+# Rebuild memory vault link graph
+bash scripts/link-index.sh
+
+# Query memory vault
+bash scripts/memory-query.sh --type pattern --recent 5
+bash scripts/memory-query.sh --tag architecture
+bash scripts/memory-query.sh --backlinks-for decisions/chose-postgres.md
+
+# Promote lessons to memory vault
+bash scripts/obsidian-sync.sh
 ```
 
 ## Automated Enforcement
@@ -196,9 +211,54 @@ Inspired by [cognee](https://github.com/topoteretes/cognee)-style automation:
 
 1. **Observe**: After every correction, log a structured lesson in `tasks/lessons.md` with YAML tags (error type, root cause, fix, rule).
 2. **Store**: Lessons are tagged and queryable. Metrics track total lessons, recurring patterns, and amendment rate.
-3. **Amend**: When a pattern hits 3+ occurrences, `scripts/lesson-updater.sh` proposes a rule update to `skills.md`.
-4. **Evaluate**: Track pre/post-fix metrics in `tasks/lessons.md`. If a rule isn't working, revise it.
-5. **Rollback**: Failed fixes get rolled back immediately. Failed rules get revised or removed.
+3. **Promote**: When a pattern hits 3+ occurrences, `scripts/obsidian-sync.sh` promotes it to `memory/patterns/` as a proven rule.
+4. **Decide**: Architectural choices are recorded in `memory/decisions/` with context, alternatives, and consequences.
+5. **Learn**: User preferences accumulate in `memory/preferences/` with confidence levels that grow over time.
+6. **Link**: `scripts/link-index.sh` rebuilds the knowledge graph — backlinks, forward links, and `memory/.link-graph.json`.
+7. **Query**: Agents search memory with `scripts/memory-query.sh` instead of re-reading every file.
+8. **Amend**: Proven patterns feed amendments into `skills.md` via `scripts/lesson-updater.sh`.
+9. **Rollback**: Failed fixes get rolled back immediately. Failed rules get revised or removed.
+
+## Memory Vault 🧠
+
+The `memory/` directory is the agent's **persistent knowledge graph** — structured, linked, and queryable. It replaces flat-file memory with the capabilities that make tools like Obsidian powerful, implemented as plain markdown + scripts that any agent can use.
+
+### What It Replaces
+
+| Obsidian Feature | Dojo Equivalent |
+|-----------------|----------------|
+| Wikilinks + graph view | `scripts/link-index.sh` → `.link-graph.json` + auto-backlinks |
+| Dataview queries | `scripts/memory-query.sh --type --tag --backlinks-for` |
+| Backlinks pane | Auto-generated `## Backlinks` sections in each file |
+| Tags | YAML frontmatter `tags:` array, queryable via memory-query |
+| MOC (Map of Content) | `memory/INDEX.md` with auto-updated stats |
+
+### Vault Structure
+
+```
+memory/
+├── INDEX.md              ← Map of Content (agents read this first)
+├── .link-graph.json      ← Machine-readable link graph (auto-generated)
+├── decisions/            ← Architectural decisions with context & rationale
+│   └── _template.md
+├── patterns/             ← Proven rules promoted from lessons (3+ occurrences)
+│   └── _template.md
+├── preferences/          ← User behavioral preferences (learned over time)
+│   └── _template.md
+└── sessions/             ← Session summaries linking to everything above
+    └── _template.md
+```
+
+### How It Works
+
+1. **Session start**: Agent reads `memory/INDEX.md` to understand stored knowledge
+2. **During work**: Agent queries memory with `scripts/memory-query.sh` for relevant context
+3. **After corrections**: Agent logs lessons in `tasks/lessons.md` (short-term capture)
+4. **On promotion**: When lessons hit 3+ occurrences, `scripts/obsidian-sync.sh` promotes them to `memory/patterns/`
+5. **Session end**: Agent writes `memory/sessions/` summary, records decisions and preferences
+6. **Graph rebuild**: `scripts/link-index.sh` updates backlinks, stats, and `.link-graph.json`
+
+All files use **relative markdown links** (not wikilinks) and **YAML frontmatter** for metadata — standards any agent can parse. Zero dependencies on Obsidian or any external tool.
 
 ## Why Train Your Agents?
 
@@ -214,10 +274,12 @@ Trained agents operate like **seasoned black belts** — plan the approach, exec
 ## Enter the Dojo
 
 1. **Copy the `skills/` folder** into your repo — or pick individual skills you need
-2. **Place `skills.md` at your repo root** — Copilot agents auto-discover this index and activate skills
-3. **Place `.github/copilot-instructions.md`** in your `.github/` folder — customize for your stack
-4. **Run `bash scripts/init.sh`** — scaffolds `tasks/todo.md` and `tasks/lessons.md`
-5. **Create custom skills** — Use `template/SKILL.md` or the `skill-creator` skill for your team's workflows
+2. **Copy the `memory/` folder** into your repo — the persistent knowledge graph
+3. **Place `skills.md` at your repo root** — Copilot agents auto-discover this index and activate skills
+4. **Place `.github/copilot-instructions.md`** in your `.github/` folder — customize for your stack
+5. **Run `bash scripts/init.sh`** — scaffolds `tasks/todo.md` and `tasks/lessons.md`
+6. **Run `bash scripts/link-index.sh`** — initializes the memory vault graph
+7. **Create custom skills** — Use `template/SKILL.md` or the `skill-creator` skill for your team's workflows
 
 ## The Dojo Layout
 
@@ -273,6 +335,17 @@ your-repo/
 │   │   └── SKILL.md                   # 🧘 Meta Dō
 │   └── using-superpowers/
 │       └── SKILL.md                   # 🧘 Meta Dō (Activator)
+├── memory/                            # 🧠 Persistent Knowledge Graph
+│   ├── INDEX.md                       # Map of Content — agents read first
+│   ├── .link-graph.json               # Machine-readable link graph
+│   ├── decisions/                     # Architectural decision records
+│   │   └── _template.md
+│   ├── patterns/                      # Proven rules (promoted from lessons)
+│   │   └── _template.md
+│   ├── preferences/                   # Learned user preferences
+│   │   └── _template.md
+│   └── sessions/                      # Session summaries with links
+│       └── _template.md
 ├── spec/
 │   └── copilot-skills-spec.md         # Skill format specification
 ├── template/
@@ -284,7 +357,10 @@ your-repo/
 ├── scripts/
 │   ├── init.sh                        # Dojo initialization
 │   ├── lesson-updater.sh              # Pattern scanner & amendment proposer
-│   └── verify.sh                      # Pre-PR verification
+│   ├── verify.sh                      # Pre-PR verification
+│   ├── link-index.sh                  # Memory vault graph builder
+│   ├── memory-query.sh                # Memory vault query tool
+│   └── obsidian-sync.sh               # Lesson → pattern promotion
 └── tasks/
     ├── todo.md                        # Battle plan
     └── lessons.md                     # Defeat log, metrics & prevention rules

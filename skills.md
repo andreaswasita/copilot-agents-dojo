@@ -29,7 +29,7 @@ Behavioral skills that govern *how* the agent thinks and operates. Style-agnosti
 🥋 A master delegates. Subagents handle research, analysis, testing, and review. One task per subagent, keep the main context clean.
 
 ### [`skills/self-improvement`](skills/self-improvement/SKILL.md) — Self-Improvement Loop
-🥋 After every correction, agents capture the lesson with tags and metrics. Patterns feed back into skills. Review `tasks/lessons.md` at session start.
+🥋 After every correction, agents capture the lesson with tags and metrics. Patterns feed back into skills. Review `tasks/lessons.md` at session start. Promote proven patterns (3+ occurrences) to `memory/patterns/`. Record decisions in `memory/decisions/`. Write session summaries to `memory/sessions/`. Run `scripts/link-index.sh` to rebuild the knowledge graph.
 
 ### [`skills/verify-before-done`](skills/verify-before-done/SKILL.md) — Verify Before Done
 🥋 No kata is complete without demonstration. Tests, logs, diffs — show your work or it didn't happen. Use `scripts/verify.sh` for automation.
@@ -105,7 +105,7 @@ A meta-skill for creating new dojo skills. Captures intent, writes SKILL.md file
 SKILL.md template and spec compliance. Use exact YAML frontmatter + triggers + steps + enforcement. Test in a branch before committing.
 
 ### [`skills/using-superpowers`](skills/using-superpowers/SKILL.md) — Using Superpowers
-The framework activator. Loads all skills, enforces the mandatory workflow, reviews lessons at session start.
+The framework activator. Loads all skills, enforces the mandatory workflow, reads `memory/INDEX.md` and reviews lessons at session start. Writes session summaries at session end.
 
 ---
 
