@@ -1,0 +1,58 @@
+{
+  "generated": "2026-04-20T03:18:39Z",
+  "total_files": 11,
+  "total_links": 11,
+  "forward_links": {
+    "patterns/no-premature-abstraction.md": [
+      "sessions/2026-04-14-notification-service.md"
+    ],
+    "patterns/test-edge-cases-first.md": [
+      "sessions/2026-04-10-auth-module.md"
+    ],
+    "patterns/validate-api-responses.md": [
+      "sessions/2026-04-08-api-refactor.md",
+      "sessions/2026-04-14-notification-service.md"
+    ],
+    "sessions/2026-04-08-api-refactor.md": [
+      "decisions/2026-04-12-postgres-over-dynamodb.md",
+      "patterns/validate-api-responses.md"
+    ],
+    "sessions/2026-04-10-auth-module.md": [
+      "patterns/test-edge-cases-first.md"
+    ],
+    "sessions/2026-04-14-notification-service.md": [
+      "decisions/2026-04-15-test-isolation-docker.md",
+      "patterns/validate-api-responses.md",
+      "patterns/no-premature-abstraction.md",
+      "patterns/no-premature-abstraction.md"
+    ]
+  },
+  "back_links": {
+    "sessions/2026-04-14-notification-service.md": [
+      "patterns/no-premature-abstraction.md",
+      "patterns/validate-api-responses.md"
+    ],
+    "sessions/2026-04-10-auth-module.md": [
+      "patterns/test-edge-cases-first.md"
+    ],
+    "sessions/2026-04-08-api-refactor.md": [
+      "patterns/validate-api-responses.md"
+    ],
+    "decisions/2026-04-12-postgres-over-dynamodb.md": [
+      "sessions/2026-04-08-api-refactor.md"
+    ],
+    "patterns/validate-api-responses.md": [
+      "sessions/2026-04-08-api-refactor.md",
+      "sessions/2026-04-14-notification-service.md"
+    ],
+    "patterns/test-edge-cases-first.md": [
+      "sessions/2026-04-10-auth-module.md"
+    ],
+    "decisions/2026-04-15-test-isolation-docker.md": [
+      "sessions/2026-04-14-notification-service.md"
+    ],
+    "patterns/no-premature-abstraction.md": [
+      "sessions/2026-04-14-notification-service.md"
+    ]
+  }
+}

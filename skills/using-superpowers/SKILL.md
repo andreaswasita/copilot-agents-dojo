@@ -74,10 +74,23 @@ Every non-trivial task follows this pipeline:
 
 Every session begins with:
 
-1. Review `tasks/lessons.md` — What did we learn last time?
-2. Check `tasks/todo.md` — Is there work in progress?
-3. Verify git status — Are we on the right branch? Clean state?
-4. Acknowledge active skills — "Dojo framework active. All skills loaded."
+1. Read `memory/INDEX.md` — What knowledge exists in the vault?
+2. Query relevant context — `bash scripts/memory-query.sh --type pattern --recent 5`
+3. Review `tasks/lessons.md` — Any un-promoted lessons?
+4. Check `tasks/todo.md` — Is there work in progress?
+5. Verify git status — Are we on the right branch? Clean state?
+6. Acknowledge active skills — "Dojo framework active. Memory vault loaded. All skills live."
+
+## Session End Ritual
+
+Every non-trivial session ends with:
+
+1. Write session summary — `memory/sessions/YYYY-MM-DD-summary.md`
+2. Promote patterns — Any lessons at 3+ occurrences? Move to `memory/patterns/`
+3. Record decisions — Any architectural choices? Log in `memory/decisions/`
+4. Capture preferences — User corrections about style/approach? Log in `memory/preferences/`
+5. Rebuild the graph — `bash scripts/link-index.sh`
+6. Update lessons metrics — `tasks/lessons.md`
 
 ## Enforcement Rules
 
@@ -86,13 +99,16 @@ Every session begins with:
 3. **No merge without verification** — `scripts/verify.sh` or equivalent
 4. **No "done" without proof** — Tests, logs, diffs
 5. **Every correction becomes a lesson** — `tasks/lessons.md`
-6. **Main branch is read-only** — Work on feature branches/worktrees
+6. **Every session ends with a summary** — `memory/sessions/`
+7. **Patterns are promoted, not buried** — 3+ occurrences → `memory/patterns/`
+8. **Main branch is read-only** — Work on feature branches/worktrees
 
 ## Examples
 
 **Session Start:**
-> Agent: "Dojo framework active. Reviewed lessons.md (3 active lessons, 1 relevant
-> to today's task). No work in progress. On main branch, clean state. Ready."
+> Agent: "Dojo framework active. Memory vault loaded (4 decisions, 7 patterns,
+> 3 preferences). Reviewed lessons.md (3 active lessons, 1 relevant to today's
+> task). No work in progress. On main branch, clean state. Ready."
 
 **Skill Triggering:**
 > User: "I want to add real-time notifications"

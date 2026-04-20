@@ -96,7 +96,7 @@ BRAINSTORM → WORKTREE → PLAN → EXECUTE → TEST → REVIEW → FINISH → 
 
 ## Task Management
 
-1. **Session Start**: Load superpowers. Review `tasks/lessons.md`. Check git status.
+1. **Session Start**: Load superpowers. Read `memory/INDEX.md`. Review `tasks/lessons.md`. Check git status.
 2. **Brainstorm**: For new features, refine design via Socratic questioning. Get approval.
 3. **Isolate**: Create git worktree or feature branch. Verify clean test baseline.
 4. **Plan**: Write plan to `tasks/todo.md` with checkable items.
@@ -104,7 +104,7 @@ BRAINSTORM → WORKTREE → PLAN → EXECUTE → TEST → REVIEW → FINISH → 
 6. **Review**: Self-review against plan after each task/batch.
 7. **Verify Before Done**: Run `scripts/verify.sh` or manually run tests/diffs.
 8. **Finish**: Present merge options. Clean up worktree. Log lessons.
-9. **Learn**: Update `tasks/lessons.md` after corrections. Tag with metadata.
+9. **Learn**: Update `tasks/lessons.md` after corrections. Promote 3+ patterns to `memory/patterns/`. Record decisions in `memory/decisions/`. Write session summary to `memory/sessions/`. Run `scripts/link-index.sh`.
 
 ## Helper Scripts
 
@@ -113,5 +113,29 @@ The `/scripts/` directory contains automation helpers. Reference them in your wo
 - **`scripts/init.sh`** — Scaffolds `tasks/todo.md` and `tasks/lessons.md` on first clone.
 - **`scripts/lesson-updater.sh`** — Scans `tasks/lessons.md` for recurring patterns (3+ occurrences) and proposes rule amendments to `skills.md`.
 - **`scripts/verify.sh`** — Pre-PR verification: runs tests, checks for uncommitted changes, validates that `tasks/todo.md` has a plan.
+- **`scripts/link-index.sh`** — Builds the memory vault link graph. Scans `memory/` for markdown links, generates backlink sections, updates `memory/INDEX.md` stats, and writes `memory/.link-graph.json` for programmatic queries.
+- **`scripts/memory-query.sh`** — Query the memory vault by tag, type, date, status, or free text. Use `--backlinks-for` to find what references a file. Lightweight Dataview replacement.
+- **`scripts/obsidian-sync.sh`** — Syncs `tasks/lessons.md` into the memory vault as `memory/patterns/` candidates.
 
 Use these for all sessions to ensure consistency.
+
+## Memory Vault
+
+The `memory/` directory is the agent's persistent knowledge graph. It replaces flat-file memory with structured, linked knowledge.
+
+```
+memory/
+├── INDEX.md              ← Map of Content (read this first)
+├── .link-graph.json      ← Machine-readable link graph
+├── decisions/            ← Architectural decisions with context
+├── patterns/             ← Proven rules promoted from lessons (3+ occurrences)
+├── preferences/          ← User behavioral preferences (learned over time)
+└── sessions/             ← Session summaries linking to everything above
+```
+
+**Rules:**
+- Read `memory/INDEX.md` at every session start
+- Use relative markdown links between files (not wikilinks)
+- Run `scripts/link-index.sh` after creating or editing memory files
+- Query with `scripts/memory-query.sh` before reading every file manually
+- Templates in each subdirectory (`_template.md`) define the required structure
