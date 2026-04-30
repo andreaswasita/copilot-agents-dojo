@@ -1,6 +1,22 @@
-# Copilot Agents Dojo 🥋
+<div align="center">
 
-<h1 align="center">🏯</h1>
+# Copilot Agents Dojo 🏯
+
+---
+
+# A discipline framework for<br/>your GitHub Copilot agents.
+
+---
+
+*End-to-end framework to take AI agents from improvised assistants to disciplined, measurable, repeatable engineering partners.*
+
+📖 [**Wiki**](../../wiki) · [**Start Here**](#enter-the-dojo) · [**Quickstart**](#enter-the-dojo) · [**Skills**](skills.md) · [**Agents**](agents/) · [**Spec**](spec/copilot-skills-spec.md)
+
+![license](https://img.shields.io/badge/license-MIT-lightgrey) ![version](https://img.shields.io/badge/version-1.0-brightgreen) ![pipeline](https://img.shields.io/badge/pipeline-8%20steps-blue) ![skills](https://img.shields.io/badge/skills-23-orange) ![agents](https://img.shields.io/badge/agents-5-yellow) ![stacks](https://img.shields.io/badge/stacks-5-purple) ![enforcement](https://img.shields.io/badge/enforcement-CI%20gated-ff69b4)
+
+</div>
+
+---
 
 **Your AI agents are untrained. Time to put them through the dojo.**
 
