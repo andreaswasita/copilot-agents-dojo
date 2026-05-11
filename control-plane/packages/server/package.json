@@ -10,16 +10,17 @@
   },
   "dependencies": {
     "@dojo/db": "workspace:*",
-    "hono": "^4.7.0",
     "@hono/node-server": "^1.13.0",
-    "gray-matter": "^4.0.3",
+    "dotenv": "^16.4.0",
+    "drizzle-orm": "^0.44.7",
     "glob": "^11.0.0",
-    "dotenv": "^16.4.0"
+    "gray-matter": "^4.0.3",
+    "hono": "^4.7.0"
   },
   "devDependencies": {
+    "@types/node": "^22.0.0",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0",
-    "vitest": "^3.1.0",
-    "@types/node": "^22.0.0"
+    "vitest": "^3.1.0"
   }
 }
