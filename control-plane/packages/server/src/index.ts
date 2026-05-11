@@ -34,44 +34,12 @@ export function createApp(db: Db, dojoRoot = DOJO_ROOT) {
   return app;
 }
 
-// Create DB - in test mode, use mock; in production, use real DB
-function getDb(): Db {
-  // Check if running in test environment
-  if (process.env.VITEST || process.env.NODE_ENV === "test") {
-    // Return a mock DB that returns empty/valid data for all queries
-    return {
-      select: (fields?: any) => ({
-        from: (table: any) => {
-          let resultData: any[] = [];
-          
-          // For count queries (stats endpoint)
-          if (fields && 'count' in fields) {
-            resultData = [{ count: 0 }];
-          }
-          // For tags queries
-          else if (fields && 'tags' in fields) {
-            resultData = [{ tags: [] }];
-          }
-          
-          // Create a thenable result that also has query chain methods
-          const result: any = Promise.resolve(resultData);
-          result.where = () => result;
-          result.orderBy = () => result;
-          result.limit = () => result;
-          
-          return result;
-        },
-      }),
-      insert: () => ({ values: () => ({ returning: () => Promise.resolve([]) }) }),
-      update: () => ({ set: () => ({ where: () => ({ returning: () => Promise.resolve([]) }) }) }),
-      delete: () => ({ where: () => ({ returning: () => Promise.resolve([]) }) }),
-    } as any;
-  }
-  return createDb();
+// Lazy app getter for production (only connects when accessed)
+let _app: ReturnType<typeof createApp> | null = null;
+export function getApp() {
+  if (!_app) _app = createApp(createDb());
+  return _app;
 }
-
-// Export app for testing and production
-export const app = createApp(getDb());
 
 // Scan and upsert on startup
 async function scanAndUpsert(db: Db, dojoRoot: string) {
@@ -103,6 +71,7 @@ async function scanAndUpsert(db: Db, dojoRoot: string) {
 // Only start server when run directly (not imported for testing)
 if (import.meta.url === `file://${process.argv[1]}`) {
   const db = createDb();
+  const app = createApp(db);
   scanAndUpsert(db, DOJO_ROOT)
     .then(() => {
       serve({ fetch: app.fetch, port: PORT }, (info) => {

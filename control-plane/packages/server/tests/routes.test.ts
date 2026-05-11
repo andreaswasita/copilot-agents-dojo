@@ -1,5 +1,8 @@
 import { describe, it, expect, beforeAll } from "vitest";
-import { app } from "../src/index.js";
+import { createApp } from "../src/index.js";
+import { createMockDb } from "./helpers/mock-db.js";
+
+const app = createApp(createMockDb());
 
 describe("API Routes", () => {
   describe("GET /api/skills", () => {
