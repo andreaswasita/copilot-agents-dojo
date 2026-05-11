@@ -1,0 +1,15 @@
+{
+  "name": "dojo-control-plane",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm -r --parallel dev",
+    "build": "pnpm -r build",
+    "db:generate": "pnpm --filter @dojo/db generate",
+    "db:migrate": "pnpm --filter @dojo/db migrate",
+    "db:seed": "pnpm --filter @dojo/db seed",
+    "test": "pnpm -r test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
