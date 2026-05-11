@@ -35,13 +35,13 @@ export const CODE_STANDARDS: Record<string, string> = {
 - Use \`record\` types for DTOs`,
 };
 
-interface SkillInput {
+export interface SkillInput {
   slug: string;
   name: string;
   markdown: string;
 }
 
-interface AgentInput {
+export interface AgentInput {
   slug: string;
   name: string;
   markdown: string;
