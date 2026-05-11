@@ -2,8 +2,9 @@ import { Hono } from "hono";
 import { eq, ilike, sql, and, inArray } from "drizzle-orm";
 import { skills } from "@dojo/db";
 import type { Db } from "@dojo/db";
+import { scanAllSkills } from "../scanner.js";
 
-export function skillRoutes(db: Db) {
+export function skillRoutes(db: Db, dojoRoot: string) {
   const router = new Hono();
 
   // GET /api/skills?category=X&search=X&tag=X
@@ -50,8 +51,16 @@ export function skillRoutes(db: Db) {
 
   // POST /api/skills/scan
   router.post("/scan", async (c) => {
-    // Trigger re-scan -- delegated to index.ts scanAndUpsert
-    return c.json({ message: "Scan triggered" });
+    const scannedSkills = await scanAllSkills(dojoRoot);
+    for (const skill of scannedSkills) {
+      const existing = await db.select().from(skills).where(eq(skills.slug, skill.slug)).limit(1);
+      if (existing.length > 0) {
+        await db.update(skills).set({ ...skill, updatedAt: new Date() }).where(eq(skills.slug, skill.slug));
+      } else {
+        await db.insert(skills).values(skill);
+      }
+    }
+    return c.json({ message: "Scan complete", count: scannedSkills.length });
   });
 
   return router;

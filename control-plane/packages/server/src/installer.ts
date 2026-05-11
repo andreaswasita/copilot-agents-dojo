@@ -1,5 +1,19 @@
 import { writeFileSync, mkdirSync, copyFileSync, existsSync, readdirSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
+
+function assertSafePath(targetPath: string): string {
+  const resolved = resolve(targetPath);
+  if (resolved.includes("..")) {
+    throw new Error(`Path traversal blocked: ${targetPath}`);
+  }
+  return resolved;
+}
+
+function assertSafeSlug(slug: string): void {
+  if (!/^[a-z0-9][a-z0-9-]*$/.test(slug)) {
+    throw new Error(`Invalid slug: ${slug}`);
+  }
+}
 
 export interface InstallOptions {
   targetPath: string;
@@ -18,6 +32,12 @@ export interface InstallResult {
 
 export function installToProject(options: InstallOptions): InstallResult {
   const { targetPath, dojoRoot, skills, agents, instructionsContent } = options;
+
+  // Validate inputs
+  const safePath = assertSafePath(targetPath);
+  for (const slug of skills) assertSafeSlug(slug);
+  for (const slug of agents) assertSafeSlug(slug);
+
   const result: InstallResult = {
     copiedSkills: [],
     copiedAgents: [],
@@ -26,7 +46,7 @@ export function installToProject(options: InstallOptions): InstallResult {
   };
 
   // Write copilot-instructions.md
-  const githubDir = join(targetPath, ".github");
+  const githubDir = join(safePath, ".github");
   mkdirSync(githubDir, { recursive: true });
   const instructionsPath = join(githubDir, "copilot-instructions.md");
   writeFileSync(instructionsPath, instructionsContent, "utf-8");

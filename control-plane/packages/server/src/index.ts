@@ -21,8 +21,13 @@ export function createApp(db: Db, dojoRoot = DOJO_ROOT) {
 
   app.use("/*", cors());
 
+  app.onError((err, c) => {
+    console.error("API error:", err);
+    return c.json({ error: "Internal server error" }, 500);
+  });
+
   // Mount routes
-  app.route("/api/skills", skillRoutes(db));
+  app.route("/api/skills", skillRoutes(db, dojoRoot));
   app.route("/api/agents", agentRoutes(db));
   app.route("/api/profiles", profileRoutes(db));
   app.route("/api/install", installRoutes(db, dojoRoot));
