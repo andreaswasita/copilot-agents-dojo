@@ -12,6 +12,7 @@ export function Install() {
   const [installing, setInstalling] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [history, setHistory] = useState<any[]>([]);
+  const [includeMemory, setIncludeMemory] = useState(false);
 
   useEffect(() => {
     api.skills.list().then(setSkills).catch(() => {});
@@ -34,6 +35,7 @@ export function Install() {
         skills: selectedSkills,
         agents: selectedAgents,
         codeStandards: {},
+        includeMemory,
       });
       setResult(data);
       api.install.history().then(setHistory).catch(() => {});
@@ -113,6 +115,28 @@ export function Install() {
         </div>
       </div>
 
+      {/* Memory vault option */}
+      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={includeMemory}
+            onChange={(e) => setIncludeMemory(e.target.checked)}
+            className="mt-1 w-4 h-4 rounded border-[var(--border)] text-[var(--primary)] focus:ring-[var(--primary)]"
+          />
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-medium flex items-center gap-1.5">
+              <span>📚</span> Include Memory Vault
+            </div>
+            <p className="text-xs text-[var(--muted)] mt-0.5">
+              Copies <code className="font-mono">memory/</code> (decisions, patterns, preferences,
+              sessions) and <code className="font-mono">scripts/link-index.sh</code> to the target
+              project. Lets the agent build long-term context that survives across sessions.
+            </p>
+          </div>
+        </label>
+      </div>
+
       {/* Actions */}
       <div className="flex gap-3">
         <button
@@ -145,7 +169,8 @@ export function Install() {
         <div className="rounded-xl border border-green-500/30 bg-green-500/5 p-4">
           <h3 className="text-sm font-semibold text-green-400">Installation Complete</h3>
           <p className="text-xs text-[var(--muted)] mt-1">
-            {result.result.copiedSkills.length} skills, {result.result.copiedAgents.length} agents installed to {targetPath}
+            {result.result.copiedSkills.length} skills, {result.result.copiedAgents.length} agents
+            {result.result.memoryCopied ? ", memory vault" : ""} installed to {targetPath}
           </p>
           {result.result.errors.length > 0 && (
             <ul className="mt-2 text-xs text-red-400">

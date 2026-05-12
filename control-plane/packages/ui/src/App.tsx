@@ -7,6 +7,8 @@ import { AgentBrowser } from "./pages/AgentBrowser.js";
 import { AgentDetail } from "./pages/AgentDetail.js";
 import { Profiles } from "./pages/Profiles.js";
 import { Install } from "./pages/Install.js";
+import { MemoryBrowser } from "./pages/MemoryBrowser.js";
+import { MemoryDetail } from "./pages/MemoryDetail.js";
 
 export function App() {
   return (
@@ -20,6 +22,8 @@ export function App() {
             <Route path="/skills/:slug" element={<SkillDetail />} />
             <Route path="/agents" element={<AgentBrowser />} />
             <Route path="/agents/:slug" element={<AgentDetail />} />
+            <Route path="/memory" element={<MemoryBrowser />} />
+            <Route path="/memory/*" element={<MemoryDetail />} />
             <Route path="/profiles" element={<Profiles />} />
             <Route path="/install" element={<Install />} />
           </Routes>

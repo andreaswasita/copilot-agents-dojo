@@ -21,17 +21,19 @@ export interface InstallOptions {
   skills: string[];
   agents: string[];
   instructionsContent: string;
+  includeMemory?: boolean;
 }
 
 export interface InstallResult {
   copiedSkills: string[];
   copiedAgents: string[];
   instructionsPath: string;
+  memoryCopied: boolean;
   errors: string[];
 }
 
 export function installToProject(options: InstallOptions): InstallResult {
-  const { targetPath, dojoRoot, skills, agents, instructionsContent } = options;
+  const { targetPath, dojoRoot, skills, agents, instructionsContent, includeMemory } = options;
 
   // Validate inputs
   const safePath = assertSafePath(targetPath);
@@ -42,6 +44,7 @@ export function installToProject(options: InstallOptions): InstallResult {
     copiedSkills: [],
     copiedAgents: [],
     instructionsPath: "",
+    memoryCopied: false,
     errors: [],
   };
 
@@ -77,6 +80,26 @@ export function installToProject(options: InstallOptions): InstallResult {
     mkdirSync(targetAgentsDir, { recursive: true });
     copyFileSync(srcFile, join(targetAgentsDir, `${slug}.md`));
     result.copiedAgents.push(slug);
+  }
+
+  // Optionally copy memory vault + link-index.sh
+  if (includeMemory) {
+    const srcMemory = join(dojoRoot, "memory");
+    if (existsSync(srcMemory)) {
+      const destMemory = join(safePath, "memory");
+      mkdirSync(destMemory, { recursive: true });
+      copyDirRecursive(srcMemory, destMemory);
+
+      const srcScript = join(dojoRoot, "scripts", "link-index.sh");
+      if (existsSync(srcScript)) {
+        const destScripts = join(safePath, "scripts");
+        mkdirSync(destScripts, { recursive: true });
+        copyFileSync(srcScript, join(destScripts, "link-index.sh"));
+      }
+      result.memoryCopied = true;
+    } else {
+      result.errors.push("Memory vault not found in dojo root");
+    }
   }
 
   return result;

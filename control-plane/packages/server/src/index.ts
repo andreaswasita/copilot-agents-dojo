@@ -10,7 +10,10 @@ import { agentRoutes } from "./routes/agents.js";
 import { profileRoutes } from "./routes/profiles.js";
 import { installRoutes } from "./routes/install.js";
 import { metaRoutes } from "./routes/meta.js";
+import { memoryRoutes } from "./routes/memory.js";
 import { scanAllSkills, scanAllAgents } from "./scanner.js";
+import { scanAllMemory } from "./memory-scanner.js";
+import { memoryEntries } from "@dojo/db";
 
 const PORT = Number(process.env.PORT) || 3131;
 const DOJO_ROOT = process.env.DOJO_ROOT || "../../";
@@ -31,6 +34,7 @@ export function createApp(db: Db, dojoRoot = DOJO_ROOT) {
   app.route("/api/agents", agentRoutes(db));
   app.route("/api/profiles", profileRoutes(db));
   app.route("/api/install", installRoutes(db, dojoRoot));
+  app.route("/api/memory", memoryRoutes(db, dojoRoot));
   app.route("/api", metaRoutes(db));
 
   // Health check
@@ -71,6 +75,17 @@ async function scanAndUpsert(db: Db, dojoRoot: string) {
     }
   }
   console.log(`Scanned ${scannedAgents.length} agents`);
+
+  const scannedMemory = await scanAllMemory(dojoRoot);
+  for (const entry of scannedMemory) {
+    const existing = await db.select().from(memoryEntries).where(eq(memoryEntries.slug, entry.slug)).limit(1);
+    if (existing.length > 0) {
+      await db.update(memoryEntries).set({ ...entry, updatedAt: new Date() }).where(eq(memoryEntries.slug, entry.slug));
+    } else {
+      await db.insert(memoryEntries).values(entry);
+    }
+  }
+  console.log(`Scanned ${scannedMemory.length} memory entries`);
 }
 
 // Only start server when run directly (not imported for testing)

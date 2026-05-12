@@ -16,6 +16,7 @@ export function installRoutes(db: Db, dojoRoot: string) {
       agents: string[];
       codeStandards?: Record<string, boolean>;
       profileId?: string;
+      includeMemory?: boolean;
     }>();
 
     // Fetch skill/agent markdown from DB
@@ -42,6 +43,7 @@ export function installRoutes(db: Db, dojoRoot: string) {
       skills: body.skills,
       agents: body.agents,
       instructionsContent,
+      includeMemory: body.includeMemory,
     });
 
     // Record in history

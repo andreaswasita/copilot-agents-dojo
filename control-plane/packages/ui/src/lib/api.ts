@@ -45,4 +45,19 @@ export const api = {
     presets: () => request<any[]>("/presets"),
     stats: () => request<any>("/stats"),
   },
+  memory: {
+    list: (params?: { type?: string; search?: string; tag?: string }) => {
+      const clean = Object.entries(params ?? {}).filter(
+        ([, v]) => v !== undefined && v !== null && v !== ""
+      ) as [string, string][];
+      const qs = clean.length > 0 ? "?" + new URLSearchParams(clean).toString() : "";
+      return request<any[]>(`/memory${qs}`);
+    },
+    get: (slug: string) => request<any>(`/memory/${slug}`),
+    graph: () => request<{ nodes: any[]; edges: any[] }>("/memory/graph"),
+    tags: () => request<string[]>("/memory/tags"),
+    scan: () => request<any>("/memory/scan", { method: "POST" }),
+    scaffold: (data: any) =>
+      request<any>("/memory/scaffold", { method: "POST", body: JSON.stringify(data) }),
+  },
 };

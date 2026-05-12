@@ -7,17 +7,20 @@ interface Stats {
   agentCount: number;
   profileCount: number;
   categories: number;
+  memoryCount?: number;
 }
 
 export function Home() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [presets, setPresets] = useState<any[]>([]);
   const [categories, setCategories] = useState<Record<string, { icon: string; label: string }>>({});
+  const [memoryCount, setMemoryCount] = useState(0);
 
   useEffect(() => {
     api.meta.stats().then(setStats).catch(() => {});
     api.meta.presets().then(setPresets).catch(() => {});
     api.meta.categories().then(setCategories).catch(() => {});
+    api.memory.list().then((m) => setMemoryCount(m.length)).catch(() => {});
   }, []);
 
   return (
@@ -34,10 +37,11 @@ export function Home() {
 
       {/* Stats */}
       {stats && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           {[
             { label: "Skills", value: stats.skillCount, icon: "🥋", link: "/skills" },
             { label: "Agents", value: stats.agentCount, icon: "🤖", link: "/agents" },
+            { label: "Memory", value: memoryCount, icon: "📚", link: "/memory" },
             { label: "Profiles", value: stats.profileCount, icon: "📋", link: "/profiles" },
             { label: "Categories", value: stats.categories, icon: "📊", link: "/skills" },
           ].map((stat) => (

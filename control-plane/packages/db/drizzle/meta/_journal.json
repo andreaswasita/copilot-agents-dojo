@@ -8,6 +8,13 @@
       "when": 1778505922181,
       "tag": "0000_flippant_sentry",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1778589443021,
+      "tag": "0001_lame_vargas",
+      "breakpoints": true
     }
   ]
 }
