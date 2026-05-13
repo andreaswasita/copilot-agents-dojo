@@ -13,6 +13,11 @@ export function Install() {
   const [result, setResult] = useState<any>(null);
   const [history, setHistory] = useState<any[]>([]);
   const [includeMemory, setIncludeMemory] = useState(false);
+  const [wireMcp, setWireMcp] = useState(false);
+
+  useEffect(() => {
+    setWireMcp(includeMemory);
+  }, [includeMemory]);
 
   useEffect(() => {
     api.skills.list().then(setSkills).catch(() => {});
@@ -36,6 +41,7 @@ export function Install() {
         agents: selectedAgents,
         codeStandards: {},
         includeMemory,
+        wireMcp: includeMemory && wireMcp,
       });
       setResult(data);
       api.install.history().then(setHistory).catch(() => {});
@@ -116,7 +122,7 @@ export function Install() {
       </div>
 
       {/* Memory vault option */}
-      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
+      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 space-y-3">
         <label className="flex items-start gap-3 cursor-pointer">
           <input
             type="checkbox"
@@ -132,6 +138,27 @@ export function Install() {
               Copies <code className="font-mono">memory/</code> (decisions, patterns, preferences,
               sessions) and <code className="font-mono">scripts/link-index.sh</code> to the target
               project. Lets the agent build long-term context that survives across sessions.
+            </p>
+          </div>
+        </label>
+
+        <label className={`flex items-start gap-3 pl-7 ${includeMemory ? "cursor-pointer" : "cursor-not-allowed opacity-50"}`}>
+          <input
+            type="checkbox"
+            checked={includeMemory && wireMcp}
+            disabled={!includeMemory}
+            onChange={(e) => setWireMcp(e.target.checked)}
+            className="mt-1 w-4 h-4 rounded border-[var(--border)] text-[var(--primary)] focus:ring-[var(--primary)] disabled:cursor-not-allowed"
+          />
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-medium flex items-center gap-1.5">
+              <span>🔌</span> Wire MCP memory server
+            </div>
+            <p className="text-xs text-[var(--muted)] mt-0.5">
+              Writes a <code className="font-mono">.mcp.json</code> at the target root pointing
+              at <code className="font-mono">@dojo/mcp-memory</code>, plus a session-boot block in
+              <code className="font-mono"> copilot-instructions.md</code> so agents auto-load
+              recent sessions and active decisions on startup.
             </p>
           </div>
         </label>
@@ -170,7 +197,9 @@ export function Install() {
           <h3 className="text-sm font-semibold text-green-400">Installation Complete</h3>
           <p className="text-xs text-[var(--muted)] mt-1">
             {result.result.copiedSkills.length} skills, {result.result.copiedAgents.length} agents
-            {result.result.memoryCopied ? ", memory vault" : ""} installed to {targetPath}
+            {result.result.memoryCopied ? ", memory vault" : ""}
+            {result.result.mcpConfigPath ? `, MCP config (${result.result.mcpConfigPath})` : ""}
+            {" "}installed to {targetPath}
           </p>
           {result.result.errors.length > 0 && (
             <ul className="mt-2 text-xs text-red-400">

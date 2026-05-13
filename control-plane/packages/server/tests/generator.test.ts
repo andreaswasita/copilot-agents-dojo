@@ -36,4 +36,19 @@ describe("generateInstructions", () => {
     const result = generateInstructions([], [], {});
     expect(typeof result).toBe("string");
   });
+
+  it("omits memory boot block by default", () => {
+    const result = generateInstructions([], [], {});
+    expect(result).not.toContain("Memory Vault — Session Boot");
+    expect(result).not.toContain("memory_recent_sessions");
+  });
+
+  it("includes memory boot block when memoryEnabled is true", () => {
+    const result = generateInstructions([], [], {}, { memoryEnabled: true });
+    expect(result).toContain("Memory Vault — Session Boot");
+    expect(result).toContain("memory_recent_sessions");
+    expect(result).toContain("memory_decisions_active");
+    expect(result).toContain("memory_create");
+    expect(result).toContain("Session Checkpoint");
+  });
 });

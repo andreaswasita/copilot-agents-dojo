@@ -17,6 +17,7 @@ export function installRoutes(db: Db, dojoRoot: string) {
       codeStandards?: Record<string, boolean>;
       profileId?: string;
       includeMemory?: boolean;
+      wireMcp?: boolean;
     }>();
 
     // Fetch skill/agent markdown from DB
@@ -34,7 +35,8 @@ export function installRoutes(db: Db, dojoRoot: string) {
     const instructionsContent = generateInstructions(
       selectedSkills,
       selectedAgents,
-      body.codeStandards || {}
+      body.codeStandards || {},
+      { memoryEnabled: Boolean(body.includeMemory) }
     );
 
     const result = installToProject({
@@ -44,6 +46,7 @@ export function installRoutes(db: Db, dojoRoot: string) {
       agents: body.agents,
       instructionsContent,
       includeMemory: body.includeMemory,
+      wireMcp: body.wireMcp,
     });
 
     // Record in history

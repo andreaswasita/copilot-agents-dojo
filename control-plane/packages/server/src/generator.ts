@@ -47,10 +47,34 @@ export interface AgentInput {
   markdown: string;
 }
 
+export const MEMORY_SESSION_BOOT_BLOCK = `## Memory Vault — Session Boot
+
+This project includes a persistent memory vault at \`memory/\` (decisions, patterns, preferences, sessions).
+A Model Context Protocol server (\`dojo-memory\`) is wired up to give you direct, structured access.
+
+**At the start of every session:**
+1. Call \`memory_recent_sessions\` (limit 3) to load what the previous agent did.
+2. Call \`memory_decisions_active\` to load architectural constraints in force.
+3. When you start working in a specific area, call \`memory_patterns_for_context\` with the language and/or file type.
+
+You may also read \`memory://INDEX\` directly for the Map of Content.
+
+**During the session:**
+- If you discover a new pattern, decision, or user preference, call \`memory_create\` to persist it.
+- If a new decision overrides an old one, call \`memory_supersede\`.
+- Use \`memory_link\` to connect related entries.
+
+**At the end of meaningful work — Session Checkpoint:**
+Call \`memory_create({ type: "session", slugSuffix: "<short-kebab>", title: "...", tags: [...], initialBody: "..." })\`
+with a concise summary covering: what was done, decisions made, patterns applied/discovered, links to entries you read or created.
+This is the time-machine entry the next agent will load.
+`;
+
 export function generateInstructions(
   skills: SkillInput[],
   agents: AgentInput[],
-  codeStandards: Record<string, boolean>
+  codeStandards: Record<string, boolean>,
+  options?: { memoryEnabled?: boolean }
 ): string {
   const sections: string[] = [];
 
@@ -67,6 +91,14 @@ export function generateInstructions(
     sections.push("---\n");
     sections.push("# Code Standards\n");
     sections.push(activeStandards.join("\n\n"));
+    sections.push("");
+  }
+
+  // Memory boot block
+  if (options?.memoryEnabled) {
+    sections.push("---\n");
+    sections.push("# Memory\n");
+    sections.push(MEMORY_SESSION_BOOT_BLOCK);
     sections.push("");
   }
 
