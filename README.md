@@ -260,6 +260,24 @@ memory/
 
 All files use **relative markdown links** (not wikilinks) and **YAML frontmatter** for metadata — standards any agent can parse. Zero dependencies on Obsidian or any external tool.
 
+### Obsidian compatibility
+
+The `memory/` directory is also a **real Obsidian vault**. Open the folder in Obsidian.app and the native graph view + backlinks pane just work — color groups match the Control Plane theme (decisions cyan, patterns indigo, preferences amber, sessions emerald). See [`memory/README.md`](memory/README.md) for details.
+
+### MCP memory server
+
+Any MCP-capable agent (Claude Code, Copilot CLI, Cursor, VS Code) can read and write the vault via tool calls. The `@dojo/mcp-memory` package exposes:
+
+- **10 tools** — `memory_list`, `memory_search`, `memory_get`, `memory_create`, `memory_link`, `memory_supersede`, `memory_history`, `memory_recent_sessions`, `memory_decisions_active`, `memory_patterns_for_context`
+- **2 resource types** — `memory://INDEX` (the Map of Content) and `memory://{type}/{slug}` (one resource per entry)
+- **Session auto-resume** — installed `copilot-instructions.md` instructs agents to call `memory_recent_sessions` + `memory_decisions_active` on startup and `memory_create({type:'session'})` on completion
+
+Install the Control Plane's MCP wiring with the **🔌 Wire MCP memory server** toggle on the Install page, or copy a sample config from [`control-plane/packages/mcp-memory/examples/`](control-plane/packages/mcp-memory/examples/). Full reference: [`docs/memory-mcp.md`](docs/memory-mcp.md).
+
+### Time Machine 🕰
+
+The Control Plane exposes git history as a first-class UI. On any memory entry, click **🕰 Time Machine** to scrub commits, preview a prior version, and restore it (auto-commits with audit trail). The Memory Browser also has a vault-wide **🕰 Time Slider** that filters cards + graph to the vault state at any chosen commit.
+
 ## Why Train Your Agents?
 
 Untrained agents:
