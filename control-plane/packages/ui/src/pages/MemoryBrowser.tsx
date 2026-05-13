@@ -1,8 +1,10 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useMemory, useMemoryGraph, useMemoryTags, MEMORY_TYPE_META } from "../hooks/useMemory.js";
 import { MemoryCard } from "../components/MemoryCard.js";
 import { MemoryGraph } from "../components/MemoryGraph.js";
 import { MemoryScaffold } from "../components/MemoryScaffold.js";
+import { VaultTimeSlider } from "../components/VaultTimeSlider.js";
+import { api } from "../lib/api.js";
 import { useNavigate } from "react-router";
 
 const TYPE_TABS = [
@@ -20,6 +22,9 @@ export function MemoryBrowser() {
   const [search, setSearch] = useState("");
   const [tag, setTag] = useState<string | null>(null);
   const [showScaffold, setShowScaffold] = useState(false);
+  const [timeSliderActive, setTimeSliderActive] = useState(false);
+  const [timeSliderSha, setTimeSliderSha] = useState<string | null>(null);
+  const [vaultAtSha, setVaultAtSha] = useState<Set<string> | null>(null);
 
   const filters = useMemo(
     () => ({
@@ -30,9 +35,33 @@ export function MemoryBrowser() {
     [type, search, tag]
   );
 
-  const { entries, loading, refetch } = useMemory(filters);
+  const { entries: rawEntries, loading, refetch } = useMemory(filters);
   const tags = useMemoryTags();
-  const { graph, loading: graphLoading } = useMemoryGraph();
+  const { graph: rawGraph, loading: graphLoading } = useMemoryGraph();
+
+  useEffect(() => {
+    if (!timeSliderSha) {
+      setVaultAtSha(null);
+      return;
+    }
+    api.memory
+      .vaultAtSha(timeSliderSha)
+      .then((res) => setVaultAtSha(new Set(res.entries.map((e) => e.slug))))
+      .catch(() => setVaultAtSha(new Set()));
+  }, [timeSliderSha]);
+
+  const entries = useMemo(() => {
+    if (!vaultAtSha) return rawEntries;
+    return rawEntries.filter((e) => vaultAtSha.has(e.slug));
+  }, [rawEntries, vaultAtSha]);
+
+  const graph = useMemo(() => {
+    if (!vaultAtSha) return rawGraph;
+    const nodes = rawGraph.nodes.filter((n) => vaultAtSha.has(n.id));
+    const ids = new Set(nodes.map((n) => n.id));
+    const edges = rawGraph.edges.filter((e) => ids.has(e.source) && ids.has(e.target));
+    return { nodes, edges };
+  }, [rawGraph, vaultAtSha]);
 
   const counts: Record<string, number> = {};
   for (const e of entries) counts[e.type] = (counts[e.type] || 0) + 1;
@@ -87,6 +116,12 @@ export function MemoryBrowser() {
           }}
         />
       )}
+
+      <VaultTimeSlider
+        active={timeSliderActive}
+        onToggle={setTimeSliderActive}
+        onChange={setTimeSliderSha}
+      />
 
       <div className="flex flex-wrap gap-2">
         {TYPE_TABS.map((t) => {

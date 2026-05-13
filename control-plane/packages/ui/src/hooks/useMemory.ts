@@ -51,20 +51,23 @@ export function useMemoryEntry(slug: string | undefined) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchEntry = () => {
     if (!slug) {
       setLoading(false);
       return;
     }
     setLoading(true);
+    setError(null);
     api.memory
       .get(slug)
       .then(setEntry)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [slug]);
+  };
 
-  return { entry, loading, error };
+  useEffect(fetchEntry, [slug]);
+
+  return { entry, loading, error, refetch: fetchEntry };
 }
 
 export function useMemoryGraph() {

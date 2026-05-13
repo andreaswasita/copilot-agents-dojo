@@ -1,11 +1,14 @@
+import { useState } from "react";
 import { useParams, Link } from "react-router";
 import { useMemoryEntry, MEMORY_TYPE_META } from "../hooks/useMemory.js";
 import { MarkdownViewer } from "../components/MarkdownViewer.js";
+import { TimeMachine } from "../components/TimeMachine.js";
 
 export function MemoryDetail() {
   const params = useParams();
   const slug = params["*"] || "";
-  const { entry, loading, error } = useMemoryEntry(slug);
+  const { entry, loading, error, refetch } = useMemoryEntry(slug);
+  const [showTimeMachine, setShowTimeMachine] = useState(false);
 
   if (loading) return <div className="text-center py-12 text-[var(--muted)]">Loading...</div>;
   if (error || !entry)
@@ -15,9 +18,27 @@ export function MemoryDetail() {
 
   return (
     <div className="space-y-6">
-      <Link to="/memory" className="text-sm text-[var(--primary)] hover:underline">
-        &larr; Back to Memory Vault
-      </Link>
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <Link to="/memory" className="text-sm text-[var(--primary)] hover:underline">
+          &larr; Back to Memory Vault
+        </Link>
+        <button
+          onClick={() => setShowTimeMachine(true)}
+          className="px-3 py-1.5 text-xs font-medium rounded-lg border border-[var(--border)] text-[var(--text)] hover:bg-[var(--surface)] flex items-center gap-1.5"
+          title="View git history and restore prior versions"
+        >
+          <span>🕰</span> Time Machine
+        </button>
+      </div>
+
+      {showTimeMachine && (
+        <TimeMachine
+          slug={entry.slug}
+          currentMarkdown={entry.markdown}
+          onClose={() => setShowTimeMachine(false)}
+          onRestored={refetch}
+        />
+      )}
 
       <div className="grid gap-8 lg:grid-cols-[1fr_300px]">
         <div className="min-w-0">

@@ -59,5 +59,22 @@ export const api = {
     scan: () => request<any>("/memory/scan", { method: "POST" }),
     scaffold: (data: any) =>
       request<any>("/memory/scaffold", { method: "POST", body: JSON.stringify(data) }),
+    history: (slug: string, limit = 50) =>
+      request<{ slug: string; count: number; commits: Array<{ sha: string; date: string; author: string; message: string; sessionId: string | null }> }>(
+        `/memory/history/${slug}?limit=${limit}`
+      ),
+    historyAtSha: (slug: string, sha: string) =>
+      request<{ slug: string; sha: string; frontmatter: string | null; markdown: string; raw: string }>(
+        `/memory/history/${slug}?sha=${encodeURIComponent(sha)}`
+      ),
+    restore: (slug: string, sha: string, commit = true) =>
+      request<{ slug: string; restoredSha: string; commitSha: string | null; warning: string | null }>(
+        `/memory/restore/${slug}`,
+        { method: "POST", body: JSON.stringify({ sha, commit }) }
+      ),
+    vaultAtSha: (sha: string) =>
+      request<{ sha: string; count: number; entries: Array<{ slug: string; type: string }> }>(
+        `/memory/at/${encodeURIComponent(sha)}`
+      ),
   },
 };

@@ -12,6 +12,12 @@ import {
   getBacklinksFor,
   getForwardLinksFor,
 } from "../memory-scanner.js";
+import {
+  getFileHistory,
+  getFileAtSha,
+  listVaultAtSha,
+  restoreFileFromSha,
+} from "../git-history.js";
 
 const VALID_TYPES = new Set(["decision", "pattern", "preference", "session"]);
 const VALID_TYPE_FOLDERS: Record<string, string> = {
@@ -254,6 +260,78 @@ export function memoryRoutes(db: Db, dojoRoot: string) {
   router.post("/scan", async (c) => {
     const count = await rescanMemory(db, dojoRoot);
     return c.json({ message: "Memory scan complete", count });
+  });
+
+  // ─── Time machine endpoints ────────────────────────────────
+  // NOTE: these MUST be registered before the catch-all GET /:slug{.+}
+  router.get("/at/:sha", async (c) => {
+    const sha = c.req.param("sha");
+    const entries = listVaultAtSha(dojoRoot, sha);
+    return c.json({ sha, count: entries.length, entries });
+  });
+
+  router.get("/history/:slug{.+}", async (c) => {
+    const slug = c.req.param("slug");
+    const sha = c.req.query("sha");
+    const entry = await db
+      .select()
+      .from(memoryEntries)
+      .where(eq(memoryEntries.slug, slug))
+      .limit(1);
+    if (entry.length === 0) return c.json({ error: "Memory entry not found" }, 404);
+
+    if (sha) {
+      const content = getFileAtSha(dojoRoot, entry[0].filePath, sha);
+      if (content === null) return c.json({ error: `File not found at sha ${sha}` }, 404);
+      const fmMatch = content.match(/^---\n([\s\S]*?)\n---\n?/);
+      const frontmatter = fmMatch ? fmMatch[1] : null;
+      const markdown = fmMatch ? content.slice(fmMatch[0].length) : content;
+      return c.json({ slug, sha, frontmatter, markdown: markdown.trim(), raw: content });
+    }
+
+    const limitParam = c.req.query("limit");
+    const limit = limitParam ? Math.min(Math.max(parseInt(limitParam, 10) || 50, 1), 200) : 50;
+    const commits = getFileHistory(dojoRoot, entry[0].filePath, limit);
+    return c.json({ slug, count: commits.length, commits });
+  });
+
+  router.post("/restore/:slug{.+}", async (c) => {
+    const slug = c.req.param("slug");
+    const body = await c.req.json<{ sha?: string; commit?: boolean }>();
+    if (!body.sha || typeof body.sha !== "string") {
+      return c.json({ error: "Missing required field: sha" }, 400);
+    }
+    const entry = await db
+      .select()
+      .from(memoryEntries)
+      .where(eq(memoryEntries.slug, slug))
+      .limit(1);
+    if (entry.length === 0) return c.json({ error: "Memory entry not found" }, 404);
+
+    const result = restoreFileFromSha(dojoRoot, entry[0].filePath, body.sha, {
+      commit: body.commit !== false,
+    });
+    if (!result.restored) {
+      return c.json({ error: result.error ?? "Restore failed" }, 500);
+    }
+
+    // Re-run link-index + DB rescan to reflect content change
+    const linkScript = join(dojoRoot, "scripts", "link-index.sh");
+    if (existsSync(linkScript)) {
+      try {
+        execSync(`bash "${linkScript}"`, { cwd: dojoRoot, stdio: "ignore" });
+      } catch {
+        // graph just won't update
+      }
+    }
+    await rescanMemory(db, dojoRoot);
+
+    return c.json({
+      slug,
+      restoredSha: result.restoredSha,
+      commitSha: result.commitSha,
+      warning: result.error ?? null,
+    });
   });
 
   router.post("/scaffold", async (c) => {
