@@ -1,0 +1,32 @@
+{
+  "name": "@dojo/mcp-memory",
+  "version": "0.0.1",
+  "type": "module",
+  "description": "MCP server exposing the Dojo memory vault to AI agents",
+  "bin": {
+    "dojo-mcp-memory": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "gray-matter": "^4.0.3",
+    "zod": "^3.25.0 || ^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.1.0"
+  },
+  "files": [
+    "dist",
+    "examples",
+    "README.md"
+  ]
+}

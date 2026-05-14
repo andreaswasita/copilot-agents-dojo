@@ -35,12 +35,22 @@ memory_dir = os.environ["MEMORY_DIR"]
 index_file = os.environ["INDEX_FILE"]
 graph_file = os.environ["GRAPH_FILE"]
 
-# Collect all markdown files (exclude templates)
+# Collect all markdown files (exclude templates, root-level READMEs/INDEX, and .obsidian config)
 md_files = []
 for root, dirs, files in os.walk(memory_dir):
+    # Don't descend into Obsidian config dirs
+    dirs[:] = [d for d in dirs if d != '.obsidian' and not d.startswith('.')]
     for f in files:
-        if f.endswith('.md') and f != '_template.md':
-            md_files.append(os.path.join(root, f))
+        if not f.endswith('.md'):
+            continue
+        if f == '_template.md':
+            continue
+        # Only count entries under decisions/patterns/preferences/sessions
+        rel_dir = os.path.relpath(root, memory_dir)
+        top = rel_dir.split(os.sep)[0]
+        if top not in ('decisions', 'patterns', 'preferences', 'sessions'):
+            continue
+        md_files.append(os.path.join(root, f))
 md_files.sort()
 
 total_files = len(md_files)
