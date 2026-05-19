@@ -1,45 +1,61 @@
 ---
 name: using-superpowers
-description: >-
-  The activation skill — loads the full dojo framework at the start of every
-  Copilot session. Use this skill at the beginning of every new session, when
-  the user says "use superpowers," "activate the dojo," or "start the framework,"
-  or when any other skill references the mandatory workflow. This skill ensures
-  all other skills are active and the mandatory workflow is enforced.
+description: Activates the dojo framework at the start of a session.
+tier: core
+category: activation
+created_by: human
+platforms: [windows, macos, linux]
+tags: [activation, framework, session]
+author: Andreas Wasita (@andreaswasita)
 ---
 
-# Using Superpowers (Copilot Dojo Edition)
+# Using Superpowers Skill
 
-The dojo activator. Load this, and every skill is live. The mandatory workflow starts.
+Loads the dojo framework at session start: confirms the core disciplines are active, surfaces relevant lessons, and verifies clean state before any work begins. Does NOT replace the underlying skills — it sequences their loading and the session opening ritual.
 
-## Activation
+## When to Use
 
-When a new session begins or the user says "use superpowers":
+- At the start of every new session in a dojo-enabled repo.
+- When the user says "use superpowers", "activate the dojo", or "start the framework".
+- When another skill references the mandatory workflow.
+- After resuming from a checkpoint or context handoff.
+- NOT mid-session for already-active skills — re-loading wastes turns.
 
-1. **All skills in `skills/` are active** — Auto-discovered by Copilot from repo root
-2. **The mandatory workflow is enforced** — No skipping steps
-3. **`tasks/lessons.md` is reviewed** — Past lessons inform this session
-4. **Clean state is verified** — `git status`, test baseline confirmed
+## Prerequisites
 
-## The Mandatory Workflow
+- The dojo is installed in the repo (`skills/`, `optional-skills/`, `tasks/`, `spec/`).
+- The `view`, `edit`, `grep`, and `powershell` Copilot tools.
+- `git` available to inspect branch + working tree.
+- `tasks/lessons.md` exists (created empty if first session).
+- `scripts/verify.sh` (or `scripts/run-checks.ps1`) available for the session-start gate.
 
-Every non-trivial task follows this pipeline:
+## How to Run
 
+```text
+1. Review `tasks/lessons.md` for relevant active lessons.
+2. Open `tasks/todo.md` — is there work in progress?
+3. Confirm `git status`: right branch, clean tree (or known WIP).
+4. Acknowledge: "Dojo framework active. Core disciplines loaded."
+5. Hand off to the trigger skill for the user's actual request.
 ```
-1. BRAINSTORM  → Refine ideas, get design approved
-2. WORKTREE    → Create isolated workspace
-3. PLAN        → Break into bite-sized tasks in tasks/todo.md
-4. EXECUTE     → One task at a time (or parallel dispatch)
-5. TEST        → RED-GREEN-REFACTOR for every change
-6. REVIEW      → Self-review against plan after each task
-7. FINISH      → Full verification, merge decision, cleanup
-8. LEARN       → Update tasks/lessons.md with retrospective
-```
 
-### When to Use the Full Pipeline
+## Quick Reference
 
-| Scenario | Workflow |
-|----------|----------|
+| Always-on (core) | Why it loads at every session |
+|---|---|
+| `plan-before-code` | Forces planning before any multi-step work |
+| `verify-before-done` | Evidence required for any "done" claim |
+| `self-improvement` | Lessons captured every correction |
+| `demand-elegance` | Hacky solutions get challenged |
+| `autonomous-bug-fix` | Full bug cycle without hand-holding |
+| `subagent-strategy` | Delegation is a first-class option |
+
+| Workflow chain (practical) | Triggered when |
+|---|---|
+| `brainstorming` → `plan-before-code` → `executing-plans` → `requesting-code-review` → `finishing-a-development-branch` | A non-trivial change begins |
+
+| Workflow scenario | Workflow shape |
+|---|---|
 | New feature | Full pipeline: brainstorm → finish |
 | Bug fix (non-trivial) | Skip brainstorm, start at plan |
 | One-line fix | Direct fix + verify-before-done |

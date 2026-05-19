@@ -1,123 +1,129 @@
 ---
 name: executing-plans
-description: >-
-  Dispatches and executes bite-sized tasks from the approved plan in tasks/todo.md.
-  Use this skill when a plan has been approved and execution should begin, when
-  working through a multi-step implementation, when resuming work after a break
-  or context switch, or when the user says "go," "start," or "execute the plan."
-  Works with subagent-strategy for delegation or directly for sequential execution.
+description: Executes approved plans one task at a time, verified.
+tier: practical
+category: workflow
+created_by: human
+platforms: [windows, macos, linux]
+tags: [execution, plan, todo]
+author: Andreas Wasita (@andreaswasita)
 ---
 
-# Executing Plans
+# Executing Plans Skill
 
-Take one task. Execute it. Verify it. Move to the next. No skipping. No freelancing.
+Walks an approved `tasks/todo.md` plan step by step: pick the next task, execute it, verify it, commit it, mark it done. Does NOT freelance new scope mid-execution and does NOT skip the verification gate.
 
 ## When to Use
 
-- A plan in `tasks/todo.md` has been approved
-- Starting or resuming a multi-step implementation
-- User says "go," "start," "execute," or "begin"
-- After brainstorming + planning produces a clear task list
-- When a subagent completes a batch and the next batch is ready
+- A plan in `tasks/todo.md` has been approved.
+- Starting or resuming a multi-step implementation.
+- User says "go", "start", "execute", or "begin".
+- A sub-agent batch finishes and the next batch is ready.
+- NOT before the design is approved (use `brainstorming` first).
 
-## How to Use
+## Prerequisites
+
+- Approved `tasks/todo.md` containing ordered steps with acceptance criteria.
+- `git` configured for atomic commits.
+- The `view`, `edit`, and `powershell` Copilot tools.
+- A green baseline test run.
+- The `verify-before-done` skill available for the verification step.
+
+## How to Run
+
+```text
+1. Read tasks/todo.md. Identify the next unchecked task.
+2. Confirm its prerequisites are satisfied.
+3. Execute the task.
+4. Run the verify-before-done skill.
+5. Append the Verification Results block.
+6. Commit. Mark the checkbox `- [x]`.
+7. Repeat. Post a short progress note every 2–3 tasks.
+```
+
+## Quick Reference
+
+| Phase | Action | Tool |
+|---|---|---|
+| Load | Read `tasks/todo.md` | `view` |
+| Execute | Make the change | `edit`, `powershell` |
+| Verify | Tests + gate + diff | `verify-before-done` skill |
+| Record | Append Verification Results | `edit` |
+| Commit | One commit per task | `powershell` → `git commit` |
+| Mark done | Flip `- [ ]` to `- [x]` | `edit` |
+
+## Procedure
 
 ### Step 1: Load the Plan
 
-Read `tasks/todo.md` and identify the next uncompleted task:
+Open `tasks/todo.md` with `view`. Locate the next `- [ ]` step. If none exist, the plan is done — hand off to `finishing-a-development-branch`.
+
+### Step 2: Check Prerequisites
+
+Read the task. Confirm any "depends on" notes are satisfied. If a prerequisite is missing, STOP — do not improvise around it; re-plan first.
+
+### Step 3: Execute Exactly One Task
+
+Make the change. Resist the urge to bundle "while I'm here" cleanups. Scope discipline is the whole point of the plan.
+
+### Step 4: Verify
+
+Invoke the `verify-before-done` skill. Do not consider the task complete until it has produced a Verification Results block:
 
 ```markdown
-## Plan
-- [x] Step 1: Set up database schema         ✅
-- [x] Step 2: Create data models              ✅
-- [ ] Step 3: Implement API endpoints          ← NEXT
-- [ ] Step 4: Add input validation
-- [ ] Step 5: Write integration tests
+### Verification Results
+- [x] Tests: 47 passed, 0 failed
+- [x] Dojo gate: `verify.sh --check` PASS
+- [x] Diff matches plan
+- [x] Clean tree
 ```
 
-### Step 2: Execute One Task at a Time
-
-For each task:
-
-1. **Read the task spec** — What exactly needs to happen?
-2. **Check dependencies** — Are prerequisites complete?
-3. **Execute** — Write the code, run the commands
-4. **Verify** — Tests pass, behavior is correct (reference `verify-before-done`)
-5. **Mark complete** — Update `tasks/todo.md` with the checkbox
-6. **Commit** — One commit per completed task (or logical unit)
+### Step 5: Commit and Mark Done
 
 ```bash
-# After completing Step 3
 git add -A
-git commit -m "feat: implement API endpoints for user preferences"
+git commit -m "<type>: <task title>"
 ```
 
-### Step 3: Use Subagents When Beneficial
+Then `edit` `tasks/todo.md` to flip `- [ ]` → `- [x]`.
 
-For tasks that benefit from delegation:
-- **Independent tasks** → Dispatch to parallel subagents (reference `dispatching-parallel-agents`)
-- **Research-heavy tasks** → Spawn a research subagent first
-- **Test-heavy tasks** → Subagent writes tests while you implement
+### Step 6: Handle Blockers Explicitly
 
-For simple sequential tasks, just execute directly.
+If a task cannot complete as planned:
 
-### Step 4: Handle Blockers
+1. Do not improvise around it.
+2. Annotate the task in `tasks/todo.md`:
 
-When a task can't be completed as planned:
-
-1. **STOP** — Don't improvise around the blocker
-2. **Log the blocker** in `tasks/todo.md`:
    ```markdown
    - [ ] Step 3: Implement API endpoints
-     > ⚠️ BLOCKED: Database schema doesn't support the required query pattern.
-     > Need to add an index or restructure Step 1.
+     > ⚠️ BLOCKED: Schema does not support required query. Need index or restructure Step 1.
    ```
-3. **Re-plan** — Update the plan to address the blocker
-4. **Resume** from the revised plan
 
-### Step 5: Progress Updates
+3. Re-plan. Update the plan. Resume from the revised version.
 
-After every 2–3 completed tasks, provide a brief status:
+### Step 7: Progress Updates
+
+Every 2–3 completed tasks, post a short status:
 
 ```markdown
 **Progress:** 3/5 tasks complete
-- ✅ Schema, models, and endpoints done
-- ⏳ Next: input validation
+- ✅ Schema, models, endpoints
+- ⏳ Next: validation
 - 🚫 No blockers
 ```
 
-## Examples
+## Pitfalls
 
-**Bad — Skipping Around:**
-> Plan says: Schema → Models → API → Validation → Tests
-> Agent: *Starts with Tests because "it's TDD"*
+- **DO NOT** skip the plan order without re-planning first.
+- **DO NOT** batch 5 tasks then verify once. Verify after each.
+- **DO NOT** add scope mid-execution ("while I'm here…"). Log it as a follow-up; stay on plan.
+- **DO NOT** mark a task done without a Verification Results block.
+- **DO NOT** silently work around blockers. Annotate and re-plan.
 
-**Good — Following the Plan:**
-> Agent: "Plan loaded. 5 tasks, starting with Step 1: Set up database schema.
-> Dependencies: none. Executing..."
-> [completes task, verifies, commits]
-> Agent: "Step 1 complete. Moving to Step 2: Create data models."
+## Verification
 
-**Bad — Improvising:**
-> Agent: "While implementing the API endpoints, I noticed we should also add
-> rate limiting, caching, and a webhook system. I'll add those too."
-
-**Good — Staying on Plan:**
-> Agent: "While implementing the API endpoints, I noticed rate limiting might
-> be useful. Logging this as a future consideration. Staying on the current plan."
-
-## Guidelines
-
-- One task at a time — complete, verify, commit, then move to the next
-- Never skip tasks or change execution order without re-planning
-- Never add scope beyond what's in the plan — log ideas for future consideration
-- When a task takes significantly longer than expected, pause and check the plan
-- Use subagents for parallelizable work, direct execution for sequential work
-
-## Anti-Patterns
-
-- **Working outside the plan** — If it's not in `tasks/todo.md`, it doesn't get done this session
-- **Skipping verification** — A completed task without proof is an unverified task
-- **Batching everything** — Don't do 5 tasks then verify once. Verify after each.
-- **Silent blockers** — If you're stuck, log it. Don't silently work around it.
-- **Scope creep** — "While I'm here, I might as well..." — No. Log it. Stay on plan.
+- [ ] Every flipped `- [x]` has a Verification Results block above it.
+- [ ] One commit per completed task (or one logical unit).
+- [ ] No scope was added to the plan without explicit user agreement.
+- [ ] Progress updates were posted at least every 3 tasks.
+- [ ] Blockers, if any, are documented in `tasks/todo.md`.

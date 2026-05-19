@@ -1,0 +1,31 @@
+// .vscode/mcp.json — VS Code / GitHub Copilot agent mode
+// Copy to <project>/.vscode/mcp.json and edit env vars.
+// Reference: https://code.visualstudio.com/docs/copilot/chat/mcp-servers
+{
+  "servers": {
+    "github": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github@0.6"],
+      "env": { "GITHUB_PERSONAL_ACCESS_TOKEN": "${env:GH_PAT}" }
+    },
+    "filesystem": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y", "@modelcontextprotocol/server-filesystem@0.6",
+        "${workspaceFolder}"
+      ]
+    },
+    "git": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-git@0.6", "--repository", "${workspaceFolder}"]
+    },
+    "fetch": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-fetch@0.6"]
+    }
+  }
+}

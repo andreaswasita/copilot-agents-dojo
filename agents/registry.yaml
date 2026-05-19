@@ -1,0 +1,109 @@
+# Persona registry — single source of truth for agent metadata.
+#
+# Source of truth for: cli/dojo_cli/scanner.py, the marketplace flow, and any
+# tooling that needs to enumerate agents without parsing five separate
+# markdown files.
+#
+# When you add or rename a persona, update BOTH:
+#   1. The markdown file in agents/<slug>.md (the runtime brief)
+#   2. The entry below (the metadata index)
+#
+# `bash scripts/verify.sh spec` will warn if the two drift.
+
+version: 1
+generated_at: 2026-05-20
+
+personas:
+
+  - slug: architect
+    name: Architect
+    type: design
+    file: agents/architect.md
+    description: >-
+      Designs system architecture, defines technical strategy, owns the
+      engineering half of requirements (impact analysis, data flow,
+      traceability), and ensures long-term code quality.
+    activation: triggered
+    activation_hint: >-
+      Designing systems, refactoring architecture, strategic technical
+      decisions, impact analysis, current/future-state process modelling.
+    apply_to: ["**/*"]
+    tags: [design, requirements, architecture, traceability]
+    default_skills:
+      - plan-before-code
+      - demand-elegance
+      - requirements-elicitation
+      - codebase-onboarding
+      - refactoring
+
+  - slug: technical-program-manager
+    name: Technical Program Manager
+    type: coordination
+    file: agents/technical-program-manager.md
+    description: >-
+      Plans projects, coordinates timelines, and owns the business half of
+      requirements engineering — stakeholder elicitation, user stories,
+      acceptance criteria, scope, and the Definition of Ready gate.
+    activation: triggered
+    activation_hint: >-
+      Sprint planning, task coordination, requirements gathering, user
+      stories, acceptance criteria, PRDs and feature briefs.
+    apply_to: ["**/*"]
+    tags: [planning, coordination, requirements, stakeholders]
+    default_skills:
+      - plan-before-code
+      - requirements-elicitation
+      - brainstorming
+      - self-improvement
+
+  - slug: software-engineer
+    name: Software Engineer
+    type: development
+    file: agents/software-engineer.md
+    description: >-
+      Primary development agent. Implements features, fixes bugs, and ships
+      production-quality code.
+    activation: always
+    activation_hint: Always active — primary development agent.
+    apply_to: ["**/*"]
+    tags: [development, implementation, default]
+    default_skills:
+      - plan-before-code
+      - executing-plans
+      - verify-before-done
+      - test-writing
+      - autonomous-bug-fix
+
+  - slug: test-engineer
+    name: Test Engineer
+    type: quality
+    file: agents/test-engineer.md
+    description: >-
+      Designs and implements test strategy, ensures code reliability,
+      coverage, and quality across the testing pyramid.
+    activation: triggered
+    activation_hint: Test design, test planning, quality assurance work.
+    apply_to: ["**/*"]
+    tags: [testing, quality, qa]
+    default_skills:
+      - test-writing
+      - verify-before-done
+      - debugging
+      - code-review
+
+  - slug: security-engineer
+    name: Security Engineer
+    type: security
+    file: agents/security-engineer.md
+    description: >-
+      Ensures security compliance, identifies vulnerabilities, and embeds
+      secure-by-default practices in code and infrastructure.
+    activation: triggered
+    activation_hint: Security review, vuln remediation, secure feature design.
+    apply_to: ["**/*"]
+    tags: [security, compliance, vulnerabilities]
+    default_skills:
+      - code-review
+      - debugging
+      - verify-before-done
+      - demand-elegance

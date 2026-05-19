@@ -1,0 +1,6 @@
+{
+  "type": "stdio",
+  "command": "npx",
+  "args": ["-y", "@modelcontextprotocol/server-github@0.6"],
+  "env": { "GITHUB_PERSONAL_ACCESS_TOKEN": "${env:GH_PAT}" }
+}

@@ -4,44 +4,39 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
-  enforce-plan:
-    name: Check PR has a plan
+  verify:
+    name: Verify (spec + plan + actions audit)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      # SHA-pinned per .github/known-pitfalls.md "DO NOT use floating uses: versions".
+      # Update SHAs deliberately; the comment after # is the human-readable version.
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
 
-      - name: Verify tasks/todo.md has a real plan
+      - name: Run dojo verification gate (CI mode)
+        run: bash scripts/verify.sh --check
+
+  enforce-action-pinning:
+    name: Enforce GitHub Action SHA pinning
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
+      - name: Reject unpinned uses: in any workflow
         run: |
-          if [ ! -f tasks/todo.md ]; then
-            echo "::error::tasks/todo.md not found. Create a plan before submitting a PR."
-            exit 1
-          fi
-
-          # Check it's not just the default template
-          if grep -q '^- \[ \] Step 1$' tasks/todo.md; then
-            echo "::warning::tasks/todo.md looks like the default template. Write a real plan."
-          fi
-
-          # Check for at least one completed item
-          if grep -q '\- \[x\]' tasks/todo.md; then
-            echo "✅ Plan has completed items."
-          else
-            echo "::warning::No completed items in tasks/todo.md. Track your progress."
-          fi
-
-      - name: Verify tasks/lessons.md exists
-        run: |
-          if [ ! -f tasks/lessons.md ]; then
-            echo "::warning::tasks/lessons.md not found. Run scripts/init.sh to create it."
-          else
-            echo "✅ tasks/lessons.md exists."
-          fi
-
-      - name: Check scripts are executable
-        run: |
-          for script in scripts/init.sh scripts/verify.sh scripts/lesson-updater.sh; do
-            if [ -f "$script" ]; then
-              echo "✅ $script exists"
+          set -euo pipefail
+          bad=0
+          while IFS= read -r wf; do
+            violations=$(grep -nE '^\s*-?\s*uses:\s*[^@]+@[^[:space:]]+' "$wf" \
+                         | grep -vE '@[0-9a-f]{40}\b' || true)
+            if [ -n "$violations" ]; then
+              echo "::error file=$wf::Unpinned uses: detected. Pin to a 40-char commit SHA + version comment."
+              echo "$violations"
+              bad=1
             fi
-          done
+          done < <(find .github/workflows -name '*.yml' -o -name '*.yaml')
+          exit $bad
+

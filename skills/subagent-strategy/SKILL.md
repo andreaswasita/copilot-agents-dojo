@@ -1,91 +1,104 @@
 ---
 name: subagent-strategy
-description: >-
-  Teaches agents to delegate work to subagents for parallel execution, research,
-  and analysis. Use this skill when a task involves research across docs or codebases,
-  when parallel analysis would speed things up, when the main context window is getting
-  crowded, or when multiple independent investigations are needed. Also use when
-  debugging complex issues that benefit from divide-and-conquer approaches.
+description: Delegates research and parallel work to sub-agents.
+tier: core
+category: delegation
+created_by: human
+platforms: [windows, macos, linux]
+tags: [delegation, parallel, context-management]
+author: Andreas Wasita (@andreaswasita)
 ---
 
-# Subagent Strategy
+# Subagent Strategy Skill
 
-A master delegates. Subagents handle research, analysis, testing, and review — keeping the main context window clean and focused.
+Delegates focused work (research, analysis, parallel reads) to Copilot sub-agents via the `task` tool so the parent context stays clean. Does NOT apply when the work must outlive the current turn — use the durable board (`skills/durable-work`) for that, since sub-agents are cancelled if the parent is interrupted.
 
 ## When to Use
 
-- Before implementing unfamiliar features (research subagent)
-- During debugging or optimization (analysis subagent)
-- When exploring alternative implementations (refactor subagent)
-- During verification phase (test subagent)
-- Before marking a task complete (review subagent)
-- Any time the main context is getting cluttered with exploratory work
+- Research across docs, APIs, or unfamiliar code (research role).
+- Log / stack-trace / performance-profile analysis (analysis role).
+- Parallel investigation when the answer lives in multiple places.
+- The main context is filling with exploratory output (>~20 file reads).
+- Multiple independent questions to resolve.
+- NOT for: reading one file, single `grep`, work that must survive the turn.
 
-## How to Use
+## Prerequisites
 
-### Principle: One Task Per Subagent
+- Access to the `task` tool (Copilot built-in).
+- A clear, written mission for each sub-agent — vague delegation produces vague output.
+- Awareness of the configured knobs in `.dojo/delegation.yaml` (defaults: `max_spawn_depth: 2`, `max_concurrent_children: 3`, `default_mode: background`, `sync_timeout_seconds: 180`, `max_mission_tokens: 1500`).
 
-Each subagent gets exactly one focused mission. Don't overload a subagent with multiple unrelated tasks — spawn another one instead.
+## How to Run
 
-### Subagent Roles
-
-| Role | Purpose | When to Deploy |
-|------|---------|----------------|
-| **Research Subagent** | Search docs, APIs, dependencies, or codebase patterns | Before implementing unfamiliar features |
-| **Analysis Subagent** | Analyze error logs, stack traces, performance profiles | During debugging or optimization |
-| **Refactor Subagent** | Explore alternative implementations, identify code smells | When "Demand Elegance" triggers |
-| **Test Subagent** | Write and run test suites in parallel | During verification phase |
-| **Review Subagent** | Audit changes against plan, check for regressions | Before marking task complete |
-
-### Delegation Pattern
-
-1. **Define the mission** — What exactly should the subagent investigate or produce?
-2. **Set boundaries** — What files, APIs, or resources should it focus on?
-3. **Specify the deliverable** — What should it report back? (findings, code, recommendations)
-4. **Launch and await** — Spawn the subagent with clear instructions
-5. **Integrate results** — Incorporate the subagent's findings into the main context
-
-### Multi-Agent Coordination
-
-When multiple subagents are needed:
-- Launch independent investigations in parallel when possible
-- Subagents report back to the main agent context
-- If subagents return conflicting results, re-run with more specific instructions or resolve via majority consensus
-- Never let subagent conflicts silently pass — log discrepancies in `tasks/lessons.md`
-
-## Examples
-
-**Research Delegation:**
-```
-"I need to add WebSocket support. Let me spawn a research subagent to:
-1. Check what WebSocket libraries are already in our dependencies
-2. Review how similar features are implemented in the codebase
-3. Identify the best integration point
-
-While that runs, I'll plan the implementation structure."
+```text
+1. Pick the role from the Quick Reference table.
+2. Draft the mission (one focused question or deliverable).
+3. Invoke the `task` tool with mode=background for independent work,
+   mode=sync only when you must block on the result.
+4. Integrate the returned summary; do NOT re-search what it already found.
 ```
 
-**Parallel Analysis:**
-```
-"This performance issue could be in the database layer or the API layer.
-Spawning two analysis subagents:
-- Subagent A: Profile the database queries in the slow endpoint
-- Subagent B: Check the API middleware chain for bottlenecks
+## Quick Reference
 
-I'll compare their findings to identify the root cause."
-```
+| Role | Mission shape | Tool & mode |
+|---|---|---|
+| Research | "Find X across the codebase; report file:line citations." | `task` (background) |
+| Analysis | "Diagnose this stack trace; report root cause and 3 candidate fixes." | `task` (background) |
+| Refactor scout | "Identify code smells in `path/`; propose alternatives." | `task` (background) |
+| Test scout | "List untested branches in `module/`." | `task` (background) |
+| Self-review | "Audit my diff against `tasks/todo.md`; flag gaps." | `task` (sync) |
 
-## Guidelines
+## Procedure
 
-- Use subagents liberally to keep main context window clean
-- Offload research, exploration, and parallel analysis to subagents
-- For complex problems, throw more compute at it via subagents
-- Write clear, specific instructions — vague delegation produces vague results
-- Review subagent output critically; they can make mistakes too
+### Step 1: One Mission Per Sub-Agent
 
-## Anti-Patterns
+Each sub-agent gets exactly one focused mission. Bundling unrelated questions blurs the output. Spawn a second sub-agent instead.
 
-- **Doing everything in the main context** — If you're scrolling through 50 search results, you should have delegated
-- **Vague subagent instructions** — "Look into this" produces garbage. Be specific.
-- **Ignoring conflicts** — When two subagents disagree, investigate; don't pick randomly
-- **Spawning subagents for trivial tasks** — Reading one file doesn't need a subagent
+### Step 2: Bound the Scope
+
+Tell the sub-agent which paths, files, or symbols to focus on. Unbounded sub-agents wander.
+
+### Step 3: Specify the Deliverable
+
+Be explicit: "Return a bullet list of file:line citations" beats "look into this." If you want code, say so. If you want a recommendation with tradeoffs, say so.
+
+### Step 4: Launch, Don't Babysit
+
+Use `mode: background` for independent sub-agents and continue planning in the foreground. Use `mode: sync` only when the next step genuinely depends on the result.
+
+### Step 5: Integrate, Don't Duplicate
+
+When the sub-agent reports back, **do not re-run** `grep`/`view` on the same files. Its findings are now ground truth for this turn; treat it like a Code Intelligence call.
+
+### Step 6: Resolve Conflicts
+
+If two sub-agents disagree, re-issue with sharper scope or pick the one with stronger citations. Never silently choose — log discrepancies in `tasks/lessons.md`.
+
+### Step 7: Respect the Configured Knobs
+
+All limits live in `.dojo/delegation.yaml` (read at session start). The agent MUST respect:
+
+- `max_spawn_depth` (default 2) — orchestrators that spawn orchestrators that spawn orchestrators kill context windows.
+- `max_concurrent_children` (default 3) — past 3 in flight, the parent can't track results.
+- `max_mission_tokens` (default 1500) — missions longer than this are almost always under-scoped; break them up.
+- `sync_timeout_seconds` (default 180) — if a sync child hasn't returned by this point, switch to background polling.
+- `conflict_resolution` (default `escalate`) — when sub-agents disagree, log to `tasks/lessons.md` with `error_type: delegation-conflict` and proceed with the higher-citation answer.
+- `escalate_to_board_if` — if any trigger fires, this is not sub-agent work; use `skills/durable-work`.
+
+To override per-project, edit `.dojo/delegation.yaml`. To override per-call, pass the corresponding argument to the `task` tool — and log the exception in `tasks/lessons.md`.
+
+## Pitfalls
+
+- **DO NOT** delegate work that must outlive this turn. Sub-agents are NOT durable; if the parent is interrupted, the child is cancelled. Use `skills/durable-work` instead.
+- **DO NOT** issue vague missions ("look into this"). Specify scope and deliverable.
+- **DO NOT** spawn a sub-agent for one `view` or one `grep` — the overhead exceeds the benefit.
+- **DO NOT** re-run searches the sub-agent already did. Trust the summary.
+- **DO NOT** exceed `max_concurrent_children` (see `.dojo/delegation.yaml`) without justification logged in `tasks/lessons.md`.
+- **DO NOT** silently pick a winner when sub-agents conflict. Resolve per `conflict_resolution` or log.
+
+## Verification
+
+- [ ] Each sub-agent invocation has a single, written mission.
+- [ ] Each invocation specifies the deliverable shape.
+- [ ] No re-search of files already reported by a sub-agent in this turn.
+- [ ] No sub-agent depth >2 unless deliberately justified in `tasks/lessons.md`.

@@ -1,106 +1,109 @@
 ---
 name: demand-elegance
-description: >-
-  Challenges the agent to find elegant solutions for non-trivial changes while
-  avoiding over-engineering on simple fixes. Use this skill when a fix feels hacky
-  or when the agent is about to submit a brute-force solution to a nuanced problem.
-  Also use when refactoring, when multiple approaches exist and the right tradeoff
-  needs evaluation. Skip this for one-line bug fixes or trivial changes — the skill
-  itself teaches when NOT to apply.
+description: Challenges hacky fixes on non-trivial changes.
+tier: core
+category: discipline
+created_by: human
+platforms: [windows, macos, linux]
+tags: [quality, design, simplicity]
+author: Andreas Wasita (@andreaswasita)
 ---
 
-# Demand Elegance (Balanced)
+# Demand Elegance Skill
 
-Brute force is for beginners. Challenge hacky solutions — but skip the kata for simple fixes.
+Forces the agent to challenge its own non-trivial diff before presenting it: fewer moving parts, standard patterns over custom abstractions, boring over clever. Does NOT apply to typos, one-line fixes, or hotfixes — over-engineering trivial work is the failure mode this skill explicitly avoids.
 
 ## When to Use
 
-- A fix feels hacky or fragile
-- There are multiple approaches and the tradeoffs aren't obvious
-- The agent is about to submit a solution with many moving parts when fewer would suffice
-- During refactoring when the goal is simplification
-- When reviewing your own work before presenting it
+- A fix feels hacky, fragile, or "barely working".
+- Multiple solutions exist and the tradeoffs aren't obvious.
+- The diff is large and includes infrastructure the original task didn't ask for.
+- Refactoring with simplification as the explicit goal.
+- Self-review before presenting any non-trivial solution.
+- NOT for: typos, one-line bugfixes, comment edits, formatting, production hotfires.
 
-## When to Skip
+## Prerequisites
 
-- **One-line bug fixes** — Don't wrap a typo fix in an abstraction layer
-- **Simple, obvious changes** — If the solution is clear and minimal, just do it
-- **Time-critical hotfixes** — Elegance matters, but production fires come first (log a lesson to revisit later)
+- A working solution (or near-working) to challenge — don't run this on a blank canvas.
+- The full diff visible (`git diff` via the `powershell` tool).
+- Willingness to throw work away if a simpler approach exists.
 
-## How to Use
+## How to Run
 
-### The Elegance Check
-
-For any non-trivial change, pause and ask:
-
-1. **"Is there a more elegant way?"** — Step back from the implementation and think about the approach
-2. **"Knowing everything I know now, would I build it this way?"** — Fresh eyes on your own work
-3. **"Can I reduce the moving parts?"** — Fewer components = fewer failure points
-4. **"Would a senior engineer raise an eyebrow?"** — If yes, reconsider
-
-### The Simplicity Principle
-
-When choosing between solutions:
-
-```
-Fewer lines > more lines (all else being equal)
-Standard patterns > custom abstractions
-Fewer dependencies > more dependencies
-Readable > clever
-Boring but correct > exciting but fragile
+```text
+1. Confirm the change is non-trivial. If trivial, skip — see Pitfalls.
+2. Run the Elegance Check (4 questions in Procedure §1).
+3. Apply the Simplicity Ladder (Procedure §2) to choose between options.
+4. Self-review the diff as if it were someone else's PR.
+5. If hacky, restart with the elegant approach — don't deodorize the smell.
 ```
 
-### Challenge Your Own Work
+## Quick Reference
 
-Before presenting any non-trivial solution:
-1. Read through the diff as if reviewing someone else's code
-2. Identify the "smelliest" part — there's always one
-3. Ask if that smell can be eliminated, not just deodorized
-4. If the solution feels hacky, say: *"Knowing everything I know now, implement the elegant solution"* and start fresh
+| Question | If answer is "yes" → action |
+|---|---|
+| Is there a more elegant way? | Try it before shipping. |
+| Knowing what I know now, would I build it this way? | If no, refactor before presenting. |
+| Can I reduce moving parts? | Cut them. |
+| Would a senior engineer raise an eyebrow? | They would. Fix it. |
 
-## Examples
+| Choose | Over |
+|---|---|
+| Fewer lines | More lines (all else equal) |
+| Standard patterns | Custom abstractions |
+| Fewer dependencies | More dependencies |
+| Readable | Clever |
+| Boring & correct | Exciting & fragile |
 
-**Hacky — Over-Complicated:**
-```python
-# Adding retry logic with custom backoff, circuit breaker, and dead letter queue
-# for a function that calls one API once at startup
-class RetryWithCircuitBreaker:
-    ...  # 200 lines of infrastructure
-```
+## Procedure
 
-**Elegant — Right-Sized:**
-```python
-# Simple retry for startup API call
-for attempt in range(3):
-    try:
-        result = fetch_config()
-        break
-    except APIError:
-        if attempt == 2:
-            raise
-        time.sleep(2 ** attempt)
-```
+### Step 1: The Elegance Check
 
-**Over-Engineered — Gold Plating:**
-```
-User: "Fix the typo in the error message"
-Agent: "I've fixed the typo and also created an i18n system with
-       translation files, a string extraction pipeline, and a CI
-       check for missing translations."
-```
+For non-trivial work, before presenting the diff, ask in order:
 
-## Guidelines
+1. Is there a more elegant way?
+2. Knowing everything I know now, would I build it this way?
+3. Can I reduce the number of moving parts?
+4. Would a senior reviewer raise an eyebrow at this?
 
-- The best solution is the one with the fewest moving parts that solves the real problem
-- Challenge your own work before presenting it
-- When in doubt, choose the boring solution — boring is reliable
-- Elegance is not cleverness. Clever code is hard to debug. Elegant code is easy to understand.
-- Every abstraction has a cost. Don't pay it unless you need to.
+A "yes" to any means: pause and try the simpler path.
 
-## Anti-Patterns
+### Step 2: The Simplicity Ladder
 
-- **Premature abstraction** — Don't build flexibility for requirements that don't exist
-- **Cleverness over clarity** — If you need comments to explain what the code does (not why), it's too clever
-- **Gold plating** — Fixing the bug + adding 3 features nobody asked for
-- **Refactoring the world** — You were asked to fix a button. Don't rewrite the component system.
-- **Paralysis** — Overthinking simple changes. The elegance check is meant for non-trivial work.
+When picking between solutions, prefer the upper rungs:
+
+1. No code change (the bug isn't a bug, or the requirement is wrong).
+2. Configuration change.
+3. Small, local code change inside one function.
+4. Localized refactor inside one module.
+5. Cross-module change with explicit motivation.
+6. New abstraction (only if 1–5 are insufficient).
+
+If you land on rung 6, justify why 1–5 do not work in a comment or in `tasks/todo.md`.
+
+### Step 3: Self-Review the Diff
+
+Run `git diff` via the `powershell` tool and read your own diff as if reviewing a stranger's PR. Identify the smelliest part — there is always one. Ask whether that smell can be eliminated, not just covered up.
+
+### Step 4: Restart If Hacky
+
+If the diff still feels hacky after Step 3, throw it away and start over with the simpler approach. Resist the sunk-cost reflex.
+
+A useful self-prompt: *"Knowing everything I know now, implement the elegant solution."*
+
+## Pitfalls
+
+- **DO NOT** run this skill on trivial changes. A typo fix doesn't need an architecture review.
+- **DO NOT** premature-abstract. Build for the requirements that exist, not the ones you imagine.
+- **DO NOT** gold-plate. The user asked for a button fix, not a component-system redesign.
+- **DO NOT** confuse cleverness with elegance. If you need a comment to explain what (not why) the code does, it's too clever.
+- **DO NOT** apply during production hotfires. Stabilize first; log a `tasks/lessons.md` entry to revisit.
+- **DO NOT** deodorize a smell — eliminate it. Wrapping bad code in a clean interface still leaves bad code.
+
+## Verification
+
+- [ ] Diff size is justified by the task description in `tasks/todo.md`.
+- [ ] No new abstractions without explicit justification.
+- [ ] No new dependencies without explicit justification.
+- [ ] Self-review pass completed (`git diff` read end-to-end).
+- [ ] No `tasks/lessons.md` entry tagged `over-engineering` for this task.
