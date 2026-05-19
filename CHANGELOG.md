@@ -2,6 +2,46 @@
 
 All notable changes to the Copilot Agents Dojo are documented here. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project ships markdown skills + bash scripts so we version by *behavioral contract*, not by published API.
 
+## [1.1.0] — 2026-05-20 — "Self-Improving Dojo"
+
+Closes the self-improvement gap with [hermes-agent](https://github.com/andreaswasita/hermes-agent). The curator now has a real state machine, durable backups, per-run audit trail, hardened provenance, and an idle-based trigger — without adding a daemon. Shell + agent, no install.
+
+### Curator state machine
+
+- **`active → stale → archived` lifecycle** stored per-entry in `.dojo/skill-usage.json` (`state` field). Any `record`/`view` snaps state back to `active`. Backfilled automatically for pre-1.1 sidecars.
+- **`scripts/curator.sh transition`** — age-based auto-transitions (defaults: 30d → stale, 90d → archived; tunable via `DOJO_CURATOR_STALE_DAYS` / `DOJO_CURATOR_ARCHIVE_DAYS`). Legacy `prune` verb kept as an alias.
+- **`--dry-run`** previews without writing.
+
+### Backup & rollback
+
+- **`scripts/curator.sh backup --reason "<why>"`** — tar.gz snapshot of `skills/`, `optional-skills/`, `skill-usage.json`, and `bundled-manifest.txt` to `.dojo/curator-backups/<UTC>/skills.tgz` with a sibling `manifest.json`. Keeps the last 5 (`DOJO_CURATOR_BACKUP_KEEP`).
+- **Every mutating curator run takes a backup first.**
+- **`scripts/curator.sh rollback <stamp>`** — restores from a backup *and takes a fresh backup of the current state first*, so rollbacks are themselves reversible.
+- **`scripts/curator.sh rollback --list`** — shows available backups newest-first.
+
+### Per-run audit trail
+
+- Every `transition` run writes `.dojo/logs/curator/<UTC>-transition/REPORT.md` + `run.json`. Keeps the last 20 (`DOJO_CURATOR_REPORT_KEEP`).
+- **`scripts/curator.sh report`** — prints the most recent report.
+
+### Provenance manifest
+
+- **`.dojo/bundled-manifest.txt`** — plain-text list of skill folder names that ship with the dojo. Regenerated whenever `scripts/regen-skills-index.sh` runs (write mode).
+- The curator's `is_bundled` check refuses to auto-archive *anything* on the manifest, complementing the existing `created_by: human` guard. Three-layer provenance: frontmatter, manifest, pin.
+- **`scripts/verify.sh`** gains a `[curator]` section that warns if the manifest is missing.
+
+### Idle-based trigger
+
+- **`scripts/curator-tick.sh`** + **`scripts/curator-tick.ps1`** — gated runner that invokes `curator.sh transition` only when (a) the last curator run is older than `DOJO_CURATOR_INTERVAL_HOURS` (default 168h) and (b) the most recent skill use is at least `DOJO_CURATOR_MIN_IDLE_HOURS` ago (default 2h). `--force` bypasses gates; `--dry-run` previews.
+- Knobs can live in `.dojo/curator.env` (sourced if present).
+- Wire into shell rc, pre-commit, cron/launchd, or Windows Task Scheduler — the dojo no longer requires a daemon to stay tidy.
+
+### Migration
+
+Existing v1.0 dojos pick up the new behavior automatically the next time `scripts/regen-skills-index.sh` runs. No data is rewritten beyond backfilling `state: "active"` on existing usage entries.
+
+---
+
 ## [1.0.0] — 2026-05-20 — "Hardened Dojo"
 
 The first numbered release. Bakes seven phases of structural work into a single coherent spec, single gate, and single set of sources of truth. The framework is now drop-in for any repo, with backwards-compatible filesystem layout.
