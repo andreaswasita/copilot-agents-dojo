@@ -1,118 +1,124 @@
 ---
 name: using-git-worktrees
-description: >-
-  Ensures every development session starts in an isolated git worktree on a
-  dedicated feature branch. Use this skill at the start of any development task,
-  when the agent is about to modify code on main, when parallel development
-  tracks are needed, or when the user says "start working on" a feature.
-  The main branch remains untouched until finishing-a-development-branch.
+description: Isolates each task in its own git worktree off main.
+tier: practical
+category: workflow
+created_by: human
+platforms: [windows, macos, linux]
+tags: [git, worktree, isolation]
+author: Andreas Wasita (@andreaswasita)
 ---
 
-# Using Git Worktrees
+# Using Git Worktrees Skill
 
-Isolated workspace for every session. Main stays clean. Always.
+Creates an isolated git worktree on a dedicated feature branch for every development task, so `main` is never touched until `finishing-a-development-branch` says so. Does NOT replace feature branches when worktrees are impractical (CI, single-file fix) — the isolation principle is what matters.
 
 ## When to Use
 
-- Starting any development task (mandatory)
-- When the agent is about to commit directly to main
-- When parallel development tracks are needed
-- User says "start working on..." or "implement..."
-- After brainstorming produces an approved design
+- Starting any non-trivial development task (default behavior).
+- Before the agent would otherwise modify code on `main`.
+- When parallel development tracks are needed (multiple worktrees in flight).
+- After `brainstorming` produces an approved design.
+- NOT for a one-line typo fix where a branch is sufficient.
 
-## How to Use
+## Prerequisites
 
-### Step 1: Create a Worktree
+- `git` ≥ 2.5 with worktree support.
+- The repository is already cloned (a worktree extends an existing clone).
+- The `powershell` Copilot tool to run `git`.
+- A naming convention agreed for the branch: `feature/*`, `fix/*`, `experiment/*`.
+- The project's dependency install command (`npm install`, `pip install -r requirements.txt`, etc.).
 
-Every task gets its own isolated workspace:
+## How to Run
+
+```text
+1. From the main repo root, create the worktree with a new branch.
+2. Change into the worktree directory.
+3. Install dependencies inside it.
+4. Confirm a green test baseline.
+5. Work only inside the worktree — never touch the main worktree.
+```
+
+## Quick Reference
+
+| Operation | Command |
+|---|---|
+| Create | `git worktree add ../<dirname> -b <branch>` |
+| List | `git worktree list` |
+| Remove | `git worktree remove ../<dirname>` |
+| Prune stale | `git worktree prune` |
+
+| Branch prefix | Use |
+|---|---|
+| `feature/<slug>` | New features |
+| `fix/<slug>` | Bug fixes |
+| `experiment/<slug>` | Spikes / throwaway |
+
+| Dependency bootstrap | Detect signal |
+|---|---|
+| `npm install` | `package.json` |
+| `pip install -r requirements.txt` | `requirements.txt` |
+| `go mod download` | `go.mod` |
+| `mvn dependency:resolve` | `pom.xml` |
+| `dotnet restore` | `*.csproj` |
+
+## Procedure
+
+### Step 1: Create the Worktree
+
+From the main repo root, run via the `powershell` tool:
 
 ```bash
-# From the main repo root
 git worktree add ../project-feature-name -b feature/feature-name
-
-# Navigate to the worktree
 cd ../project-feature-name
 ```
 
-Branch naming convention:
-- Features: `feature/short-description`
-- Fixes: `fix/short-description`
-- Experiments: `experiment/short-description`
+Use a directory name that is obviously not the main repo so you cannot edit the wrong one by accident.
 
-### Step 2: Set Up the Worktree
+### Step 2: Install Dependencies
 
-Run project setup in the new worktree:
+Detect the stack from the table above and run the matching install command. A worktree shares `.git`, not `node_modules` / `.venv` / build artifacts.
 
-```bash
-# Install dependencies (auto-detect)
-[ -f package.json ] && npm install
-[ -f requirements.txt ] && pip install -r requirements.txt
-[ -f go.mod ] && go mod download
-[ -f pom.xml ] && mvn dependency:resolve
+### Step 3: Establish a Green Baseline
 
-# Verify clean test baseline
-# Run whatever test command the project uses
-```
-
-### Step 3: Verify Clean Baseline
-
-Before writing any code, confirm:
-1. **All tests pass** — If tests fail before you start, fix that first or note it
-2. **No uncommitted changes** — Start from a clean state
-3. **You're on the feature branch** — `git branch --show-current`
+Run the project's test command via the `powershell` tool. Capture pass/fail counts before changing any code. If the baseline is red, fix it first or explicitly acknowledge the broken tests in `tasks/todo.md`.
 
 ```bash
-git status        # Should be clean
-git branch        # Should show your feature branch
-# Run tests to establish baseline
+git status --porcelain         # must be empty
+git branch --show-current      # must be the new feature branch
+<project test command>         # must exit 0 for a clean baseline
 ```
 
 ### Step 4: Work Inside the Worktree
 
-All development happens inside this worktree:
-- Commits go to the feature branch
-- Main branch is never touched directly
-- Other worktrees for other tasks can run in parallel
+All commits go to the feature branch. The main repo's working tree is read-only for the duration. Open files and run commands only from inside the worktree directory.
 
-### When Worktrees Aren't Available
+### Step 5: When Worktrees Are Impractical
 
-If git worktrees aren't practical (e.g., CI environment, simple single-file fix):
-- Create a regular feature branch: `git checkout -b feature/name`
-- The principle still applies: never work directly on main
+For CI environments, single-file fixes, or systems without worktree support:
 
-## Examples
+```bash
+git checkout -b feature/<slug>
+```
 
-**Bad — Working on Main:**
-> User: "Add search to the API"
-> Agent: *starts editing files on the main branch, commits directly to main*
+The isolation principle still applies: never commit to `main`.
 
-**Good — Worktree Isolation:**
-> User: "Add search to the API"
-> Agent: "Creating an isolated worktree for this feature:
-> ```
-> git worktree add ../project-search -b feature/add-search
-> cd ../project-search
-> npm install
-> npm test  # baseline: 47 tests pass
-> ```
-> Clean baseline established. Ready to implement."
+### Step 6: Cleanup (handled later)
 
-## Guidelines
+Worktree teardown is owned by `finishing-a-development-branch`. Do not remove the worktree mid-task.
 
-- One worktree per task — don't reuse worktrees for unrelated work
-- Always verify tests pass before writing code (clean baseline)
-- Main branch is read-only until `finishing-a-development-branch` approves a merge
-- Clean up worktrees when the branch is done (the finishing skill handles this)
-- If you can't use worktrees, use feature branches — the isolation principle is what matters
+## Pitfalls
 
-## Enforcement
+- **DO NOT** commit to `main`. Not even once. That is how production breaks.
+- **DO NOT** reuse a stale worktree from a prior task. Create a fresh one.
+- **DO NOT** skip the baseline test run. Unknown baseline = unverifiable changes.
+- **DO NOT** leave orphaned worktrees behind. `git worktree list` to audit; cleanup belongs to the finishing skill.
+- **DO NOT** edit files across multiple worktrees in one task. One worktree, one task.
 
-Main branch remains untouched until `finishing-a-development-branch` skill approves. Any attempt to commit directly to main should be flagged and redirected.
+## Verification
 
-## Anti-Patterns
-
-- **Committing to main** — Never. Not even "just this once." That's how production breaks.
-- **Reusing a stale worktree** — Old worktrees may be out of date. Create fresh ones.
-- **Skipping the baseline** — If you don't know the test baseline, you can't verify your changes
-- **Leaving orphaned worktrees** — Clean up after finishing. `git worktree list` to audit.
-- **Working across worktrees** — Each worktree is one task. Don't cross the streams.
+- [ ] `git worktree list` shows the new worktree.
+- [ ] Current directory matches the worktree path; current branch is the new feature branch.
+- [ ] Dependencies installed inside the worktree.
+- [ ] Test baseline captured (counts recorded in `tasks/todo.md`).
+- [ ] `git status --porcelain` was empty before the first code change.

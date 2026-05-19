@@ -2,35 +2,51 @@
 
 # Copilot Agents Dojo 🏯
 
----
-
 # A discipline framework for<br/>your GitHub Copilot agents.
 
 ---
 
 *End-to-end framework to take AI agents from improvised assistants to disciplined, measurable, repeatable engineering partners.*
 
-📖 [**Wiki**](../../wiki) · [**Start Here**](#enter-the-dojo) · [**Quickstart**](#enter-the-dojo) · [**Skills**](skills.md) · [**Agents**](agents/) · [**Spec**](spec/copilot-skills-spec.md)
+[**📖 Wiki**](../../wiki) · [**Start Here**](#enter-the-dojo) · [**Quickstart**](#enter-the-dojo) · [**Skills**](./skills.md) · [**Agents**](./agents) · [**Spec**](./spec/copilot-skills-spec.md) · [**Contributor Guide**](./AGENTS.md)
 
-![license](https://img.shields.io/badge/license-MIT-lightgrey) ![version](https://img.shields.io/badge/version-1.0-brightgreen) ![pipeline](https://img.shields.io/badge/pipeline-8%20steps-blue) ![skills](https://img.shields.io/badge/skills-23-orange) ![agents](https://img.shields.io/badge/agents-5-yellow) ![stacks](https://img.shields.io/badge/stacks-5-purple) ![enforcement](https://img.shields.io/badge/enforcement-CI%20gated-ff69b4)
-
-</div>
+![license](https://img.shields.io/badge/license-MIT-1f6feb?style=flat-square)
+![version](https://img.shields.io/badge/version-1.0-3fb950?style=flat-square)
+![spec](https://img.shields.io/badge/spec-v1-1f6feb?style=flat-square)
+![skills](https://img.shields.io/badge/skills-26-d2691e?style=flat-square)
+![tiers](https://img.shields.io/badge/tiers-core%20%2F%20practical%20%2F%20optional-8b5cf6?style=flat-square)
+![agents](https://img.shields.io/badge/personas-5-14b8a6?style=flat-square)
+![gate](https://img.shields.io/badge/enforcement-verify.sh-ec4899?style=flat-square)
 
 ---
 
-**Your AI agents are untrained. Time to put them through the dojo.**
+</div>
 
-A skills & discipline framework for GitHub Copilot agents. Drop structured skills into any repo, enforce a mandatory workflow, and let agents self-improve — with auto-discovery via repo root, no marketplace needed, and `scripts/` for automated gates. Built from battle-tested patterns from the field.
+> *Your AI agents are untrained. Time to put them through the dojo.*
 
-Drop `skills/` + `.github/copilot-instructions.md` into any repo root → Copilot agents auto-discover and enforce the full workflow.
+A **skills & discipline framework for GitHub Copilot agents** — for the engineers who *build with* Copilot every day to plan, code, test, review, ship, and learn alongside autonomous tooling.
 
-Includes:
-- **23 production skills** (6 core kata + 7 flow waza + 7 practical kumite + 3 meta dō)
-- Mandatory **BRAINSTORM → PLAN → TDD → REVIEW → FINISH** pipeline
-- Git worktree isolation
-- Self-improving `tasks/lessons.md`
-- `scripts/verify.sh` enforcement gates
-- GitHub Actions PR enforcement
+Where the [Copilot Cowork Dojo](https://github.com/andreaswasita/copilot-cowork-dojo) trains AI **coworkers** for knowledge work, this dojo trains AI **builders**: software engineers, architects, TPMs, security engineers, and test engineers running Copilot in their IDE, terminal, and CI.
+
+Drop `skills/` + `optional-skills/` + `.github/copilot-instructions.md` into any repo → Copilot agents auto-discover the index and follow the workflow. Run `bash scripts/verify.sh` as the single gate in CI or pre-PR.
+
+> 🆕 **New here?** Run `bash scripts/init.sh` after cloning to scaffold `tasks/`. Then `bash scripts/verify.sh spec` to confirm everything is wired.
+>
+> ℹ️ Upgrading from a pre-v1 layout? Run [`bash scripts/migrate-v1.sh`](./scripts/migrate-v1.sh). See [`CHANGELOG.md`](./CHANGELOG.md) for the v1.0 release notes.
+
+## Includes
+
+- 26 production skills across three tiers (8 core kata + 14 practical kumite + 4 optional)
+- Mandatory **BRAINSTORM → WORKTREE → PLAN → EXECUTE → TEST → REVIEW → FINISH → LEARN** pipeline
+- Single source of truth for skills (`skills.md`), personas (`agents/registry.yaml`), CLI commands (`cli/dojo_cli/registry.py`), and delegation knobs (`.dojo/delegation.yaml`)
+- Single gate — `scripts/verify.sh` enforces spec invariants, skill-index freshness, persona drift, and `DOJO_ROOT` hygiene
+- Durable work board — `tasks/board/` + `scripts/board.sh` for work that must outlive a single session
+- Curator + telemetry — `.dojo/skill-usage.json` + `scripts/curator.sh` for pin / archive / report
+- Cache-aware self-improvement — `scripts/lesson-updater.sh` defers amendments to `.dojo/pending-amendments.md` so the prompt cache survives mid-session
+- Multi-instance profiles — `dojo --profile <name>` swaps in `~/.dojo/profiles/<name>` as `DOJO_ROOT`
+- PowerShell mirrors for every shell script (Windows-first parity)
+
+---
 
 ## The Mandatory Workflow
 
@@ -40,185 +56,212 @@ Every non-trivial task follows this pipeline — no skipping, no improvising:
 BRAINSTORM → WORKTREE → PLAN → EXECUTE → TEST → REVIEW → FINISH → LEARN
 ```
 
-| Step | Skill | What Happens |
-|------|-------|-------------|
-| 1 | [`brainstorming`](skills/brainstorming/SKILL.md) | Socratic refinement → approved design |
-| 2 | [`using-git-worktrees`](skills/using-git-worktrees/SKILL.md) | Isolated workspace on feature branch |
-| 3 | [`plan-before-code`](skills/plan-before-code/SKILL.md) | Bite-sized tasks in `tasks/todo.md` |
-| 4 | [`executing-plans`](skills/executing-plans/SKILL.md) | One task at a time, verify each |
-| 5 | [`test-writing`](skills/test-writing/SKILL.md) | RED-GREEN-REFACTOR for every change |
-| 6 | [`requesting-code-review`](skills/requesting-code-review/SKILL.md) | Self-review against plan |
-| 7 | [`finishing-a-development-branch`](skills/finishing-a-development-branch/SKILL.md) | Verify + merge decision + cleanup |
-| 8 | [`self-improvement`](skills/self-improvement/SKILL.md) | Log lessons, update metrics |
+| # | Skill | Purpose |
+|---|---|---|
+| 1 | [brainstorming](./skills/brainstorming/SKILL.md) | Socratic refinement → approved design |
+| 2 | [using-git-worktrees](./skills/using-git-worktrees/SKILL.md) | Isolated workspace on a feature branch |
+| 3 | [plan-before-code](./skills/plan-before-code/SKILL.md) | Bite-sized tasks in `tasks/todo.md` or `tasks/board/` |
+| 4 | [executing-plans](./skills/executing-plans/SKILL.md) | One task at a time, verify each |
+| 5 | [test-writing](./skills/test-writing/SKILL.md) | RED-GREEN-REFACTOR for every change |
+| 6 | [requesting-code-review](./skills/requesting-code-review/SKILL.md) | Self-review against plan |
+| 7 | [finishing-a-development-branch](./skills/finishing-a-development-branch/SKILL.md) | Verify + merge decision + cleanup |
+| 8 | [self-improvement](./skills/self-improvement/SKILL.md) | Log lessons, update metrics, propose amendments |
+
+---
 
 ## Skill Sets
 
-- **[`skills/`](skills/)** — Individual skill folders (kata + waza + kumite + dō)
-- **[`agents/`](agents/)** — Specialized agent personas for different roles
-- **[`skills.md`](skills.md)** — The master index — auto-discovered by Copilot agents
-- **[`spec/`](spec/)** — The Copilot Skills specification
-- **[`template/`](template/)** — Starter template for creating new skills
+- [skills/](./skills) — Core + practical skill folders (always discoverable)
+- [optional-skills/](./optional-skills) — Heavy / niche skills (installed explicitly)
+- [agents/](./agents) — Persona briefs + [`agents/registry.yaml`](./agents/registry.yaml)
+- [skills.md](./skills.md) — Master index — generated, auto-discovered by Copilot
+- [spec/](./spec) — The Copilot Skills specification (v1)
+- [template/](./template) — Starter template for creating new skills
+
+---
 
 ## Core Kata — 基本型
 
-Behavioral skills that govern *how* agents think. Style-agnostic — works with any language or framework.
+Always loaded. Behavioral skills that govern *how* agents think. Style-agnostic.
 
-| Skill | Discipline |
-|-------|-----------|
-| [`plan-before-code`](skills/plan-before-code/SKILL.md) | 🥋 Plan multi-step work before touching code |
-| [`subagent-strategy`](skills/subagent-strategy/SKILL.md) | 🥋 Delegate research, analysis, and testing to subagents |
-| [`self-improvement`](skills/self-improvement/SKILL.md) | 🥋 Capture lessons, track patterns, evolve skills |
-| [`verify-before-done`](skills/verify-before-done/SKILL.md) | 🥋 Prove your work with tests, logs, and diffs |
-| [`demand-elegance`](skills/demand-elegance/SKILL.md) | 🥋 Challenge hacky solutions (but don't over-engineer) |
-| [`autonomous-bug-fix`](skills/autonomous-bug-fix/SKILL.md) | 🥋 Reproduce → diagnose → fix → verify. Zero hand-holding. |
-
-## Practical Kumite — 実践組手
-
-Task-specific skills for common engineering workflows.
-
-| Skill | Purpose |
-|-------|---------|
-| [`code-review`](skills/code-review/SKILL.md) | Structured review with severity-based feedback |
-| [`refactoring`](skills/refactoring/SKILL.md) | Safe refactoring — behavior preservation, small steps |
-| [`test-writing`](skills/test-writing/SKILL.md) | Meaningful tests that catch bugs, not just exist |
-| [`pr-workflow`](skills/pr-workflow/SKILL.md) | Clean commits, good descriptions, merge-ready PRs |
-| [`debugging`](skills/debugging/SKILL.md) | Systematic debugging — evidence, hypotheses, divide-and-conquer |
-| [`codebase-onboarding`](skills/codebase-onboarding/SKILL.md) | Rapidly understand unfamiliar codebases |
-| [`requirements-elicitation`](skills/requirements-elicitation/SKILL.md) | Structured elicitation, user stories, acceptance criteria, Definition of Ready gate |
+| Skill | Belt |
+|---|---|
+| [using-superpowers](./skills/using-superpowers/SKILL.md) | 🥋 Activate the dojo framework at session start |
+| [plan-before-code](./skills/plan-before-code/SKILL.md) | 🥋 Plan multi-step work before touching code |
+| [durable-work](./skills/durable-work/SKILL.md) | 🥋 Pick the board over sub-agents for cross-turn work |
+| [subagent-strategy](./skills/subagent-strategy/SKILL.md) | 🥋 Delegate research, analysis, and testing to sub-agents |
+| [self-improvement](./skills/self-improvement/SKILL.md) | 🥋 Capture lessons, track patterns, evolve skills |
+| [verify-before-done](./skills/verify-before-done/SKILL.md) | 🥋 Prove your work with tests, logs, and diffs |
+| [demand-elegance](./skills/demand-elegance/SKILL.md) | 🥋 Challenge hacky solutions (without over-engineering) |
+| [autonomous-bug-fix](./skills/autonomous-bug-fix/SKILL.md) | 🥋 Reproduce → diagnose → fix → verify. Zero hand-holding. |
 
 ## Flow Waza — 流れ技
 
-Skills that orchestrate the mandatory pipeline — brainstorm to finish.
+Skills that orchestrate the mandatory pipeline.
 
-| Skill | Purpose |
-|-------|---------|
-| [`brainstorming`](skills/brainstorming/SKILL.md) | Socratic design refinement before any code |
-| [`using-git-worktrees`](skills/using-git-worktrees/SKILL.md) | Isolated workspace for every session |
-| [`executing-plans`](skills/executing-plans/SKILL.md) | Dispatch and execute tasks from `tasks/todo.md` |
-| [`requesting-code-review`](skills/requesting-code-review/SKILL.md) | Self-review against plan between tasks |
-| [`receiving-code-review`](skills/receiving-code-review/SKILL.md) | Process feedback and iterate |
-| [`finishing-a-development-branch`](skills/finishing-a-development-branch/SKILL.md) | Final verification + merge decision + cleanup |
-| [`dispatching-parallel-agents`](skills/dispatching-parallel-agents/SKILL.md) | Concurrent sub-agent work when beneficial |
+| Skill | |
+|---|---|
+| [brainstorming](./skills/brainstorming/SKILL.md) | Socratic design refinement before any code |
+| [using-git-worktrees](./skills/using-git-worktrees/SKILL.md) | Isolated workspace for every session |
+| [executing-plans](./skills/executing-plans/SKILL.md) | Dispatch and execute tasks one at a time |
+| [requesting-code-review](./skills/requesting-code-review/SKILL.md) | Self-review against plan between tasks |
+| [receiving-code-review](./skills/receiving-code-review/SKILL.md) | Process feedback and iterate |
+| [finishing-a-development-branch](./skills/finishing-a-development-branch/SKILL.md) | Final verification + merge decision + cleanup |
+| [dispatching-parallel-agents](./skills/dispatching-parallel-agents/SKILL.md) | Concurrent sub-agent work when beneficial |
 
-## Meta Dō — 道
+## Practical Kumite — 実践組手
 
-| Skill | Purpose |
-|-------|---------|
-| [`skill-creator`](skills/skill-creator/SKILL.md) | Meta-skill for creating new dojo skills |
-| [`writing-skills`](skills/writing-skills/SKILL.md) | SKILL.md template and spec compliance |
-| [`using-superpowers`](skills/using-superpowers/SKILL.md) | Framework activator — loads everything |
+Task-specific skills for the most common engineering work.
 
-## Creating a Skill
+| Skill | |
+|---|---|
+| [code-review](./skills/code-review/SKILL.md) | Structured review with severity-based feedback |
+| [refactoring](./skills/refactoring/SKILL.md) | Safe refactoring — behavior preservation, small steps |
+| [test-writing](./skills/test-writing/SKILL.md) | Meaningful tests that catch bugs, not just exist |
+| [debugging](./skills/debugging/SKILL.md) | Evidence, hypotheses, divide-and-conquer |
+| [pr-workflow](./skills/pr-workflow/SKILL.md) | Clean commits, good descriptions, merge-ready PRs |
+| [codebase-onboarding](./skills/codebase-onboarding/SKILL.md) | Rapidly understand unfamiliar codebases |
+| [requirements-elicitation](./skills/requirements-elicitation/SKILL.md) | User stories, acceptance criteria, Definition of Ready |
 
-Skills are simple — a folder with a `SKILL.md` containing YAML frontmatter and instructions:
+## Optional Skills — 選択
 
-```yaml
+Heavyweight or niche. Installed explicitly from [optional-skills/](./optional-skills).
+
+| Skill | |
+|---|---|
+| [writing-skills](./optional-skills/writing-skills/SKILL.md) | SKILL.md template + spec compliance |
+| [using-mcp](./optional-skills/using-mcp/SKILL.md) | Call MCP tools from inside a Copilot session |
+| [calling-mcp-tools-via-subprocess](./optional-skills/calling-mcp-tools-via-subprocess/SKILL.md) | Drive MCP servers from a sub-shell |
+| [building-mcp-servers](./optional-skills/building-mcp-servers/SKILL.md) | Author and ship a new MCP server |
+
 ---
-name: my-skill-name
-description: >-
-  Clear description of what this skill does and when the agent should
-  use it. Be specific about trigger phrases and contexts.
+
+## Specialized Agent Personas
+
+Personas in [agents/](./agents), with a single source of truth in [`agents/registry.yaml`](./agents/registry.yaml). `scripts/verify.sh` blocks drift between the registry and the briefs.
+
+| Persona | Focus |
+|---|---|
+| [architect](./agents/architect.md) | System design, technical strategy, impact analysis, traceability |
+| [security-engineer](./agents/security-engineer.md) | Security compliance, vulnerability identification, secure-by-default |
+| [software-engineer](./agents/software-engineer.md) | Feature development, bug fixes, production-quality code |
+| [technical-program-manager](./agents/technical-program-manager.md) | Project planning, requirements, Definition of Ready |
+| [test-engineer](./agents/test-engineer.md) | Test strategy, implementation, quality assurance |
+
 ---
 
-# My Skill Name
+## Single Gate, Single Sources of Truth
 
-Instructions the agent follows when this skill activates.
+`scripts/verify.sh` is the only enforcement entry point. Four modes: `spec` (default), `plan`, `tests`, `all`.
 
-## When to Use
-- Trigger condition 1
+| Source of truth | Generated artifact | Drift detector |
+|---|---|---|
+| `skills/*/SKILL.md` + `optional-skills/*/SKILL.md` frontmatter | `skills.md` | `verify.sh spec` |
+| `agents/registry.yaml` | `agents/*.md` briefs | `verify.sh` persona check |
+| `cli/dojo_cli/registry.py` `COMMAND_REGISTRY` | CLI help table + interactive menu | (programmatic — single tuple) |
+| `.dojo/delegation.yaml` | Sub-agent knobs cited by `subagent-strategy` | manual review |
 
-## How to Use
-Step-by-step workflow.
+If any source of truth changes, the gate either auto-regenerates the artifact or fails loudly. No silent drift.
 
-## Examples
-Concrete demonstrations.
-
-## Anti-Patterns
-What NOT to do.
-```
-
-See the full spec at [`spec/copilot-skills-spec.md`](spec/copilot-skills-spec.md) or use [`template/SKILL.md`](template/SKILL.md) as a starting point.
-
-## Skill Anatomy
-
-Each skill is a self-contained folder:
-
-```
-skills/my-skill/
-├── SKILL.md          # Required — frontmatter + instructions
-├── examples/         # Optional — worked examples
-├── references/       # Optional — docs loaded on demand
-└── scripts/          # Optional — executable helpers
-```
-
-Skills use progressive disclosure to manage context window budget:
-1. **Metadata** (name + description) — Always in context
-2. **SKILL.md body** — Loaded when skill activates
-3. **Bundled resources** — Loaded on demand
-
-### [`.github/copilot-instructions.md`](/.github/copilot-instructions.md) — The Dojo Rules
-The house rules that every agent follows when they enter your repo:
-
-- Code standards — multi-stack examples (TypeScript, Python, Java, Go, .NET)
-- Behavioral governance summary linking back to the skills
-- Session-start lesson review workflow
-- Helper script references for automation
-
-## Specialized Agents
-
-Agents are specialized personas bundled in the [`agents/`](agents/) directory. Each agent combines relevant skills to excel at specific roles:
-
-| Agent | Focus Area |
-|-------|-----------|
-| [`architect.md`](agents/architect.md) | System design, technical strategy, and the engineering half of requirements — impact analysis, specification, traceability |
-| [`security-engineer.md`](agents/security-engineer.md) | Security compliance, vulnerability identification, and secure practices |
-| [`software-engineer.md`](agents/software-engineer.md) | Feature development, bug fixes, and production-quality code |
-| [`technical-program-manager.md`](agents/technical-program-manager.md) | Project planning, timeline coordination, and the business half of requirements — elicitation, user stories, Definition of Ready gate |
-| [`test-engineer.md`](agents/test-engineer.md) | Test strategy, test implementation, and quality assurance |
-
-Agents activate based on context and task type, dynamically loading the appropriate skills for the job.
+---
 
 ## Helper Scripts
 
-Reusable scripts in `/scripts/` to reduce token burn and enforce consistency:
+Everything in `scripts/` honors `${DOJO_ROOT:-…}` so it works from any cwd and supports multi-instance profiles.
 
 | Script | Purpose |
-|--------|---------|
-| [`scripts/init.sh`](scripts/init.sh) | Scaffolds `tasks/todo.md` and `tasks/lessons.md` on first clone |
-| [`scripts/lesson-updater.sh`](scripts/lesson-updater.sh) | Scans lessons for recurring patterns (3+), proposes skill amendments |
-| [`scripts/verify.sh`](scripts/verify.sh) | Pre-PR verification: tests, clean tree, plan check |
+|---|---|
+| [scripts/init.sh](./scripts/init.sh) | Scaffolds `tasks/{todo,lessons}.md` on first clone |
+| [scripts/verify.sh](./scripts/verify.sh) | **The single gate** — spec invariants + skills.md freshness + persona drift + path audit |
+| [scripts/run-checks.ps1](./scripts/run-checks.ps1) | Windows parity wrapper for `verify.sh` |
+| [scripts/regen-skills-index.sh](./scripts/regen-skills-index.sh) | Rebuilds `skills.md` from frontmatter (`.ps1` mirror included) |
+| [scripts/lesson-updater.sh](./scripts/lesson-updater.sh) | Cache-aware skill amendments — deferred by default, `--now` to apply immediately |
+| [scripts/curator.sh](./scripts/curator.sh) | Skill lifecycle: `status / record / pin / unpin / archive / restore / prune / report` (`.ps1` mirror included) |
+| [scripts/board.sh](./scripts/board.sh) | Durable task board: `new / list / status / roll-up` |
+| [scripts/migrate-v1.sh](./scripts/migrate-v1.sh) | Idempotent upgrade helper for pre-v1 repos |
 
 ```bash
 # Initialize the dojo in your repo
 bash scripts/init.sh
 
-# Check for patterns that should become skills
-bash scripts/lesson-updater.sh
-
-# Verify before submitting a PR
+# Run all gates before submitting a PR (use scripts/run-checks.ps1 on Windows)
 bash scripts/verify.sh
+
+# Rebuild the skills index after adding or renaming skills
+bash scripts/regen-skills-index.sh
+
+# Open a new durable task on the board
+bash scripts/board.sh new "Fix flaky auth test"
 ```
 
-## Automated Enforcement
+### Requirements
 
-The `.github/workflows/dojo-enforce.yml` GitHub Action runs on every PR to `main`:
-- Checks that `tasks/todo.md` has a real plan (not the default template)
-- Verifies `tasks/lessons.md` exists
-- Validates helper scripts are present
+- `bash` (Git for Windows works on Windows hosts) and standard POSIX tools.
+- `jq` — used by `curator.sh` and `lesson-updater.sh`. On Windows: `winget install jqlang.jq`.
+- Python 3.10+ (optional) for the `cli/dojo_cli/` CLI and `--profile` multi-instance support.
 
-## Self-Improvement Loop
+---
 
-Inspired by [cognee](https://github.com/topoteretes/cognee)-style automation:
+## Curator + Telemetry
 
-1. **Observe**: After every correction, log a structured lesson in `tasks/lessons.md` with YAML tags (error type, root cause, fix, rule).
-2. **Store**: Lessons are tagged and queryable. Metrics track total lessons, recurring patterns, and amendment rate.
-3. **Amend**: When a pattern hits 3+ occurrences, `scripts/lesson-updater.sh` proposes a rule update to `skills.md`.
-4. **Evaluate**: Track pre/post-fix metrics in `tasks/lessons.md`. If a rule isn't working, revise it.
-5. **Rollback**: Failed fixes get rolled back immediately. Failed rules get revised or removed.
+`scripts/curator.sh` reads `.dojo/skill-usage.json` (gitignored) and keeps the tier list honest.
+
+```bash
+bash scripts/curator.sh status                   # usage counts per skill
+bash scripts/curator.sh pin debugging            # always-load this skill
+bash scripts/curator.sh archive my-old-skill     # move to skills/.archive/
+bash scripts/curator.sh report                   # markdown rollup for review
+```
+
+## Cache-Aware Self-Improvement
+
+Mutating `skills.md` or any `SKILL.md` mid-session invalidates Copilot's prompt cache. The dojo defends against this:
+
+- `scripts/lesson-updater.sh` (no flag) writes proposed amendments to `.dojo/pending-amendments.md`. Apply them at session boundaries.
+- `scripts/lesson-updater.sh --now` applies immediately but prints a loud warning that the cache is being blown.
+
+## Multi-Instance Profiles
+
+Working on several projects concurrently? Each profile gets its own `skills/`, `tasks/`, `.dojo/` under `~/.dojo/profiles/<name>/`:
+
+```bash
+dojo --profile work status         # uses ~/.dojo/profiles/work
+dojo --profile experiment menu     # uses ~/.dojo/profiles/experiment
+```
+
+`DOJO_ROOT` is exported automatically so every shell script and the `verify.sh` gate operate on the right root.
+
+---
+
+## Enter the Dojo
+
+1. Copy [`skills/`](./skills) and [`optional-skills/`](./optional-skills) into your repo — or pick the individual tiers you need.
+2. Place [`skills.md`](./skills.md) at your repo root — Copilot agents auto-discover this index.
+3. Place [`.github/copilot-instructions.md`](./.github/copilot-instructions.md) in your `.github/` folder — customize for your stack.
+4. Run `bash scripts/init.sh` — scaffolds `tasks/todo.md` and `tasks/lessons.md`.
+5. Run `bash scripts/verify.sh spec` — confirms the skill index, personas, and scripts are wired correctly.
+6. Author your own skills from [template/SKILL.md](./template/SKILL.md) — guidance lives in [optional-skills/writing-skills](./optional-skills/writing-skills/SKILL.md).
+
+---
+
+## Choose Your Fighting Style
+
+`.github/copilot-instructions.md` ships with code-standard examples for multiple stacks:
+
+- **TypeScript** 📘 — strict mode, Vitest, Tailwind, Next.js App Router
+- **Python** 🐍 — pytest, ruff, type hints, FastAPI/Django
+- **Java** ☕ — JUnit 5, Spring Boot, Maven/Gradle
+- **Go** 🐹 — standard library, table-driven tests
+- **.NET** 🛡️ — xUnit, clean architecture, nullable reference types
+
+Pick your style. Delete the others. The disciplines are **style-agnostic**.
+
+---
 
 ## Why Train Your Agents?
 
 Untrained agents:
+
 - Rush in without a plan — all offense, no strategy
 - Never learn from their losses
 - Throw sloppy patches instead of finding the root cause
@@ -227,119 +270,25 @@ Untrained agents:
 
 Trained agents operate like **seasoned black belts** — plan the approach, execute with precision, verify the outcome, learn from every round.
 
-## Enter the Dojo
-
-1. **Copy the `skills/` folder** into your repo — or pick individual skills you need
-2. **Place `skills.md` at your repo root** — Copilot agents auto-discover this index and activate skills
-3. **Place `.github/copilot-instructions.md`** in your `.github/` folder — customize for your stack
-4. **Run `bash scripts/init.sh`** — scaffolds `tasks/todo.md` and `tasks/lessons.md`
-5. **Create custom skills** — Use `template/SKILL.md` or the `skill-creator` skill for your team's workflows
-
-## The Dojo Layout
-
-```
-your-repo/
-├── skills.md                          # Skills index (auto-discovered)
-├── skills/
-│   ├── plan-before-code/
-│   │   └── SKILL.md                   # 🥋 Core Kata
-│   ├── subagent-strategy/
-│   │   └── SKILL.md                   # 🥋 Core Kata
-│   ├── self-improvement/
-│   │   ├── SKILL.md                   # 🥋 Core Kata
-│   │   └── examples/
-│   │       └── lesson-entry.md        # Worked example
-│   ├── verify-before-done/
-│   │   └── SKILL.md                   # 🥋 Core Kata
-│   ├── demand-elegance/
-│   │   └── SKILL.md                   # 🥋 Core Kata
-│   ├── autonomous-bug-fix/
-│   │   └── SKILL.md                   # 🥋 Core Kata
-│   ├── brainstorming/
-│   │   └── SKILL.md                   # 🔄 Flow Waza
-│   ├── using-git-worktrees/
-│   │   └── SKILL.md                   # 🔄 Flow Waza
-│   ├── executing-plans/
-│   │   └── SKILL.md                   # 🔄 Flow Waza
-│   ├── requesting-code-review/
-│   │   └── SKILL.md                   # 🔄 Flow Waza
-│   ├── receiving-code-review/
-│   │   └── SKILL.md                   # 🔄 Flow Waza
-│   ├── finishing-a-development-branch/
-│   │   └── SKILL.md                   # 🔄 Flow Waza
-│   ├── dispatching-parallel-agents/
-│   │   └── SKILL.md                   # 🔄 Flow Waza
-│   ├── code-review/
-│   │   └── SKILL.md                   # ⚔️ Practical Kumite
-│   ├── refactoring/
-│   │   └── SKILL.md                   # ⚔️ Practical Kumite
-│   ├── test-writing/
-│   │   └── SKILL.md                   # ⚔️ Practical Kumite
-│   ├── pr-workflow/
-│   │   └── SKILL.md                   # ⚔️ Practical Kumite
-│   ├── debugging/
-│   │   └── SKILL.md                   # ⚔️ Practical Kumite
-│   ├── codebase-onboarding/
-│   │   └── SKILL.md                   # ⚔️ Practical Kumite
-│   ├── requirements-elicitation/
-│   │   └── SKILL.md                   # ⚔️ Practical Kumite
-│   ├── skill-creator/
-│   │   └── SKILL.md                   # 🧘 Meta Dō
-│   ├── writing-skills/
-│   │   └── SKILL.md                   # 🧘 Meta Dō
-│   └── using-superpowers/
-│       └── SKILL.md                   # 🧘 Meta Dō (Activator)
-├── spec/
-│   └── copilot-skills-spec.md         # Skill format specification
-├── template/
-│   └── SKILL.md                       # Starter template
-├── .github/
-│   ├── copilot-instructions.md        # The Dojo Rules
-│   └── workflows/
-│       └── dojo-enforce.yml           # PR enforcement
-├── scripts/
-│   ├── init.sh                        # Dojo initialization
-│   ├── lesson-updater.sh              # Pattern scanner & amendment proposer
-│   └── verify.sh                      # Pre-PR verification
-└── tasks/
-    ├── todo.md                        # Battle plan
-    └── lessons.md                     # Defeat log, metrics & prevention rules
-```
-
-## Choose Your Fighting Style
-
-The Code Standards in `copilot-instructions.md` ship with examples for multiple stacks:
-
-- **TypeScript** 📘: strict mode, Vitest, Tailwind, Next.js App Router
-- **Python** 🐍: pytest, Black, type hints, FastAPI/Django
-- **Java** ☕: JUnit 5, Spring Boot, Maven/Gradle
-- **Go** 🐹: standard library, table-driven tests
-- **.NET** 🛡️: xUnit, clean architecture, nullable reference types
-
-Pick your style. Delete the others. The Six Disciplines are **style-agnostic**.
+---
 
 ## Origin Story
 
-The Copilot Agents Dojo was born from battle-tested patterns learned the hard way — shipping production code with AI agents, watching them fail, and figuring out what actually makes them reliable.
+The Copilot Agents Dojo distills field-tested patterns from shipping production code with AI agents — watching them fail, and figuring out what actually makes them reliable:
 
-The skills distill lessons from multiple sources:
-
-- **Field experience** — Real-world agent sessions that exposed the failure modes: rushing without plans, skipping verification, repeating the same mistakes, flooding the context window. Every core kata exists because an agent failed without it.
-- **[Anthropic Claude](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering)** — Structured prompting, progressive disclosure, explicit verification gates, and the principle that agents perform best when given clear constraints rather than open-ended freedom.
-- **[obra/superpowers](https://github.com/obra/superpowers)** — The mandatory orchestration pipeline (BRAINSTORM → WORKTREE → PLAN → EXECUTE → TEST → REVIEW → FINISH → LEARN) that proved disciplined agents outperform freestyle ones.
-
-The dojo wraps all of this into GitHub Copilot’s native auto-discovery (`skills/` + `.github/copilot-instructions.md` at repo root), adds `scripts/` for automated gates, and packages it in a martial-arts skill progression system where agents earn their belts.
-
-Agents will behave identically: disciplined, testable, self-improving, no hand-holding.
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-## License
-
-[MIT](LICENSE)
+- **Field experience** — Real-world agent sessions exposing failure modes: rushing without plans, skipping verification, repeating the same mistakes, flooding the context window. Every core kata exists because an agent failed without it.
+- **[hermes-agent](https://github.com/andreaswasita/hermes-agent)** — The reference build for spec v1, the curator pattern, durable boards, and the registry-driven CLI.
+- **[obra/superpowers](https://github.com/obra/superpowers)** — The mandatory orchestration pipeline (BRAINSTORM → WORKTREE → … → LEARN) proving disciplined agents outperform freestyle ones.
+- **[Anthropic Claude](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering)** — Structured prompting, progressive disclosure, explicit verification gates.
 
 ---
 
-**⭐ Star this dojo** if you're done babysitting your AI agents. Fork it, train your agents, earn your belt.
+## Contributing
+
+See [AGENTS.md](./AGENTS.md) for the contributor guide and [CONTRIBUTING.md](./CONTRIBUTING.md) for the high-level checklist.
+
+## License
+
+[MIT](./LICENSE)
+
+⭐ Star this dojo if you're done babysitting your AI agents. Fork it, train your agents, earn your belt.

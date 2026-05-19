@@ -6,8 +6,8 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(dirname "$SCRIPT_DIR")"
-TASKS_DIR="$REPO_ROOT/tasks"
+DOJO_ROOT="${DOJO_ROOT:-$(dirname "$SCRIPT_DIR")}"
+TASKS_DIR="$DOJO_ROOT/tasks"
 
 echo "🥋 Copilot Agents Dojo — Initializing..."
 

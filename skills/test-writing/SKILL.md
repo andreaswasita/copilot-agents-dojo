@@ -1,145 +1,116 @@
 ---
 name: test-writing
-description: >-
-  Guides the agent in writing effective, meaningful tests — not just tests that exist,
-  but tests that catch bugs. Use this skill when writing tests for new code, when adding
-  test coverage to untested areas, when a bug was found that tests should have caught,
-  when implementing TDD, or when the verify-before-done skill reveals missing test coverage.
+description: Writes meaningful tests that actually catch bugs.
+tier: practical
+category: workflow
+created_by: human
+platforms: [windows, macos, linux]
+tags: [testing, tdd, quality]
+author: Andreas Wasita (@andreaswasita)
 ---
 
-# Test Writing
+# Test Writing Skill
 
-Tests aren't paperwork. They're proof that your code works and a safety net for everyone who touches it next.
+Produces tests that fail when the code is wrong — not tests that exist for coverage theatre. Covers happy path, edge cases, error paths, and state transitions. Does NOT chase 100% coverage as a goal; chases meaningful coverage that catches real regressions.
 
 ## When to Use
 
-- Writing tests for new features or bug fixes
-- Adding coverage to untested code
-- A bug slipped through that tests should have caught
-- Practicing test-driven development (TDD)
-- The verify-before-done skill flagged missing coverage
+- Writing tests for new code or features.
+- Adding coverage to an untested area before changing it.
+- A bug slipped through that tests should have caught.
+- Practicing test-driven development.
+- The `verify-before-done` skill flagged missing coverage.
+- NOT when the user explicitly asked for a spike or throwaway script.
 
-## How to Use
+## Prerequisites
 
-### The Testing Pyramid
+- A test framework installed for the stack (pytest, vitest, jest, go test, xUnit, JUnit).
+- Ability to run the test suite via the `powershell` tool.
+- The `view`, `edit`, and `grep` tools to read existing patterns.
+- A baseline run of the existing suite passing.
 
-Prioritize tests by value:
+## How to Run
 
-```
-        ╱  E2E  ╲           Few, slow, high-confidence
-       ╱─────────╲
-      ╱Integration ╲        Moderate count, test boundaries
-     ╱───────────────╲
-    ╱   Unit Tests    ╲     Many, fast, focused
-   ╱───────────────────╲
-```
-
-- **Unit tests** — Test individual functions/methods in isolation. Fast, many.
-- **Integration tests** — Test component boundaries (API → DB, service → service). Moderate.
-- **E2E tests** — Test full user workflows. Few, high-value scenarios only.
-
-### Step 1: Identify What to Test
-
-For any piece of code, identify:
-1. **Happy path** — Does it work with valid input?
-2. **Edge cases** — Empty input, null, boundary values, large datasets
-3. **Error cases** — Invalid input, network failures, missing dependencies
-4. **State transitions** — If stateful, do transitions work correctly?
-
-### Step 2: Write Tests That Catch Bugs
-
-Good tests have three parts (Arrange-Act-Assert):
-
-```python
-def test_calculate_discount_for_premium_user():
-    # Arrange — Set up the scenario
-    user = create_user(tier="premium")
-    order = create_order(total=100.00)
-
-    # Act — Execute the behavior
-    discount = calculate_discount(user, order)
-
-    # Assert — Verify the outcome
-    assert discount == 20.00  # Premium users get 20%
+```text
+1. Read existing tests with `view`/`grep` to copy the project's pattern.
+2. List scenarios: happy path, edges, errors, state transitions.
+3. Write one test per scenario using Arrange-Act-Assert.
+4. Run the suite — confirm new tests pass and nothing else broke.
+5. If TDD: write the test first, watch it fail for the right reason, then implement.
 ```
 
-### Step 3: Name Tests Like Documentation
+## Quick Reference
 
-Test names should describe the scenario and expected behavior:
-
-```
-✅ test_login_with_expired_token_returns_401
-✅ test_empty_cart_shows_no_items_message
-✅ test_bulk_import_with_duplicate_emails_skips_duplicates
-
-❌ test_login
-❌ test_cart
-❌ test_import
-```
-
-### Step 4: Test the Bug, Not Just the Fix
-
-When fixing a bug, write the test **first**:
-
-1. Write a test that reproduces the bug (it should fail)
-2. Confirm it fails for the right reason
-3. Implement the fix
-4. Confirm the test now passes
-5. Run the full suite — no regressions
-
-## Framework Quick Reference
-
-| Stack | Framework | Run Command |
-|-------|-----------|-------------|
+| Stack | Framework | Run command |
+|---|---|---|
 | TypeScript | Vitest / Jest | `npm test` or `npx vitest` |
 | Python | pytest | `pytest` or `python -m pytest` |
 | Java | JUnit 5 | `mvn test` or `gradle test` |
 | Go | testing | `go test ./...` |
 | .NET | xUnit | `dotnet test` |
 
-## Examples
+| Scenario type | Must cover |
+|---|---|
+| Happy path | Valid input → expected output |
+| Edge case | Empty, null, boundary, maximum size |
+| Error case | Invalid input, dependency failure, timeout |
+| State transition | Stateful object moves between valid states |
 
-**Bad — Test That Proves Nothing:**
+## Procedure
+
+### Step 1: Read the Existing Pattern
+
+Use `grep` for `test_*` or `*.spec.*` files and `view` one of them. Match the project's naming, location, fixtures, and assertion style. Do not introduce a second testing dialect.
+
+### Step 2: Enumerate Scenarios
+
+For the code under test, list:
+
+1. Happy path inputs.
+2. Edge cases (empty, null, boundary, max).
+3. Error cases (invalid input, dependency failure).
+4. State transitions, if stateful.
+
+### Step 3: Write Arrange-Act-Assert
+
 ```python
-def test_user_exists():
-    user = User(name="test")
-    assert user is not None  # This will always pass
+def test_calculate_discount_for_premium_user():
+    # Arrange
+    user = create_user(tier="premium")
+    order = create_order(total=100.00)
+
+    # Act
+    discount = calculate_discount(user, order)
+
+    # Assert
+    assert discount == 20.00
 ```
 
-**Good — Test That Catches Bugs:**
-```python
-def test_user_email_validation_rejects_missing_domain():
-    with pytest.raises(ValidationError, match="invalid email"):
-        User(name="test", email="user@")
-```
+Name tests as documentation: `test_login_with_expired_token_returns_401`, not `test_login`.
 
-**Bad — Testing Implementation Details:**
-```python
-def test_sort_uses_quicksort():
-    # Brittle: tied to internal implementation
-    with mock.patch('module.quicksort') as qs:
-        sort_items([3, 1, 2])
-        qs.assert_called_once()
-```
+### Step 4: For Bug Fixes — Test First
 
-**Good — Testing Behavior:**
-```python
-def test_sort_returns_ascending_order():
-    assert sort_items([3, 1, 2]) == [1, 2, 3]
-```
+1. Write a test that reproduces the bug.
+2. Run it. Confirm it fails for the right reason.
+3. Implement the fix.
+4. Run it. Confirm it passes.
+5. Run the full suite — no regressions.
 
-## Guidelines
+### Step 5: Run and Record
 
-- Test behavior, not implementation — tests should survive refactoring
-- Every bug fix should come with a test that would have caught it
-- Aim for >80% coverage, but coverage alone doesn't mean quality
-- Flaky tests must be fixed immediately — they erode trust in the whole suite
-- Mocks are a last resort, not a first choice — prefer real dependencies when feasible
+Run the suite via the `powershell` tool. Capture pass/fail counts and paste them into the `tasks/todo.md` Verification Results block (per `verify-before-done`).
 
-## Anti-Patterns
+## Pitfalls
 
-- **Tests that always pass** — If a test can't fail, it's not testing anything
-- **Testing the framework** — Don't test that `if` statements work. Test your logic.
-- **Copy-paste test suites** — If tests are repetitive, use parameterized/table-driven tests
-- **Ignoring test failures** — A failing test is a bug report. Treat it that way.
-- **100% coverage as a goal** — Coverage is a metric, not a mission. Focus on meaningful coverage.
+- **DO NOT** write tests that cannot fail (`assert user is not None` on a freshly constructed object).
+- **DO NOT** test implementation details (e.g. mocking that `quicksort` was called). Test the behavior.
+- **DO NOT** mock the world. Prefer real collaborators where the cost is acceptable.
+- **DO NOT** ignore a flaky test — fix it or delete it. A flaky test erodes trust in the whole suite.
+- **DO NOT** chase 100% coverage as a target. Coverage is a metric, not a mission.
+
+## Verification
+
+- [ ] Every new test was observed to fail before it passed (TDD) OR a deliberate mutation was introduced to confirm it fails.
+- [ ] The full suite is green after the change.
+- [ ] Test names describe scenario + expected behavior.
+- [ ] Each bug fix has a regression test that would have caught the original bug.

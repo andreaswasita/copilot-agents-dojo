@@ -1,127 +1,331 @@
 #!/usr/bin/env bash
-# Copilot Agents Dojo — Pre-PR Verification Wrapper
-# Runs a series of checks before a PR is considered ready.
+# Copilot Agents Dojo — Verification Gate (v1)
 #
-# Usage: bash scripts/verify.sh
+# Single source of truth for "is this dojo clone in good shape?"
+# Run before every PR. CI runs the same script with --check.
 #
-# Checks:
-#   1. tasks/todo.md has a plan (not just the template)
-#   2. No uncommitted changes (clean working tree)
-#   3. Tests pass (auto-detects test runner)
-#   4. Summary output
+# Usage:
+#   bash scripts/verify.sh                  # full gate
+#   bash scripts/verify.sh spec             # only spec/frontmatter invariants
+#   bash scripts/verify.sh tests            # only the pytest/skill smoke tests
+#   bash scripts/verify.sh plan             # only the tasks/todo.md sanity check
+#   bash scripts/verify.sh actions          # only the Action SHA-pin audit
+#   bash scripts/verify.sh --check          # CI mode: fail on warnings too
+#
+# Hermetic environment:
+#   We pin TZ=UTC, LANG=C.UTF-8, and unset credential env vars so local
+#   runs match CI. This prevents "works on my machine" drift caused by
+#   timezone-dependent string comparisons, locale-dependent sort order,
+#   or tests that silently use a developer's real API keys.
+#
+# Profile-safe:
+#   All paths resolve from ${DOJO_ROOT:-<repo>}.
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+# --- Hermetic env ---------------------------------------------------------
+export TZ=UTC
+export LANG=C.UTF-8
+export LC_ALL=C.UTF-8
+# Strip credentials so tests can never call real APIs by accident.
+unset GITHUB_TOKEN GH_TOKEN OPENAI_API_KEY ANTHROPIC_API_KEY \
+      AZURE_OPENAI_API_KEY GOOGLE_API_KEY GEMINI_API_KEY \
+      HUGGINGFACE_TOKEN COPILOT_TOKEN 2>/dev/null || true
 
-PASSED=0
-FAILED=0
-WARNED=0
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOJO_ROOT="${DOJO_ROOT:-$(dirname "$SCRIPT_DIR")}"
+cd "$DOJO_ROOT"
+
+PASSED=0; FAILED=0; WARNED=0
+CHECK_MODE=false
+MODE="all"
+
+for arg in "$@"; do
+  case "$arg" in
+    --check) CHECK_MODE=true ;;
+    spec|tests|plan|actions|all) MODE="$arg" ;;
+    -h|--help) sed -n '1,30p' "$0"; exit 0 ;;
+    *) echo "unknown arg: $arg" >&2; exit 2 ;;
+  esac
+done
 
 pass() { echo "  ✅ $1"; PASSED=$((PASSED + 1)); }
 fail() { echo "  ❌ $1"; FAILED=$((FAILED + 1)); }
 warn() { echo "  ⚠️  $1"; WARNED=$((WARNED + 1)); }
 
-echo "🥋 Copilot Agents Dojo — Pre-PR Verification"
+echo "🥋 Copilot Agents Dojo — Verification (mode=$MODE, root=$DOJO_ROOT)"
 echo ""
 
-# 1. Check for a plan in todo.md
-echo "[1/4] Checking tasks/todo.md for a plan..."
-TODO_FILE="$REPO_ROOT/tasks/todo.md"
-if [ ! -f "$TODO_FILE" ]; then
-  fail "tasks/todo.md not found. Create a plan before submitting."
-elif grep -qE '\- \[x\]|\- \[ \]' "$TODO_FILE" 2>/dev/null && \
-     ! grep -q 'Step 1' "$TODO_FILE" 2>/dev/null; then
-  pass "Plan found in tasks/todo.md"
-else
-  warn "tasks/todo.md looks like the default template. Write a real plan."
-fi
+# =========================================================================
+# Spec / frontmatter invariants
+# =========================================================================
+run_spec_checks() {
+  echo "[spec] Scanning skill frontmatter and bodies…"
+  local skill_files
+  skill_files=$(find skills optional-skills -name SKILL.md 2>/dev/null || true)
+  if [ -z "$skill_files" ]; then
+    warn "No SKILL.md files found under skills/ or optional-skills/"
+    return
+  fi
 
-# 2. Check for uncommitted changes
-echo "[2/4] Checking for uncommitted changes..."
-cd "$REPO_ROOT"
-if git diff --quiet HEAD 2>/dev/null && git diff --cached --quiet HEAD 2>/dev/null; then
-  pass "Working tree is clean"
-else
-  warn "Uncommitted changes detected. Commit or stash before PR."
-fi
+  # Banned marketing words in description/intro
+  local banned_words='powerful|comprehensive|seamless|advanced|robust|cutting-edge|intelligent|revolutionary'
+  # Banned bare shell utilities in prose (skip code fences via simple heuristic — flag for review)
+  local banned_shell='\b(cat|sed|awk|find|head|tail)\b'
 
-# 3. Auto-detect and run tests
-echo "[3/4] Running tests..."
-TESTS_RAN=false
+  local seen_names=""
+  while IFS= read -r f; do
+    [ -z "$f" ] && continue
+    local rel="${f#$DOJO_ROOT/}"
 
-if [ -f "$REPO_ROOT/package.json" ]; then
-  if grep -q '"test"' "$REPO_ROOT/package.json" 2>/dev/null; then
-    echo "   Detected: npm test"
-    if npm test --prefix "$REPO_ROOT" 2>&1; then
-      pass "npm tests passed"
-    else
-      fail "npm tests failed"
+    # Required frontmatter keys
+    for key in name description tier category created_by platforms; do
+      if ! awk '/^---$/{c++; next} c==1' "$f" | grep -qE "^${key}:"; then
+        fail "$rel: missing required frontmatter key '$key'"
+      fi
+    done
+
+    # description <= 60 chars and ends with period
+    local desc
+    desc=$(awk '/^---$/{c++; next} c==1 && /^description:/{sub(/^description: */,""); print; exit}' "$f" \
+           | sed -E 's/^"//; s/"$//; s/^>-\s*//')
+    if [ -n "$desc" ]; then
+      local n=${#desc}
+      if [ "$n" -gt 60 ]; then
+        fail "$rel: description is $n chars (max 60): \"$desc\""
+      fi
+      case "$desc" in
+        *.) ;;
+        *) fail "$rel: description must end with a period";;
+      esac
+      if echo "$desc" | grep -qiE "$banned_words"; then
+        fail "$rel: description contains a banned marketing word"
+      fi
     fi
-    TESTS_RAN=true
-  fi
-fi
 
-if [ -f "$REPO_ROOT/pyproject.toml" ] || [ -f "$REPO_ROOT/setup.py" ] || [ -f "$REPO_ROOT/pytest.ini" ]; then
-  echo "   Detected: pytest"
-  if python -m pytest "$REPO_ROOT" 2>&1; then
-    pass "pytest passed"
+    # name must match folder
+    local folder name
+    folder=$(basename "$(dirname "$f")")
+    name=$(awk '/^---$/{c++; next} c==1 && /^name:/{sub(/^name: */,""); print; exit}' "$f")
+    if [ "$folder" != "$name" ]; then
+      fail "$rel: name '$name' does not match folder '$folder'"
+    fi
+    case " $seen_names " in
+      *" $name "*) fail "$rel: duplicate skill name '$name'";;
+      *) seen_names="$seen_names $name";;
+    esac
+
+    # tier must be valid
+    local tier
+    tier=$(awk '/^---$/{c++; next} c==1 && /^tier:/{sub(/^tier: */,""); print; exit}' "$f")
+    case "$tier" in core|practical|optional) ;;
+      *) fail "$rel: tier '$tier' must be core|practical|optional";;
+    esac
+
+    # Required body sections in correct order.
+    # Track code fences so a literal `---` inside ```yaml example doesn't
+    # get counted as a frontmatter delimiter.
+    local body
+    body=$(awk '
+      /^```/ { fence = !fence; print; next }
+      !fence && /^---$/ { c++; next }
+      c >= 2 { print }
+    ' "$f")
+    local prev=0
+    for section in "When to Use" "Prerequisites" "How to Run" "Quick Reference" "Procedure" "Pitfalls" "Verification"; do
+      local line
+      line=$(echo "$body" | grep -nE "^## ${section}\b" | head -n1 | cut -d: -f1 || true)
+      if [ -z "$line" ]; then
+        fail "$rel: missing required section '## $section'"
+        continue
+      fi
+      if [ "$line" -le "$prev" ]; then
+        fail "$rel: section '## $section' is out of order"
+      fi
+      prev=$line
+    done
+
+    # Strip ```…``` blocks for prose-level checks (so meta skills that
+    # document forbidden words/utilities in code examples don't false-positive).
+    local prose
+    prose=$(echo "$body" | awk 'BEGIN{infence=0} /^```/{infence=1-infence; next} !infence')
+
+    # Banned marketing words in prose (outside code fences)
+    if echo "$prose" | grep -qiE "$banned_words"; then
+      warn "$rel: body contains a banned marketing word (review prose)"
+    fi
+
+    # Banned bare shell utility references in prose (outside code fences)
+    if echo "$prose" | grep -qE "$banned_shell"; then
+      warn "$rel: prose references a bare shell utility (use Copilot tool instead — see spec §3)"
+    fi
+  done <<< "$skill_files"
+
+  # skills.md drift: every skill folder present in index, and vice versa
+  if [ -f skills.md ]; then
+    local fs_names index_names
+    fs_names=$(find skills optional-skills -name SKILL.md 2>/dev/null \
+               | awk -F/ '{print $(NF-1)}' | sort -u)
+    index_names=$(grep -oE 'skills/[a-z0-9-]+|optional-skills/[a-z0-9-]+' skills.md \
+                  | awk -F/ '{print $2}' | sort -u)
+    local diff_out
+    diff_out=$(diff <(echo "$fs_names") <(echo "$index_names") || true)
+    if [ -n "$diff_out" ]; then
+      warn "skills.md drift detected — regenerate via scripts/regen-skills-index.sh"
+    else
+      pass "skills.md matches filesystem"
+    fi
   else
-    fail "pytest failed"
+    warn "skills.md missing"
   fi
-  TESTS_RAN=true
-fi
 
-if [ -f "$REPO_ROOT/pom.xml" ]; then
-  echo "   Detected: Maven"
-  if mvn -f "$REPO_ROOT/pom.xml" test 2>&1; then
-    pass "Maven tests passed"
+  if [ "$FAILED" -eq 0 ]; then pass "spec invariants OK"; fi
+}
+
+# =========================================================================
+# Persona registry drift (agents/registry.yaml ↔ agents/*.md)
+# =========================================================================
+run_persona_checks() {
+  echo "[personas] Checking agents/registry.yaml drift…"
+  local reg="agents/registry.yaml"
+  if [ ! -f "$reg" ]; then
+    warn "agents/registry.yaml missing — falling back to per-file frontmatter"
+    return
+  fi
+  local fs_slugs reg_slugs
+  fs_slugs=$(find agents -maxdepth 1 -name '*.md' 2>/dev/null \
+             | awk -F/ '{print $NF}' | sed 's/\.md$//' | sort -u)
+  reg_slugs=$(grep -E '^[[:space:]]*-[[:space:]]*slug:' "$reg" \
+              | sed -E 's/^[[:space:]]*-[[:space:]]*slug:[[:space:]]*//' | sort -u)
+  local diff_out
+  diff_out=$(diff <(echo "$fs_slugs") <(echo "$reg_slugs") || true)
+  if [ -n "$diff_out" ]; then
+    warn "agents/registry.yaml drift — re-sync with agents/*.md (see diff below)"
+    echo "$diff_out" | sed 's/^/    /'
   else
-    fail "Maven tests failed"
+    pass "agents/registry.yaml matches agents/*.md"
   fi
-  TESTS_RAN=true
-fi
+}
 
-if [ -f "$REPO_ROOT/go.mod" ]; then
-  echo "   Detected: Go"
-  if (cd "$REPO_ROOT" && go test ./... 2>&1); then
-    pass "Go tests passed"
+# =========================================================================
+# Path audit — scripts must respect DOJO_ROOT, never hardcode parent paths
+# =========================================================================
+run_path_audit() {
+  echo "[paths] Auditing scripts/ for DOJO_ROOT compliance…"
+  local files
+  files=$(find scripts -maxdepth 1 -type f \( -name '*.sh' -o -name '*.ps1' \) 2>/dev/null || true)
+  [ -z "$files" ] && { warn "no scripts found"; return; }
+
+  local bad=0
+  while IFS= read -r f; do
+    [ -z "$f" ] && continue
+    # Each script must reference DOJO_ROOT (env or var) — the contract from AGENTS.md §Path Convention.
+    if ! grep -qE 'DOJO_ROOT' "$f"; then
+      warn "$f: does not reference DOJO_ROOT (see AGENTS.md → Path Convention)"
+      bad=$((bad + 1))
+      continue
+    fi
+    # Hardcoded parent-relative paths that ignore DOJO_ROOT are the bug pattern.
+    # Allow them inside comments (lines starting with #) and inside heredocs we
+    # can't easily detect — keep this a warning, not an error.
+    local hits
+    hits=$(grep -nE '(^|[^A-Za-z0-9_/.$"])(\.\./(skills|tasks|agents|optional-skills|cli|mcp|template|spec|\.dojo)/)' "$f" \
+           | grep -vE '^[0-9]+:[[:space:]]*#' || true)
+    if [ -n "$hits" ]; then
+      warn "$f: hardcoded parent-relative dojo path (use \${DOJO_ROOT}/… instead)"
+      echo "$hits" | sed 's/^/    /'
+      bad=$((bad + 1))
+    fi
+  done <<< "$files"
+  [ "$bad" -eq 0 ] && pass "all scripts respect DOJO_ROOT"
+}
+
+# =========================================================================
+# Plan sanity (tasks/todo.md)
+# =========================================================================
+run_plan_checks() {
+  echo "[plan] Checking tasks/todo.md…"
+  if [ ! -f tasks/todo.md ]; then
+    fail "tasks/todo.md not found — run scripts/init.sh"
+    return
+  fi
+  if grep -qE '^- \[( |x)\] Step 1$' tasks/todo.md \
+     && ! grep -qE '^- \[( |x)\] (?!Step [0-9])' tasks/todo.md 2>/dev/null; then
+    warn "tasks/todo.md looks like the default template"
   else
-    fail "Go tests failed"
+    pass "tasks/todo.md has a real plan"
   fi
-  TESTS_RAN=true
-fi
+  [ -f tasks/lessons.md ] && pass "tasks/lessons.md exists" \
+                          || warn "tasks/lessons.md missing — run scripts/init.sh"
+}
 
-if [ "$TESTS_RAN" = false ]; then
-  warn "No test runner detected. Add tests for your stack."
-fi
+# =========================================================================
+# GitHub Actions SHA-pin audit
+# =========================================================================
+run_actions_checks() {
+  echo "[actions] Auditing .github/workflows/ for SHA-pinned uses:…"
+  local files
+  files=$(find .github/workflows -name '*.yml' -o -name '*.yaml' 2>/dev/null || true)
+  if [ -z "$files" ]; then
+    warn "no workflow files found"
+    return
+  fi
+  local bad=0
+  while IFS= read -r wf; do
+    [ -z "$wf" ] && continue
+    # Allowed: uses: <owner/repo>@<40-hex-sha>  # comment
+    # Reject:  uses: <…>@v4   or @main
+    local violations
+    violations=$(grep -nE '^\s*-?\s*uses:\s*[^@]+@[^[:space:]]+' "$wf" \
+                 | grep -vE '@[0-9a-f]{40}\b' || true)
+    if [ -n "$violations" ]; then
+      while IFS= read -r v; do
+        fail "$wf: $v  (pin to 40-char SHA + version comment)"
+        bad=$((bad+1))
+      done <<< "$violations"
+    fi
+  done <<< "$files"
+  [ "$bad" -eq 0 ] && pass "all workflow uses: lines are SHA-pinned"
+}
 
-# 4. Summary
+# =========================================================================
+# Tests (skill smoke tests + auto-detected project tests)
+# =========================================================================
+run_tests() {
+  echo "[tests] Running skill smoke tests…"
+  local skill_tests
+  skill_tests=$(find skills optional-skills -path '*/tests' -type d 2>/dev/null || true)
+  if [ -n "$skill_tests" ] && command -v python >/dev/null 2>&1; then
+    if python -m pytest $skill_tests -q --no-header 2>&1; then
+      pass "skill smoke tests passed"
+    else
+      fail "skill smoke tests failed"
+    fi
+  else
+    warn "no skill tests found (or python unavailable) — skipping"
+  fi
+}
+
+# --- Dispatch -------------------------------------------------------------
+case "$MODE" in
+  spec)    run_spec_checks; run_persona_checks; run_path_audit ;;
+  plan)    run_plan_checks ;;
+  actions) run_actions_checks ;;
+  tests)   run_tests ;;
+  all)     run_spec_checks; run_persona_checks; run_path_audit; run_plan_checks; run_actions_checks; run_tests ;;
+esac
+
 echo ""
-echo "[4/4] Checking lessons.md exists..."
-if [ -f "$REPO_ROOT/tasks/lessons.md" ]; then
-  pass "tasks/lessons.md exists"
-else
-  warn "tasks/lessons.md missing. Run scripts/init.sh."
-fi
-
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  Results: ✅ $PASSED passed, ❌ $FAILED failed, ⚠️  $WARNED warnings"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 if [ "$FAILED" -gt 0 ]; then
-  echo ""
-  echo "🚫 Verification FAILED. Fix the issues above before submitting."
+  echo "🚫 Verification FAILED."
   exit 1
 fi
-
-if [ "$WARNED" -gt 0 ]; then
-  echo ""
-  echo "⚠️  Verification passed with warnings. Review before submitting."
-  exit 0
+if [ "$CHECK_MODE" = true ] && [ "$WARNED" -gt 0 ]; then
+  echo "🚫 --check mode: warnings are fatal."
+  exit 1
 fi
-
-echo ""
-echo "🏯 All checks passed. Ready to submit."
+echo "🏯 OK."

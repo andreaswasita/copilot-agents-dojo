@@ -1,0 +1,79 @@
+# Changelog
+
+All notable changes to the Copilot Agents Dojo are documented here. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project ships markdown skills + bash scripts so we version by *behavioral contract*, not by published API.
+
+## [1.0.0] — 2026-05-20 — "Hardened Dojo"
+
+The first numbered release. Bakes seven phases of structural work into a single coherent spec, single gate, and single set of sources of truth. The framework is now drop-in for any repo, with backwards-compatible filesystem layout.
+
+### Spec & content
+
+- **Spec v1** (`spec/copilot-skills-spec.md`) — formalized frontmatter (`name`, `description`, `tier`, `category`, `version`), required body sections in fixed order, and the rule that every "should" must map to a verifiable check in `scripts/verify.sh`.
+- **Template** (`template/SKILL.md`) — starter aligned to spec v1.
+- **Tier reorganization** — every skill now carries `tier: core | practical | optional` frontmatter. Heavyweight / niche skills relocated to `optional-skills/`. The legacy "core kata / flow waza / practical kumite / meta dō" labels are retained as decoration in `skills.md` but the canonical taxonomy is the tier field.
+- **New skills:**
+  - `skills/durable-work/` (tier: core, category: delegation) — picks the durable board over sub-agents for cross-turn work.
+  - `optional-skills/writing-skills/` — meta skill for SKILL.md authoring (relocated from `skills/`).
+- **Retired skills:** `skill-creator` (folded into `writing-skills`).
+- **Known pitfalls** — `.github/known-pitfalls.md` — imperative DO-NOT register loaded at session start.
+
+### Single sources of truth
+
+- **`skills.md`** — fully generated from `SKILL.md` frontmatter via `scripts/regen-skills-index.sh`. The gate fails if hand edits drift from the filesystem.
+- **`agents/registry.yaml`** — single source for all five personas (slug, type, activation, apply_to, tags, default_skills). `scanner.scan_agents()` prefers the registry over per-file frontmatter. `verify.sh` detects drift.
+- **`cli/dojo_cli/registry.py`** — single `COMMAND_REGISTRY` tuple drives `main()`, the help table, and the interactive menu. Refactored `app.py.main()` from 40-line `if/elif` to a 6-line registry lookup.
+- **`.dojo/delegation.yaml`** — concrete knobs (max_spawn_depth, max_concurrent_children, conflict_resolution, escalate-to-board triggers) cited by `subagent-strategy`.
+
+### Single gate
+
+- **`scripts/verify.sh`** — the only enforcement entry point. Modes: `spec` (default), `plan`, `tests`, `all`. Checks:
+  - Skill frontmatter + body invariants per spec v1.
+  - `skills.md` matches filesystem.
+  - `agents/registry.yaml` matches `agents/*.md`.
+  - All `scripts/*.{sh,ps1}` honor `DOJO_ROOT` and avoid hardcoded `../{skills,tasks,agents,…}/` paths.
+- **`scripts/run-checks.ps1`** — Windows parity wrapper.
+
+### Durable work + telemetry
+
+- **`tasks/board/`** — durable per-task markdown files (`000-template.md`, `README.md`). Survives across turns and sub-agent handoffs.
+- **`scripts/board.sh`** — verbs: `new / list / status / roll-up`. The `roll-up` action regenerates `tasks/todo.md` from board state.
+- **`.dojo/`** (gitignored) — per-clone state: `skill-usage.json` telemetry, `.gitignore`, `README.md`.
+- **`scripts/curator.sh`** — 8 verbs (`status / record / pin / unpin / archive / restore / prune / report`) over the usage telemetry. PowerShell mirror at `scripts/curator.ps1` auto-adds the `winget` `jq` install dir to `PATH`.
+
+### Cache-aware self-improvement
+
+- **`scripts/lesson-updater.sh`** — defaults to **deferred** mode: proposed amendments are written to `.dojo/pending-amendments.md` so the current Copilot session's prompt cache stays valid. `--now` opt-in applies immediately with a loud warning. Bumps `tasks/lessons.md` metrics either way.
+
+### DOJO_ROOT + multi-instance profiles
+
+- Every shell script and `.ps1` wrapper now resolves the dojo root via `${DOJO_ROOT:-…}` (bash) / `$env:DOJO_ROOT` (PowerShell), with a fallback to the script's parent directory.
+- **`cli/dojo_cli/profiles.py`** — six refreshed PRESETS (`full-dojo`, `lean`, `tdd-focus`, `code-review-focus`, `onboarding`, `requirements-first`) aligned to the current 26-skill catalog. Adds `INSTANCE_PROFILES_HOME = ~/.dojo/profiles` and helpers `instance_profile_path()`, `list_instance_profiles()`, `activate_instance_profile()`, `resolve_dojo_root()`.
+- **`dojo --profile <name>`** — `app.py` parses `--profile` early and swaps `DOJO_ROOT` so every downstream call operates on the right root.
+
+### Docs
+
+- **`README.md`** — rewritten end-to-end for v1: tier structure, single gate, single sources of truth, curator + telemetry, cache-aware updater, multi-instance profiles, and an honest scripts table.
+- **`AGENTS.md`** — contributor guide with the full directory tree, DOJO_ROOT convention, and curator workflow (incl. `jq` prerequisite).
+- **`scripts/migrate-v1.sh`** — best-effort migration helper for repos still on the pre-v1 layout.
+- **Wiki** — `Home.md` rewritten to mirror the README v1 structure. (Other wiki pages remain as historical references and should be reviewed page-by-page.)
+
+### Compatibility
+
+- The on-disk layout of `skills/` is unchanged for existing skills — they were augmented with `tier:` frontmatter, not moved. Only `skill-creator` (deleted) and `writing-skills` (moved to `optional-skills/`) require attention.
+- `skills.md` is now generated; if you previously hand-edited it, the gate will fail. Run `bash scripts/regen-skills-index.sh` once.
+- `scripts/verify.sh` is stricter. If you have local scripts that hardcode `../skills/`, either add `${DOJO_ROOT:-…}` resolution or expect the path audit to warn.
+
+### Migration
+
+```bash
+# From the repo root of an existing pre-v1 dojo:
+bash scripts/migrate-v1.sh
+bash scripts/regen-skills-index.sh
+bash scripts/verify.sh spec
+```
+
+---
+
+## [0.x] — Pre-v1
+
+Historical period. The dojo existed as a flat collection of skills under `skills/`, a generic `skills.md` maintained by hand, ad-hoc enforcement via `.github/workflows/dojo-enforce.yml`, and no concept of tiers, telemetry, durable boards, or registries. Useful as a starting point but lacked the drift detection that makes v1 safe to scale.

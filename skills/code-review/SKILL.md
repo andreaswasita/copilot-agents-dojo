@@ -1,103 +1,112 @@
 ---
 name: code-review
-description: >-
-  Guides the agent through structured code review — reading diffs, identifying issues,
-  and providing actionable feedback. Use this skill when asked to review a PR, diff, or
-  set of changes, when auditing code quality before merge, when checking for security
-  issues or anti-patterns, or when the agent needs to evaluate its own output before
-  presenting it to the user.
+description: Reviews diffs by severity to produce actionable feedback.
+tier: practical
+category: workflow
+created_by: human
+platforms: [windows, macos, linux]
+tags: [review, quality, pr]
+author: Andreas Wasita (@andreaswasita)
 ---
 
-# Code Review
+# Code Review Skill
 
-Review code like a senior engineer: systematic, constructive, and focused on what matters.
+Reviews diffs and PRs the way a senior engineer would: intent first, structure second, line-by-line third. Produces feedback grouped by severity (🔴 must / 🟡 should / 🟢 nit) with concrete suggestions. Does NOT rewrite the author's code — it directs, it does not replace.
 
 ## When to Use
 
-- Reviewing a pull request or diff
-- Auditing changes before merge
-- Checking for security vulnerabilities, anti-patterns, or style violations
-- Self-reviewing agent output before presenting to the user
-- When asked "does this look right?" about a piece of code
+- Reviewing a pull request, branch diff, or staged changes.
+- Auditing changes before merge.
+- Self-reviewing the agent's own output before presenting it.
+- Hunting for security, correctness, or performance regressions.
+- The user asks "does this look right?" about a code change.
 
-## How to Use
+## Prerequisites
+
+- The `view`, `grep`, and `glob` Copilot tools to read code.
+- `git` available so diffs can be inspected (`git diff main`, `git log`).
+- Read access to the repository being reviewed.
+- For PR-scoped review: `gh` CLI authenticated to fetch PR metadata.
+
+## How to Run
+
+```text
+1. Read the PR title, description, and linked issue.
+2. List changed files (`git diff main --stat`) and assess scope.
+3. Walk the diff with the `view` tool, file by file.
+4. Apply the severity rubric below.
+5. Emit a structured review block with concrete fixes.
+```
+
+## Quick Reference
+
+| Phase | Tool | What to check |
+|---|---|---|
+| Intent | PR description, linked issue | Why does this change exist? |
+| Scope | `git diff main --stat` | Files changed match stated intent |
+| Correctness | `view` on hot paths | Logic, null/edge handling, off-by-one |
+| Security | `grep` for secrets, raw SQL, eval | Injection, auth bypass, leaked secrets |
+| Performance | `view` on loops, queries | N+1, unbounded allocations, missing indexes |
+| Tests | `view` on test files | New paths actually covered |
+
+## Procedure
 
 ### Step 1: Understand Intent
 
-Before reviewing the code, understand *what* it's trying to do:
-- Read the PR description or commit message
-- Understand the problem being solved
-- Note the scope — is this a bug fix, feature, refactor, or config change?
+Read the PR description, commit messages, and any linked issue. If intent is unclear, stop and ask the author — reviewing code whose purpose you don't understand wastes everyone's time.
 
-### Step 2: Structural Review
+### Step 2: Structural Pass
 
-Look at the big picture first:
-- **Files changed** — Does the scope make sense for the stated intent?
-- **Architecture** — Does this fit the existing patterns in the codebase?
-- **Dependencies** — Are new dependencies justified?
-- **Deletion ratio** — Good PRs often delete more than they add
+Use `git diff main --stat` to size the change. Check:
 
-### Step 3: Line-by-Line Review
+- Does the file list match the stated scope?
+- Are new dependencies justified?
+- Does the change fit existing patterns in the repo?
+- Is the deletion ratio healthy? (Good PRs often delete as much as they add.)
 
-Walk through the diff systematically:
+### Step 3: Line-by-Line Pass
 
-| Category | What to Look For |
-|----------|-----------------|
-| **Correctness** | Logic errors, off-by-one, null handling, edge cases |
-| **Security** | Injection, auth bypass, secrets in code, input validation |
-| **Performance** | N+1 queries, unnecessary allocations, missing indexes |
-| **Readability** | Naming, complexity, comments (too few or too many) |
-| **Testing** | Are new paths covered? Are tests meaningful, not just present? |
-| **Error handling** | Are errors handled or silently swallowed? |
+Walk each changed file with `view`. Apply the rubric:
 
-### Step 4: Provide Actionable Feedback
+| Category | Look for |
+|---|---|
+| Correctness | Logic errors, off-by-one, null handling, missing edge cases |
+| Security | Injection, auth bypass, secrets in code, weak input validation |
+| Performance | N+1 queries, unbounded allocations, missing indexes |
+| Readability | Naming, complexity, comments (too few or too many) |
+| Testing | New paths actually covered, tests meaningful (not assert-true) |
+| Error handling | Errors handled or silently swallowed |
 
-Structure feedback by severity:
+### Step 4: Emit Structured Feedback
 
 ```markdown
 ## Review Summary
 
 ### 🔴 Must Fix (Blocking)
-- [file:line] Issue description and why it matters
-  **Suggestion:** Concrete fix
+- `path/to/file.ts:42` — <issue> + **Suggestion:** <concrete fix>
 
 ### 🟡 Should Fix (Non-Blocking)
-- [file:line] Issue description
-  **Suggestion:** Better approach
+- `path/to/file.ts:88` — <issue> + **Suggestion:** <better approach>
 
 ### 🟢 Nit (Optional)
-- [file:line] Minor style or preference point
+- `path/to/file.ts:120` — <style or preference point>
 
 ### ✅ What's Good
-- Highlight things done well — positive reinforcement matters
+- <Highlight something done well — positive reinforcement matters.>
 ```
 
-## Examples
+## Pitfalls
 
-**Shallow Review:**
-> "LGTM 👍"
+- **DO NOT** rubber-stamp ("LGTM 👍") without reading the diff — worse than no review.
+- **DO NOT** block a PR over formatting if a linter exists — that is the linter's job.
+- **DO NOT** rewrite the author's code in the review thread. Suggest direction; do not freelance.
+- **DO NOT** miss the forest for the trees. Catching a typo while missing a SQL injection is a bad trade.
+- **DO NOT** review code you do not understand. Read the surrounding code first.
 
-**Structured Review:**
-> "**Summary:** This PR adds rate limiting to the API. The approach is sound but there are two issues.
->
-> 🔴 **Must Fix:** `api/middleware/rateLimit.ts:23` — The rate limit counter uses an in-memory Map which resets on server restart and doesn't work across multiple instances. Use Redis or the existing cache layer.
->
-> 🟡 **Should Fix:** `api/middleware/rateLimit.ts:45` — The error response returns a 500 instead of 429 (Too Many Requests).
->
-> ✅ **Good:** Clean separation of the middleware, good test coverage for the happy path."
+## Verification
 
-## Guidelines
-
-- Review the intent first, then the implementation
-- Prefer concrete suggestions over vague criticism
-- One review pass isn't always enough — re-read after understanding the full context
-- If you're unsure about something, say so explicitly rather than guessing
-- Give positive feedback too — it's not just about finding problems
-
-## Anti-Patterns
-
-- **LGTM without reading** — A rubber stamp review is worse than no review
-- **Style wars** — Don't block a PR over formatting if there's a linter
-- **Rewriting in the review** — Suggest direction, don't rewrite the whole function in a comment
-- **Missing the forest for the trees** — Catching a typo but missing a SQL injection is a bad trade
-- **Review without context** — Don't review code you don't understand. Read the surrounding code first.
+- [ ] Every changed file was opened with `view` at least once.
+- [ ] Each issue cites a file and line number.
+- [ ] Severity buckets used (🔴 / 🟡 / 🟢 / ✅).
+- [ ] At least one positive observation included.
+- [ ] If 🔴 issues exist, the PR is explicitly marked NOT ready to merge.

@@ -1,0 +1,136 @@
+# MCP Server Registry — vetted servers for the Copilot Agents Dojo
+#
+# Every entry MUST declare:
+#   - id, name, owner, transport, install, auth, scopes (min), env
+#   - clients: which IDEs / agents are known-good
+#   - skill_links: which dojo skills should reference this server
+#
+# Schema is intentionally simple; future `dojo doctor` will validate it.
+
+version: 1
+
+servers:
+  - id: github
+    name: GitHub MCP Server
+    owner: github
+    description: Issues, PRs, code search, repos, file contents.
+    transport: stdio
+    install: "npx -y @modelcontextprotocol/server-github@latest"
+    pin: "0.6.x"
+    auth: token
+    env:
+      - name: GITHUB_PERSONAL_ACCESS_TOKEN
+        required: true
+        notes: Fine-grained PAT scoped to specific repos. Read-only when possible.
+    scopes_min: ["contents:read", "issues:read", "pull_requests:read"]
+    clients: [vscode, claude-code, cursor, codex]
+    skill_links: [pr-workflow, code-review]
+
+  - id: filesystem
+    name: Filesystem MCP Server
+    owner: anthropic
+    description: Read/write files inside an explicit allow-list.
+    transport: stdio
+    install: "npx -y @modelcontextprotocol/server-filesystem@latest"
+    pin: "0.6.x"
+    auth: none
+    args_template: ["<allowed-dir-1>", "<allowed-dir-2>"]
+    env: []
+    scopes_min: ["explicit-paths-only"]
+    warnings:
+      - Never pass "/" or "$HOME" — pass project-scoped paths only.
+    clients: [vscode, claude-code, cursor]
+    skill_links: [codebase-onboarding, refactoring]
+
+  - id: playwright
+    name: Playwright MCP Server
+    owner: microsoft
+    description: Browser automation — navigate, click, scrape, screenshot.
+    transport: stdio
+    install: "npx -y @playwright/mcp@latest"
+    pin: "0.0.x"
+    auth: none
+    env: []
+    scopes_min: ["browser:headless"]
+    clients: [vscode, claude-code, cursor]
+    skill_links: [debugging]
+
+  - id: azure
+    name: Azure MCP Server
+    owner: microsoft
+    description: Azure resource queries, Bicep, App Insights, Cosmos, KeyVault.
+    transport: stdio
+    install: "npx -y @azure/mcp@latest"
+    pin: "0.x"
+    auth: cli-session   # inherits `az login`
+    env:
+      - name: AZURE_SUBSCRIPTION_ID
+        required: false
+    scopes_min: ["reader-on-target-rg"]
+    warnings:
+      - Run `az login` first. Do NOT inline service principal secrets.
+    clients: [vscode, claude-code]
+    skill_links: []
+
+  - id: microsoft-graph
+    name: Microsoft Graph MCP Server
+    owner: microsoft
+    description: M365 calendar, mail, Teams, files, users, groups.
+    transport: stdio
+    install: "npx -y @microsoft/mcp-server-graph@latest"
+    pin: "0.x"
+    auth: oauth-device
+    env:
+      - name: MS_GRAPH_TENANT_ID
+        required: true
+      - name: MS_GRAPH_CLIENT_ID
+        required: true
+    scopes_min: ["User.Read", "Mail.Read", "Calendars.Read"]
+    clients: [vscode, claude-code]
+    skill_links: []
+
+  - id: postgres
+    name: Postgres MCP Server
+    owner: anthropic
+    description: Read-only SQL queries against a Postgres database.
+    transport: stdio
+    install: "npx -y @modelcontextprotocol/server-postgres@latest"
+    pin: "0.6.x"
+    auth: connection-string
+    args_template: ["${env:DATABASE_URL}"]
+    env:
+      - name: DATABASE_URL
+        required: true
+        notes: Use a read-only role. Never use the app's primary credentials.
+    scopes_min: ["select-only-role"]
+    clients: [vscode, claude-code, cursor]
+    skill_links: [debugging]
+
+  - id: fetch
+    name: Fetch MCP Server
+    owner: anthropic
+    description: HTTP GET with content extraction (markdown / text / HTML).
+    transport: stdio
+    install: "npx -y @modelcontextprotocol/server-fetch@latest"
+    pin: "0.6.x"
+    auth: none
+    env: []
+    scopes_min: ["network:outbound"]
+    warnings:
+      - Egress allowed everywhere by default. Restrict via OS / container.
+    clients: [vscode, claude-code, cursor, codex]
+    skill_links: [codebase-onboarding]
+
+  - id: git
+    name: Git MCP Server
+    owner: anthropic
+    description: Local git ops — log, diff, blame, status, branches.
+    transport: stdio
+    install: "npx -y @modelcontextprotocol/server-git@latest"
+    pin: "0.6.x"
+    auth: none
+    args_template: ["--repository", "<repo-path>"]
+    env: []
+    scopes_min: ["local-repo-only"]
+    clients: [vscode, claude-code, cursor]
+    skill_links: [code-review, using-git-worktrees]

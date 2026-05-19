@@ -1,0 +1,23 @@
+// .mcp.json — Claude Code (workspace) / generic stdio MCP clients
+// Copy to <project>/.mcp.json and edit env vars.
+{
+  "mcpServers": {
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github@0.6"],
+      "env": { "GITHUB_PERSONAL_ACCESS_TOKEN": "${GH_PAT}" }
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem@0.6", "."]
+    },
+    "git": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-git@0.6", "--repository", "."]
+    },
+    "fetch": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-fetch@0.6"]
+    }
+  }
+}

@@ -1,106 +1,120 @@
 ---
 name: autonomous-bug-fix
-description: >-
-  Guides the agent through a complete autonomous bug-fixing cycle — reproduce, diagnose,
-  fix, and verify — with zero hand-holding from the user. Use this skill whenever a bug
-  report is received, CI tests are failing, an error appears in logs, or the user reports
-  unexpected behavior. The agent should fix it independently without asking the user
-  how to read logs, run tests, or navigate the codebase.
+description: Reproduces, diagnoses, fixes, and verifies bugs unaided.
+tier: core
+category: discipline
+created_by: human
+platforms: [windows, macos, linux]
+tags: [debugging, autonomy, root-cause]
+author: Andreas Wasita (@andreaswasita)
 ---
 
-# Autonomous Bug Fixing
+# Autonomous Bug Fix Skill
 
-Reproduce, diagnose, fix, verify. Full cycle, zero questions. The user provides intent; the agent handles execution.
+Walks the agent through the full reproduce → diagnose → fix → verify cycle on its own, without asking the user for navigation help, log-reading instructions, or test commands. Does NOT cover net-new feature work — for that use `plan-before-code` and `executing-plans`.
 
 ## When to Use
 
-- User reports a bug or unexpected behavior
-- CI tests are failing
-- Error appears in logs or stack traces
-- User says something like "this is broken" or "it doesn't work"
-- A previously working feature stopped working
+- User reports a bug, regression, or unexpected behavior.
+- CI is red on a branch you own.
+- An error or warning appears in logs.
+- A previously working feature stopped working.
+- The user says "this is broken," "it doesn't work," or similar.
 
-## How to Use
+## Prerequisites
 
-### Phase 1: Reproduce
+- Read access to the failing component (use `glob` / `grep` to locate it).
+- The `powershell` tool to run tests, `git`, and reproduction commands.
+- A clean working tree on a feature branch (use `using-git-worktrees` if needed).
+- `verify-before-done` skill loaded — you'll invoke it at the end.
 
-Before fixing anything, confirm you can reproduce the issue:
+## How to Run
 
-1. **Read the bug report carefully** — Extract the expected vs. actual behavior
-2. **Find the relevant code** — Search the codebase, don't ask the user where it is
-3. **Run the failing test or reproduce the error** — If there's no test, create a minimal reproduction
-4. **Confirm the reproduction** — "I can reproduce this: [evidence]"
-
-If you can't reproduce:
-- Check if the bug is environment-specific
-- Look for race conditions or state-dependent behavior
-- Ask the user for clarification only as a last resort
-
-### Phase 2: Diagnose
-
-Find the root cause, not just the symptom:
-
-1. **Read the error message and stack trace** — These exist for a reason
-2. **Trace the execution path** — Follow the data flow from input to error
-3. **Check recent changes** — `git log` and `git blame` are your friends
-4. **Identify the root cause** — Not "what broke" but "why it broke"
-
-```bash
-# Useful diagnostic commands
-git log --oneline -20              # Recent changes
-git blame path/to/file.ts          # Who changed what
-git diff HEAD~5 -- path/to/file.ts # What changed recently
+```text
+1. Reproduce  → locate the code, run the failing path, confirm with evidence.
+2. Diagnose   → trace from symptom to root cause; check recent changes.
+3. Fix        → minimal change at the root cause + a regression test.
+4. Verify     → re-run reproduction + full suite via `verify-before-done`.
 ```
 
-### Phase 3: Fix
+## Quick Reference
 
-Implement the fix with precision:
+| Phase | Action | Tool |
+|---|---|---|
+| Find code | Search by symbol or file pattern | `grep`, `glob` |
+| Read code | Inspect the failing path | `view` |
+| Reproduce | Run failing command/test | `powershell` |
+| Diagnose | Recent changes / blame | `powershell` → `git log -20 --oneline`, `git blame <path>` |
+| Edit | Minimal, root-cause fix | `edit` |
+| Add test | Regression test | `create` or `edit` under `tests/` |
+| Verify | Re-run reproduction + full suite | `powershell`, then `verify-before-done` |
 
-1. **Fix the root cause, not the symptom** — A band-aid now is a bug later
-2. **Keep the fix minimal** — Change only what needs to change
-3. **Add a test for the bug** — The test should fail without the fix and pass with it
-4. **Check for similar issues elsewhere** — If this bug could exist in other places, check them
+## Procedure
 
-### Phase 4: Verify
+### Step 1: Reproduce
 
-Prove the fix works:
+Find the relevant code yourself — `grep` for the symbol, `glob` for the path. Do not ask the user "which file is this in?"
 
-1. **Run the reproduction again** — The error should be gone
-2. **Run the full test suite** — No regressions
-3. **Show the evidence** — Before/after comparison, test output, log diff
-4. **Reference the verify-before-done skill** for the complete checklist
+Run the failing path via the `powershell` tool. If no failing test exists, write a minimal one that captures the bug. Confirm reproduction with concrete evidence (stack trace, exit code, log line).
 
-### Rollback Strategy
+If you can't reproduce:
 
-If verification fails after a fix:
+- Check for environment-specific behavior (OS, Node/Python version).
+- Look for race conditions or state-dependent paths.
+- Ask the user for clarification only as a last resort, and only with specific questions.
 
-1. **Immediately rollback** the changes — `git checkout -- .` or `git stash`
-2. **Log the failed attempt** in `tasks/lessons.md` with root cause analysis
-3. **Re-plan** with a different approach
-4. **Never push broken code** hoping it will be caught later
+### Step 2: Diagnose Root Cause
 
-## Examples
+Read the error message and stack trace before doing anything else — they exist for a reason. Trace from the user-visible symptom back to the root cause:
 
-**Bad — Helpless:**
-> User: "The login button doesn't work"
-> Agent: "Can you tell me which file the login button is in? What error do you see? How do I run the tests?"
+```bash
+# via the `powershell` tool
+git log -20 --oneline
+git blame path/to/suspect.ts
+git diff HEAD~5 -- path/to/suspect.ts
+```
 
-**Good — Autonomous:**
-> User: "The login button doesn't work"
-> Agent: "Investigating. Found the login handler in `src/auth/LoginForm.tsx`. The `onClick` handler calls `handleLogin()` which throws a `TypeError: Cannot read property 'token' of undefined` at line 42. Root cause: the auth context is `null` when the component mounts because `AuthProvider` is missing from the component tree in the latest route change (commit `a3f2c1d`). Fix: Wrapping the login route with `AuthProvider`. Test added. All 31 tests pass."
+Stop at the root cause, not the first thing that looks suspicious. "Why did this break?" — not "what broke?"
 
-## Guidelines
+### Step 3: Fix at the Root
 
-- **No context switching required from the user** — Figure it out yourself
-- Point at logs, errors, failing tests — then resolve them
-- Go fix failing CI tests without being told how
-- When given a bug report: just fix it. Don't ask for hand-holding.
-- Find root causes. No temporary fixes. Senior developer standards.
+Edit with precision via the `edit` tool:
 
-## Anti-Patterns
+- Change only what needs to change. Bigger diffs hide bigger bugs.
+- Fix the root cause, never the symptom. Swallowing an exception is not a fix.
+- Add a regression test that fails without the fix and passes with it.
+- Check whether the same root cause exists elsewhere (`grep` for the pattern). If yes, fix those too or log them in `tasks/lessons.md` for follow-up.
 
-- **Asking the user to navigate for you** — "Which file?" "How do I run tests?" Figure it out.
-- **Band-aid fixes** — Catching and swallowing an exception is not a fix
-- **Fixing the symptom** — The login button not working because of a missing provider isn't a "button bug"
-- **Skipping verification** — An unverified fix might be worse than no fix
-- **Not logging failed attempts** — You lost knowledge. Log it in `tasks/lessons.md`.
+### Step 4: Verify
+
+Hand off to the `verify-before-done` skill:
+
+- Re-run the reproduction. The error must be gone.
+- Run the full test suite. No regressions.
+- Record evidence in `tasks/todo.md` under the task.
+
+### Step 5: Rollback If Verification Fails
+
+If verification fails after your fix:
+
+1. Reset the working tree (`git checkout -- .` or `git stash` via `powershell`).
+2. Log the failed attempt in `tasks/lessons.md` with the root-cause analysis you had.
+3. Re-plan with a different approach via `plan-before-code`.
+4. **Never** push broken code hoping someone catches it later.
+
+## Pitfalls
+
+- **DO NOT** ask the user "which file is it in?" or "how do I run the tests?" Use `grep`/`glob`/`view`/`powershell` to discover it.
+- **DO NOT** apply a band-aid (catch-and-swallow, ignore the warning). Fix the root cause.
+- **DO NOT** fix the symptom. A login button that fails because of a missing provider is a provider bug, not a button bug.
+- **DO NOT** skip the regression test. Without one, the bug comes back in 3 months.
+- **DO NOT** push without verification. An unverified fix is often worse than no fix.
+- **DO NOT** abandon failed attempts silently. Log them in `tasks/lessons.md`.
+
+## Verification
+
+- [ ] Reproduction was confirmed with concrete evidence before any fix.
+- [ ] Root cause is identified in writing (in commit message or `tasks/todo.md`).
+- [ ] Regression test added that fails on `main` and passes on the branch.
+- [ ] `verify-before-done` checklist passed.
+- [ ] If similar patterns exist elsewhere, they are fixed or logged.

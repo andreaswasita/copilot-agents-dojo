@@ -1,139 +1,139 @@
 ---
 name: receiving-code-review
-description: >-
-  Processes feedback from human or agent code reviews and iterates until the
-  code is approved. Use this skill when review comments are received on a PR
-  or diff, when the user provides corrections or suggestions, when a self-review
-  (requesting-code-review) flagged issues, or when CI/CD checks fail with
-  actionable feedback.
+description: Processes review feedback until the change is approved.
+tier: practical
+category: workflow
+created_by: human
+platforms: [windows, macos, linux]
+tags: [review, feedback, iteration]
+author: Andreas Wasita (@andreaswasita)
 ---
 
-# Receiving Code Review
+# Receiving Code Review Skill
 
-Feedback received. Process every comment. Fix, verify, update, and request re-review.
+Processes every review comment — human, agent, or CI — until the change is approved. Each comment is categorized, addressed, verified, and answered. Does NOT silently ignore comments and does NOT amend the original commit during active review.
 
 ## When to Use
 
-- Review comments received on a pull request
-- User provides corrections or improvement suggestions
-- Self-review (`requesting-code-review`) flagged issues to fix
-- CI/CD checks fail with actionable feedback
-- Another agent's review output needs to be addressed
+- Review comments received on a pull request.
+- User provides corrections or improvement suggestions.
+- The `requesting-code-review` skill flagged issues.
+- CI/CD checks fail with actionable feedback.
+- A sub-agent's review output needs to be addressed.
 
-## How to Use
+## Prerequisites
+
+- The list of comments (PR thread, CI log, or chat).
+- The `view`, `edit`, `grep`, and `powershell` Copilot tools.
+- `git` for new commits and `gh` for PR threads (when relevant).
+- A green baseline test run.
+
+## How to Run
+
+```text
+1. Read every comment. Categorize by action.
+2. For each comment: fix, verify, respond, mark resolved.
+3. Re-run the full test suite after all fixes.
+4. Re-self-review with the `requesting-code-review` skill.
+5. Update `tasks/todo.md` and (if pattern recurring) `tasks/lessons.md`.
+6. Request re-review with a short summary.
+```
+
+## Quick Reference
+
+| Category | Action |
+|---|---|
+| Agree — will fix | Fix it. No debate. |
+| Agree — won't fix now | Log as follow-up with reason |
+| Disagree — with evidence | Respond with reasoning and evidence |
+| Need clarification | Ask one focused follow-up |
+| Already addressed | Link to the commit / line |
+
+| Phase | Tool |
+|---|---|
+| Read comments | `gh pr view` / PR UI |
+| Apply fix | `edit` |
+| Verify fix | `powershell` → test runner |
+| Respond | `gh pr comment` / PR UI |
+| Track resolution | Checklist in `tasks/todo.md` |
+
+## Procedure
 
 ### Step 1: Acknowledge and Categorize
 
-Read every comment. Categorize by action needed:
+Read every comment. Categorize each using the table above. Track them in `tasks/todo.md` as a Review Feedback section:
 
-| Category | Action |
-|----------|--------|
-| **Agree — will fix** | Fix it. No debate needed. |
-| **Agree — won't fix now** | Log as follow-up with reason |
-| **Disagree — with explanation** | Respond with reasoning and evidence |
-| **Question — need clarification** | Ask a focused follow-up question |
-| **Already addressed** | Point to the commit/line that addresses it |
+```markdown
+### Review Feedback (Round 1)
+- [ ] Comment #1: missing error handling — agree, will fix
+- [ ] Comment #2: rename for clarity — agree, will fix
+- [ ] Comment #3: add pagination — agree, follow-up (out of scope)
+```
 
 ### Step 2: Address Each Comment
 
-For every review comment:
+For every comment:
 
-1. **Fix the issue** — Make the code change
-2. **Run relevant tests** — Verify the fix doesn't break anything
-3. **Respond to the comment** — Explain what you changed and why
-4. **Mark resolved** — Track which comments are addressed
-
-```markdown
-## Review Response
-
-### Comment 1: "Missing error handling on API call" — @reviewer
-**Action:** Added try/catch with proper error response (commit abc123)
-**Verification:** New test covers the error path
-
-### Comment 2: "Consider using a Map instead of Object" — @reviewer
-**Action:** Agree, refactored to Map for O(1) lookups (commit def456)
-**Verification:** All existing tests pass, perf test shows 2x improvement
-
-### Comment 3: "Add pagination" — @reviewer
-**Action:** Logged as follow-up — out of scope for this PR
-**Tracking:** Added to tasks/todo.md as future item
-```
-
-### Step 3: Re-Verify After Changes
-
-After addressing all comments:
-
-1. **Run the full test suite** — Not just the tests for changed code
-2. **Re-review the diff** — Use `requesting-code-review` skill on the updated code
-3. **Check that fixes don't introduce new issues** — Every fix is a potential new bug
-
-### Step 4: Update Tracking Files
+1. Fix the issue with `edit`.
+2. Run the relevant tests via the `powershell` tool.
+3. Respond on the thread with what changed and why (cite commit SHA).
+4. Tick the checkbox in `tasks/todo.md`.
 
 ```markdown
-# tasks/todo.md — add review section
-### Review Feedback (Round 1)
-- [x] Fix missing error handling (comment #1)
-- [x] Refactor to Map (comment #2)
-- [ ] Add pagination (comment #3 — logged as follow-up)
+### Comment #1: missing error handling — @reviewer
+**Action:** Added try/catch with 502 response on upstream failure (commit `abc1234`).
+**Verification:** New test covers the failure path.
 ```
 
-Update `tasks/lessons.md` if the review caught a recurring pattern:
+### Step 3: Re-Verify After All Fixes
+
+Run the full test suite — not just the tests for the changed lines. Re-run the dojo gate:
+
+```bash
+bash scripts/verify.sh --check
+```
+
+Re-self-review with the `requesting-code-review` skill. Every fix is a potential new bug.
+
+### Step 4: Record Lessons If The Pattern Repeats
+
+If review keeps catching the same shape of issue, append to `tasks/lessons.md`:
 
 ```yaml
-- date: 2026-03-24
-  error_type: error-handling-gap
+- date: 2026-05-19
+  error_type: missing-error-handling
   trigger: "Reviewer caught missing try/catch on external API call"
-  root_cause: "Didn't consider failure modes for external dependencies"
-  fix: "Added error boundary pattern for all external calls"
-  rule: "Every external API call gets a try/catch with proper error response"
-  occurrences: 1
+  root_cause: "Did not consider failure modes for external dependencies"
+  fix: "Wrapped call in retry + circuit breaker"
+  rule: "Every external API call has an explicit failure path with a test"
+  occurrences: 2
   status: active
 ```
 
 ### Step 5: Request Re-Review
 
-After all fixes are committed:
-
 ```markdown
 **Re-review ready**
 - Addressed 2/3 comments directly
-- 1 comment logged as follow-up (out of scope)
+- 1 logged as follow-up (out of scope)
 - All tests pass (49 total, 2 new)
-- No new issues in self-review
+- Self-review clean
 ```
 
-## Examples
+Push fixes as new commits while review is active. Squash fixup commits just before merge — not during.
 
-**Bad — Defensive Response:**
-> Reviewer: "This doesn't handle null"
-> Agent: "It works fine in my tests"
+## Pitfalls
 
-**Good — Constructive Response:**
-> Reviewer: "This doesn't handle null"
-> Agent: "Good catch. Added null guard at the boundary and a test for the null case.
-> Commit abc123. All 49 tests pass."
+- **DO NOT** ignore a comment. Every comment gets a response, even "won't fix, here's why".
+- **DO NOT** be defensive. "It works in my tests" is not a response to "this could be better".
+- **DO NOT** force-push during active review. Reviewers lose context.
+- **DO NOT** fix one comment in isolation and skip retesting. Re-verify after every round.
+- **DO NOT** treat repeat feedback as random. If the same theme keeps coming back, log a lesson.
 
-**Bad — Ignoring Feedback:**
-> *3 comments received, agent addresses 1 and ignores the rest*
+## Verification
 
-**Good — Complete Response:**
-> Agent: "Addressed all 3 comments:
-> 1. ✅ Fixed — null handling added
-> 2. ✅ Fixed — renamed for clarity
-> 3. 📝 Logged — pagination is out of scope, added to follow-up"
-
-## Guidelines
-
-- Address every comment — even if the answer is "won't fix now, here's why"
-- Fixes from review get their own commits — don't amend the original
-- Re-verify after every round of fixes
-- Log recurring review themes in `tasks/lessons.md` — they're learning opportunities
-- If you disagree with feedback, explain with evidence, not attitude
-
-## Anti-Patterns
-
-- **Ignoring comments** — Every comment deserves a response
-- **Being defensive** — "It works" is not a response to "this could be better"
-- **Fixing without verifying** — A fix that breaks something else isn't a fix
-- **Losing track of comments** — Use a checklist to ensure every comment is addressed
-- **Not learning from reviews** — If the same feedback keeps appearing, log the lesson
+- [ ] Every comment is checked off in `tasks/todo.md`.
+- [ ] Every comment has an explicit thread response (action + commit reference).
+- [ ] Full test suite re-run after all fixes; exit 0.
+- [ ] `requesting-code-review` re-run after fixes; no new 🔴 findings.
+- [ ] If a pattern repeated, `tasks/lessons.md` was updated.

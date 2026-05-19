@@ -1,118 +1,132 @@
 ---
 name: requesting-code-review
-description: >-
-  Reviews the agent's own work against the original plan and design before
-  presenting it to the user or submitting a PR. Use this skill when a task or
-  batch of tasks is complete, between implementation phases, before creating
-  a pull request, or when the agent is about to declare "done." Critical issues
-  block progress — no exceptions.
+description: Self-reviews work against the plan before sign-off.
+tier: practical
+category: workflow
+created_by: human
+platforms: [windows, macos, linux]
+tags: [self-review, quality, gate]
+author: Andreas Wasita (@andreaswasita)
 ---
 
-# Requesting Code Review
+# Requesting Code Review Skill
 
-Review your own work against the plan. Flag issues by severity. Critical issues block progress.
+Self-reviews the agent's own output against the original plan before declaring done or opening a PR. Surfaces issues by severity; critical issues block progress. Does NOT replace human review — it ensures the human review starts from a defensible baseline.
 
 ## When to Use
 
-- A task or batch of tasks is complete
-- Between major implementation phases
-- Before creating a pull request
-- Before telling the user "done" on any non-trivial change
-- After a subagent completes delegated work
+- A task or batch of tasks is complete.
+- Between major implementation phases.
+- Before creating a pull request.
+- Before telling the user "done" on any non-trivial change.
+- After a sub-agent returns delegated work.
 
-## How to Use
+## Prerequisites
 
-### Step 1: Compare Output to Plan
+- An approved plan in `tasks/todo.md` (or equivalent design doc).
+- The `view` and `grep` tools to read the diff and surrounding code.
+- `git` for the diff inspection.
+- A green test run (the `verify-before-done` skill should already have run).
 
-Pull up the original plan from `tasks/todo.md` and the design (if one exists):
+## How to Run
 
-1. **Does the implementation match the spec?** — Compare actual behavior to planned behavior
-2. **Are all acceptance criteria met?** — Check each criterion explicitly
-3. **Were any shortcuts taken?** — Note where the implementation deviated from the plan
+```text
+1. Compare implementation to the plan spec, criterion by criterion.
+2. Walk the self-review checklist.
+3. Tag each finding 🔴 / 🟡 / 🟢 / ✅.
+4. Act on findings — 🔴 blocks, 🟡 fixed before PR, 🟢 logged.
+5. Emit a short summary before claiming completion.
+```
 
-### Step 2: Self-Review Checklist
+## Quick Reference
 
-Run through this checklist for every completed task:
+| Severity | Meaning | Action |
+|---|---|---|
+| 🔴 Critical | Wrong behavior, security risk, broken test | STOP. Fix before next task. |
+| 🟡 Major | Should fix before merge | Fix before PR; OK to continue current task |
+| 🟢 Minor | Style, nit, future improvement | Log to `tasks/todo.md` follow-ups |
+| ✅ Passing | Criterion met | Note in summary |
 
-| Check | Status |
-|-------|--------|
-| Implementation matches the plan spec | ✅/❌ |
-| All tests pass (including new ones) | ✅/❌ |
-| No debug artifacts left (console.log, TODO hacks) | ✅/❌ |
-| Error handling covers edge cases | ✅/❌ |
-| No security issues introduced | ✅/❌ |
-| Code follows project conventions | ✅/❌ |
-| Diff scope matches task scope (no extra changes) | ✅/❌ |
+| Checklist item | Look at |
+|---|---|
+| Matches plan spec | `tasks/todo.md` |
+| Tests pass (including new) | Latest test run output |
+| No debug artifacts | `grep` for `console.log`, `print`, `TODO` |
+| Edge cases covered | The new test file |
+| No security regressions | Auth, input validation, secrets |
+| Follows project conventions | Adjacent files |
+| Diff scope = task scope | `git diff main --stat` |
 
-### Step 3: Flag Issues by Severity
+## Procedure
+
+### Step 1: Compare to Plan
+
+Open `tasks/todo.md` with `view`. For the task just completed, read its acceptance criteria. Tick each one explicitly — do not summarize.
+
+### Step 2: Walk the Checklist
+
+For each row in the Quick Reference checklist, mark ✅ or flag a finding. Use `grep` to hunt for debug artifacts:
+
+```bash
+grep -nE "console\.log|print\(|TODO|XXX|FIXME" <changed files>
+```
+
+(Use the `grep` Copilot tool, not bare shell `grep`.)
+
+### Step 3: Tag by Severity
+
+Group findings under 🔴 / 🟡 / 🟢 / ✅:
 
 ```markdown
-## Self-Review Summary
+## Self-Review
 
-### 🔴 Critical (Blocks Progress)
-- [issue] — Must fix before moving forward
-  **Action:** [what needs to change]
+### 🔴 Critical
+- `api/users.ts:42` — DELETE endpoint missing authorization check.
 
-### 🟡 Major (Should Fix)
-- [issue] — Important but doesn't block the current task
-  **Action:** [what needs to change]
+### 🟡 Major
+- `api/users.ts:88` — Returns 500 instead of 404 for missing user.
 
-### 🟢 Minor (Note for Later)
-- [issue] — Nice to have, not urgent
-  **Action:** [log for future]
+### 🟢 Minor
+- `api/users.ts:120` — Consider pagination on the list endpoint.
 
 ### ✅ Passing
-- Implementation matches spec
-- Tests cover the new behavior
-- Code follows existing patterns
+- 4/4 endpoints match spec.
+- 12 new tests, all green.
+- Diff scope = task scope.
 ```
 
 ### Step 4: Act on Findings
 
-- **🔴 Critical** → STOP. Fix immediately. Do not proceed to the next task.
-- **🟡 Major** → Fix before the PR, but can continue to the next task
-- **🟢 Minor** → Log in `tasks/todo.md` as a follow-up item
-- **✅ All clear** → Proceed to the next task or submit
+- 🔴 → STOP. Fix immediately. Re-verify. Re-review.
+- 🟡 → Fix before the PR. Safe to continue the current task.
+- 🟢 → Log in `tasks/todo.md` under follow-ups.
+- ✅ → Note in the summary and proceed.
 
-### Step 5: Present Summary
+### Step 5: Present the Summary
 
-Always show the user a brief review summary before declaring completion:
+Always emit a short visible summary before "done":
 
 ```markdown
 **Review: Step 3 — Implement API endpoints**
-- ✅ 4/4 endpoints implemented per spec
+- ✅ 4/4 endpoints per spec
 - ✅ Input validation on all routes
 - 🟡 Missing rate limit on POST /users (logged for Step 6)
 - ✅ 12 new tests, all passing
-- Proceeding to Step 4.
+Proceeding to Step 4.
 ```
 
-## Examples
+## Pitfalls
 
-**Bad — No Self-Review:**
-> Agent: "Done! I implemented all the endpoints."
-> User: *finds missing error handling, wrong response codes, and a SQL injection*
+- **DO NOT** skip self-review and say "it works, ship it".
+- **DO NOT** downgrade severity to avoid extra work. A missing auth check is 🔴, not 🟢.
+- **DO NOT** review only the happy path. Walk the error and edge paths too.
+- **DO NOT** proceed past a 🔴 finding. The whole point is that criticals block.
+- **DO NOT** rubber-stamp ("✅ all good") without actually checking each item.
 
-**Good — Self-Review Catches Issues:**
-> Agent: "Implementation complete. Self-review:
-> - 🔴 The DELETE endpoint doesn't check authorization — fixing now.
-> - ✅ All other endpoints match spec, 12 tests passing.
-> - 🟢 Could add pagination to GET /users, logging for future.
->
-> Fixing the auth check before proceeding..."
+## Verification
 
-## Guidelines
-
-- Self-review is mandatory between tasks, not optional
-- Critical issues are non-negotiable blockers — fix before moving forward
-- The review checks the plan, not just the code — did we build what we said we'd build?
-- Be honest in self-review — hiding issues from yourself helps nobody
-- Use the `code-review` skill format for detailed line-by-line review when needed
-
-## Anti-Patterns
-
-- **Skipping self-review** — "It works, ship it" is not a review
-- **Downgrading severity** — A missing auth check is critical, not minor
-- **Reviewing only happy paths** — Check edge cases and error paths too
-- **Proceeding past critical issues** — The whole point is that criticals block
-- **Rubber-stamp reviews** — "✅ All good" without actually checking is worse than no review
+- [ ] Each acceptance criterion in the plan is explicitly ticked or flagged.
+- [ ] Self-review summary was emitted with severity buckets.
+- [ ] Any 🔴 findings were fixed and re-verified before claiming done.
+- [ ] 🟢 findings were logged to `tasks/todo.md` follow-ups.
+- [ ] User saw the summary before any "done" claim.
