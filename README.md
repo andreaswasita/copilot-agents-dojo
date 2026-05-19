@@ -8,14 +8,15 @@
 
 *End-to-end framework to take AI agents from improvised assistants to disciplined, measurable, repeatable engineering partners.*
 
-[**📖 Wiki**](../../wiki) · [**Start Here**](#enter-the-dojo) · [**Quickstart**](#enter-the-dojo) · [**Skills**](./skills.md) · [**Agents**](./agents) · [**Spec**](./spec/copilot-skills-spec.md) · [**Contributor Guide**](./AGENTS.md)
+[**📖 Wiki**](../../wiki) · [**Start Here**](#enter-the-dojo) · [**Skills**](./skills.md) · [**Agents**](./agents) · [**Spec**](./spec/copilot-skills-spec.md) · [**Contributor Guide**](./AGENTS.md)
 
 ![license](https://img.shields.io/badge/license-MIT-1f6feb?style=flat-square)
-![version](https://img.shields.io/badge/version-1.0-3fb950?style=flat-square)
+![version](https://img.shields.io/badge/version-1.1-3fb950?style=flat-square)
 ![spec](https://img.shields.io/badge/spec-v1-1f6feb?style=flat-square)
 ![skills](https://img.shields.io/badge/skills-26-d2691e?style=flat-square)
 ![tiers](https://img.shields.io/badge/tiers-core%20%2F%20practical%20%2F%20optional-8b5cf6?style=flat-square)
 ![agents](https://img.shields.io/badge/personas-5-14b8a6?style=flat-square)
+![curator](https://img.shields.io/badge/curator-self--improving-f59e0b?style=flat-square)
 ![gate](https://img.shields.io/badge/enforcement-verify.sh-ec4899?style=flat-square)
 
 ---
@@ -30,14 +31,18 @@ Where the [Copilot Cowork Dojo](https://github.com/andreaswasita/copilot-cowork-
 
 Drop `skills/` + `optional-skills/` + `.github/copilot-instructions.md` into any repo → Copilot agents auto-discover the index and follow the workflow. Run `bash scripts/verify.sh` as the single gate in CI or pre-PR.
 
-Includes:
-- **23 production skills** (6 core kata + 7 flow waza + 7 practical kumite + 3 meta dō)
+**What's inside:**
+
+- **26 production skills** across `core / practical / optional` tiers
+- **5 specialized agent personas** (architect, security-engineer, software-engineer, TPM, test-engineer)
 - Mandatory **BRAINSTORM → PLAN → TDD → REVIEW → FINISH** pipeline
-- **Memory vault** — persistent, linked knowledge graph (replaces flat-file memory)
-- Git worktree isolation
-- Self-improving `tasks/lessons.md` → promoted to `memory/patterns/`
-- `scripts/verify.sh` enforcement gates
-- GitHub Actions PR enforcement
+- **Self-improving curator** — state machine, backups, idle-based trigger, per-run audit trail
+- **Memory vault** — persistent, linked knowledge graph (Obsidian-compatible)
+- **MCP memory server** — any MCP-capable agent can read/write the vault
+- Git worktree isolation + cache-aware skill amendments
+- Single enforcement gate: `scripts/verify.sh` (+ GitHub Actions)
+
+---
 
 ## The Mandatory Workflow
 
@@ -47,16 +52,18 @@ Every non-trivial task follows this pipeline — no skipping, no improvising:
 BRAINSTORM → WORKTREE → PLAN → EXECUTE → TEST → REVIEW → FINISH → LEARN
 ```
 
-| Step | Skill | What Happens |
+| Step | Skill | What happens |
 |------|-------|-------------|
 | 1 | [`brainstorming`](skills/brainstorming/SKILL.md) | Socratic refinement → approved design |
 | 2 | [`using-git-worktrees`](skills/using-git-worktrees/SKILL.md) | Isolated workspace on feature branch |
 | 3 | [`plan-before-code`](skills/plan-before-code/SKILL.md) | Bite-sized tasks in `tasks/todo.md` |
 | 4 | [`executing-plans`](skills/executing-plans/SKILL.md) | One task at a time, verify each |
-| 5 | [`test-writing`](skills/test-writing/SKILL.md) | RED-GREEN-REFACTOR for every change |
+| 5 | [`test-writing`](skills/test-writing/SKILL.md) | RED → GREEN → REFACTOR for every change |
 | 6 | [`requesting-code-review`](skills/requesting-code-review/SKILL.md) | Self-review against plan |
 | 7 | [`finishing-a-development-branch`](skills/finishing-a-development-branch/SKILL.md) | Verify + merge decision + cleanup |
 | 8 | [`self-improvement`](skills/self-improvement/SKILL.md) | Log lessons, promote patterns, update memory vault |
+
+---
 
 ## Skill Sets
 
@@ -67,9 +74,7 @@ BRAINSTORM → WORKTREE → PLAN → EXECUTE → TEST → REVIEW → FINISH → 
 - [spec/](./spec) — The Copilot Skills specification (v1)
 - [template/](./template) — Starter template for creating new skills
 
----
-
-## Core Kata — 基本型
+### Core Kata — 基本型
 
 Always loaded. Behavioral skills that govern *how* agents think. Style-agnostic.
 
@@ -84,11 +89,11 @@ Always loaded. Behavioral skills that govern *how* agents think. Style-agnostic.
 | [demand-elegance](./skills/demand-elegance/SKILL.md) | 🥋 Challenge hacky solutions (without over-engineering) |
 | [autonomous-bug-fix](./skills/autonomous-bug-fix/SKILL.md) | 🥋 Reproduce → diagnose → fix → verify. Zero hand-holding. |
 
-## Flow Waza — 流れ技
+### Flow Waza — 流れ技
 
 Skills that orchestrate the mandatory pipeline.
 
-| Skill | |
+| Skill | Purpose |
 |---|---|
 | [brainstorming](./skills/brainstorming/SKILL.md) | Socratic design refinement before any code |
 | [using-git-worktrees](./skills/using-git-worktrees/SKILL.md) | Isolated workspace for every session |
@@ -98,25 +103,25 @@ Skills that orchestrate the mandatory pipeline.
 | [finishing-a-development-branch](./skills/finishing-a-development-branch/SKILL.md) | Final verification + merge decision + cleanup |
 | [dispatching-parallel-agents](./skills/dispatching-parallel-agents/SKILL.md) | Concurrent sub-agent work when beneficial |
 
-## Practical Kumite — 実践組手
+### Practical Kumite — 実践組手
 
 Task-specific skills for the most common engineering work.
 
 | Skill | Purpose |
 |-------|---------|
-| [`code-review`](skills/code-review/SKILL.md) | Structured review with severity-based feedback |
-| [`refactoring`](skills/refactoring/SKILL.md) | Safe refactoring — behavior preservation, small steps |
-| [`test-writing`](skills/test-writing/SKILL.md) | Meaningful tests that catch bugs, not just exist |
-| [`pr-workflow`](skills/pr-workflow/SKILL.md) | Clean commits, good descriptions, merge-ready PRs |
-| [`debugging`](skills/debugging/SKILL.md) | Systematic debugging — evidence, hypotheses, divide-and-conquer |
-| [`codebase-onboarding`](skills/codebase-onboarding/SKILL.md) | Rapidly understand unfamiliar codebases |
-| [`requirements-elicitation`](skills/requirements-elicitation/SKILL.md) | Structured elicitation, user stories, acceptance criteria, Definition of Ready gate |
+| [code-review](./skills/code-review/SKILL.md) | Structured review with severity-based feedback |
+| [refactoring](./skills/refactoring/SKILL.md) | Safe refactoring — behavior preservation, small steps |
+| [test-writing](./skills/test-writing/SKILL.md) | Meaningful tests that catch bugs, not just exist |
+| [pr-workflow](./skills/pr-workflow/SKILL.md) | Clean commits, good descriptions, merge-ready PRs |
+| [debugging](./skills/debugging/SKILL.md) | Systematic debugging — evidence, hypotheses, divide-and-conquer |
+| [codebase-onboarding](./skills/codebase-onboarding/SKILL.md) | Rapidly understand unfamiliar codebases |
+| [requirements-elicitation](./skills/requirements-elicitation/SKILL.md) | Structured elicitation, user stories, acceptance criteria, Definition of Ready gate |
 
-## Optional Skills — 選択
+### Optional Skills — 選択
 
 Heavyweight or niche. Installed explicitly from [optional-skills/](./optional-skills).
 
-| Skill | |
+| Skill | Purpose |
 |---|---|
 | [writing-skills](./optional-skills/writing-skills/SKILL.md) | SKILL.md template + spec compliance |
 | [using-mcp](./optional-skills/using-mcp/SKILL.md) | Call MCP tools from inside a Copilot session |
@@ -149,6 +154,7 @@ Personas in [agents/](./agents), with a single source of truth in [`agents/regis
 | `agents/registry.yaml` | `agents/*.md` briefs | `verify.sh` persona check |
 | `cli/dojo_cli/registry.py` `COMMAND_REGISTRY` | CLI help table + interactive menu | (programmatic — single tuple) |
 | `.dojo/delegation.yaml` | Sub-agent knobs cited by `subagent-strategy` | manual review |
+| `skills/` + `optional-skills/` folder names | `.dojo/bundled-manifest.txt` | `verify.sh` curator check |
 
 If any source of truth changes, the gate either auto-regenerates the artifact or fails loudly. No silent drift.
 
@@ -161,27 +167,25 @@ Everything in `scripts/` honors `${DOJO_ROOT:-…}` so it works from any cwd and
 | Script | Purpose |
 |---|---|
 | [scripts/init.sh](./scripts/init.sh) | Scaffolds `tasks/{todo,lessons}.md` on first clone |
-| [scripts/verify.sh](./scripts/verify.sh) | **The single gate** — spec invariants + skills.md freshness + persona drift + path audit |
+| [scripts/verify.sh](./scripts/verify.sh) | **The single gate** — spec invariants + skills.md freshness + persona drift + path audit + curator manifest |
 | [scripts/run-checks.ps1](./scripts/run-checks.ps1) | Windows parity wrapper for `verify.sh` |
-| [scripts/regen-skills-index.sh](./scripts/regen-skills-index.sh) | Rebuilds `skills.md` from frontmatter (`.ps1` mirror included) |
+| [scripts/regen-skills-index.sh](./scripts/regen-skills-index.sh) | Rebuilds `skills.md` + `.dojo/bundled-manifest.txt` from frontmatter (`.ps1` mirror included) |
 | [scripts/lesson-updater.sh](./scripts/lesson-updater.sh) | Cache-aware skill amendments — deferred by default, `--now` to apply immediately |
 | [scripts/curator.sh](./scripts/curator.sh) | Skill lifecycle: `status / record / pin / unpin / archive / restore / transition / backup / rollback / report` (`.ps1` mirror included) |
 | [scripts/curator-tick.sh](./scripts/curator-tick.sh) | Idle-gated curator trigger (interval + min-idle); `.ps1` wrapper for Windows |
 | [scripts/board.sh](./scripts/board.sh) | Durable task board: `new / list / status / roll-up` |
+| [scripts/link-index.sh](./scripts/link-index.sh) | Memory vault link graph + backlinks + `INDEX.md` stats |
+| [scripts/memory-query.sh](./scripts/memory-query.sh) | Query memory vault by tag, type, date, status, or backlinks |
+| [scripts/obsidian-sync.sh](./scripts/obsidian-sync.sh) | Promote 3+ occurrence lessons to `memory/patterns/` |
 | [scripts/migrate-v1.sh](./scripts/migrate-v1.sh) | Idempotent upgrade helper for pre-v1 repos |
 
 ```bash
-# Initialize the dojo in your repo
-bash scripts/init.sh
-
-# Run all gates before submitting a PR (use scripts/run-checks.ps1 on Windows)
-bash scripts/verify.sh
-
-# Rebuild the skills index after adding or renaming skills
-bash scripts/regen-skills-index.sh
-
-# Open a new durable task on the board
-bash scripts/board.sh new "Fix flaky auth test"
+bash scripts/init.sh                              # initialize the dojo in your repo
+bash scripts/verify.sh                            # run the single gate before any PR
+bash scripts/regen-skills-index.sh                # rebuild skills.md + bundled-manifest.txt
+bash scripts/board.sh new "Fix flaky auth test"   # open a durable task on the board
+bash scripts/link-index.sh                        # rebuild memory vault graph
+bash scripts/memory-query.sh --type pattern --recent 5
 ```
 
 ### Requirements
@@ -194,28 +198,36 @@ bash scripts/board.sh new "Fix flaky auth test"
 
 ## Curator + Telemetry
 
-`scripts/curator.sh` reads `.dojo/skill-usage.json` (gitignored), enforces an `active → stale → archived` lifecycle, and writes per-run reports + tarball backups.
+`scripts/curator.sh` reads `.dojo/skill-usage.json` (gitignored), enforces an `active → stale → archived` lifecycle, and writes per-run reports + tarball backups. v1.1 ports the [hermes-agent](https://github.com/andreaswasita/hermes-agent) self-improvement pattern without adding a daemon.
 
 ```bash
-bash scripts/curator.sh status                   # usage counts + state per skill
-bash scripts/curator.sh pin debugging            # always-load (exempt from transitions)
-bash scripts/curator.sh transition --dry-run     # age-based active→stale→archived
-bash scripts/curator.sh backup --reason "pre-edit"  # tar.gz snapshot (keeps last 5)
-bash scripts/curator.sh rollback --list          # show available backups
-bash scripts/curator.sh report                   # markdown rollup of last run
+bash scripts/curator.sh status                       # usage counts + state per skill
+bash scripts/curator.sh pin debugging                # always-load (exempt from transitions)
+bash scripts/curator.sh transition --dry-run         # age-based active → stale → archived
+bash scripts/curator.sh backup --reason "pre-edit"   # tar.gz snapshot (keeps last 5)
+bash scripts/curator.sh rollback --list              # show available backups
+bash scripts/curator.sh report                       # markdown rollup of last run
 ```
 
 **Idle-based trigger** (hermes-style — fires only when the agent is quiet):
 
 ```bash
-bash scripts/curator-tick.sh                     # gated: default 168h interval, 2h idle
-bash scripts/curator-tick.sh --force --dry-run   # bypass gates, preview
-pwsh scripts/curator-tick.ps1                    # Windows wrapper
+bash scripts/curator-tick.sh                         # gated: default 168h interval, 2h idle
+bash scripts/curator-tick.sh --force --dry-run       # bypass gates, preview
+pwsh scripts/curator-tick.ps1                        # Windows wrapper
 ```
 
-Wire it into your shell init, a pre-commit hook, or a scheduled task. Knobs live in `.dojo/curator.env` (`DOJO_CURATOR_STALE_DAYS`, `DOJO_CURATOR_ARCHIVE_DAYS`, `DOJO_CURATOR_INTERVAL_HOURS`, `DOJO_CURATOR_MIN_IDLE_HOURS`).
+Wire it into your shell init, a pre-commit hook, or a scheduled task. Knobs live in `.dojo/curator.env` (`DOJO_CURATOR_STALE_DAYS`, `DOJO_CURATOR_ARCHIVE_DAYS`, `DOJO_CURATOR_INTERVAL_HOURS`, `DOJO_CURATOR_MIN_IDLE_HOURS`, `DOJO_CURATOR_BACKUP_KEEP`, `DOJO_CURATOR_REPORT_KEEP`).
 
-**Provenance.** Three layers protect bundled skills from auto-archive: (1) `created_by: human` frontmatter, (2) the `.dojo/bundled-manifest.txt` manifest regenerated by `scripts/regen-skills-index.sh`, (3) the per-skill `pinned: true` flag. Only agent-authored, unpinned, un-bundled skills can ever transition to archived.
+**Three-layer provenance guard.** Bundled skills can never be auto-archived. Three checks, any of which exempts a skill from every auto-transition:
+
+1. `created_by: human` in the SKILL.md frontmatter.
+2. Folder name in `.dojo/bundled-manifest.txt` (regenerated whenever you run `regen-skills-index.sh`).
+3. `pinned: true` in the usage sidecar (`bash scripts/curator.sh pin <name>`).
+
+Only agent-authored, unpinned, un-bundled skills can ever reach `archived` — and even then, "archived" means moved to `skills/.archive/`, never deleted, and restorable via `curator.sh restore <name>` or `rollback <stamp>`.
+
+---
 
 ## Cache-Aware Self-Improvement
 
@@ -224,14 +236,11 @@ Mutating `skills.md` or any `SKILL.md` mid-session invalidates Copilot's prompt 
 - `scripts/lesson-updater.sh` (no flag) writes proposed amendments to `.dojo/pending-amendments.md`. Apply them at session boundaries.
 - `scripts/lesson-updater.sh --now` applies immediately but prints a loud warning that the cache is being blown.
 
-| Script | Purpose |
-|--------|---------|
-| [`scripts/init.sh`](scripts/init.sh) | Scaffolds `tasks/todo.md` and `tasks/lessons.md` on first clone |
-| [`scripts/lesson-updater.sh`](scripts/lesson-updater.sh) | Scans lessons for recurring patterns (3+), proposes skill amendments |
-| [`scripts/verify.sh`](scripts/verify.sh) | Pre-PR verification: tests, clean tree, plan check |
-| [`scripts/link-index.sh`](scripts/link-index.sh) | Builds memory vault link graph, backlinks, and INDEX.md stats |
-| [`scripts/memory-query.sh`](scripts/memory-query.sh) | Query memory by tag, type, date, status, or backlinks |
-| [`scripts/obsidian-sync.sh`](scripts/obsidian-sync.sh) | Promotes 3+ occurrence lessons to `memory/patterns/` |
+---
+
+## Multi-Instance Profiles
+
+Working on several projects concurrently? Each profile gets its own `skills/`, `tasks/`, `.dojo/` under `~/.dojo/profiles/<name>/`:
 
 ```bash
 dojo --profile work status         # uses ~/.dojo/profiles/work
@@ -240,88 +249,51 @@ dojo --profile experiment menu     # uses ~/.dojo/profiles/experiment
 
 `DOJO_ROOT` is exported automatically so every shell script and the `verify.sh` gate operate on the right root.
 
-# Verify before submitting a PR
-bash scripts/verify.sh
-
-# Rebuild memory vault link graph
-bash scripts/link-index.sh
-
-# Query memory vault
-bash scripts/memory-query.sh --type pattern --recent 5
-bash scripts/memory-query.sh --tag architecture
-bash scripts/memory-query.sh --backlinks-for decisions/chose-postgres.md
-
-# Promote lessons to memory vault
-bash scripts/obsidian-sync.sh
-```
-
-## Enter the Dojo
-
-1. Copy [`skills/`](./skills) and [`optional-skills/`](./optional-skills) into your repo — or pick the individual tiers you need.
-2. Place [`skills.md`](./skills.md) at your repo root — Copilot agents auto-discover this index.
-3. Place [`.github/copilot-instructions.md`](./.github/copilot-instructions.md) in your `.github/` folder — customize for your stack.
-4. Run `bash scripts/init.sh` — scaffolds `tasks/todo.md` and `tasks/lessons.md`.
-5. Run `bash scripts/verify.sh spec` — confirms the skill index, personas, and scripts are wired correctly.
-6. Author your own skills from [template/SKILL.md](./template/SKILL.md) — guidance lives in [optional-skills/writing-skills](./optional-skills/writing-skills/SKILL.md).
-
 ---
-
-## Choose Your Fighting Style
-
-1. **Observe**: After every correction, log a structured lesson in `tasks/lessons.md` with YAML tags (error type, root cause, fix, rule).
-2. **Store**: Lessons are tagged and queryable. Metrics track total lessons, recurring patterns, and amendment rate.
-3. **Promote**: When a pattern hits 3+ occurrences, `scripts/obsidian-sync.sh` promotes it to `memory/patterns/` as a proven rule.
-4. **Decide**: Architectural choices are recorded in `memory/decisions/` with context, alternatives, and consequences.
-5. **Learn**: User preferences accumulate in `memory/preferences/` with confidence levels that grow over time.
-6. **Link**: `scripts/link-index.sh` rebuilds the knowledge graph — backlinks, forward links, and `memory/.link-graph.json`.
-7. **Query**: Agents search memory with `scripts/memory-query.sh` instead of re-reading every file.
-8. **Amend**: Proven patterns feed amendments into `skills.md` via `scripts/lesson-updater.sh`.
-9. **Rollback**: Failed fixes get rolled back immediately. Failed rules get revised or removed.
 
 ## Memory Vault 🧠
 
-The `memory/` directory is the agent's **persistent knowledge graph** — structured, linked, and queryable. It replaces flat-file memory with the capabilities that make tools like Obsidian powerful, implemented as plain markdown + scripts that any agent can use.
+The `memory/` directory is the agent's **persistent knowledge graph** — structured, linked, and queryable. It replaces flat-file memory with the capabilities that make tools like Obsidian powerful, implemented as plain markdown + scripts any agent can use.
 
-### What It Replaces
+### What it replaces
 
-| Obsidian Feature | Dojo Equivalent |
-|-----------------|----------------|
+| Obsidian feature | Dojo equivalent |
+|---|---|
 | Wikilinks + graph view | `scripts/link-index.sh` → `.link-graph.json` + auto-backlinks |
 | Dataview queries | `scripts/memory-query.sh --type --tag --backlinks-for` |
 | Backlinks pane | Auto-generated `## Backlinks` sections in each file |
 | Tags | YAML frontmatter `tags:` array, queryable via memory-query |
 | MOC (Map of Content) | `memory/INDEX.md` with auto-updated stats |
 
-### Vault Structure
+### Vault structure
 
 ```
 memory/
 ├── INDEX.md              ← Map of Content (agents read this first)
 ├── .link-graph.json      ← Machine-readable link graph (auto-generated)
 ├── decisions/            ← Architectural decisions with context & rationale
-│   └── _template.md
 ├── patterns/             ← Proven rules promoted from lessons (3+ occurrences)
-│   └── _template.md
 ├── preferences/          ← User behavioral preferences (learned over time)
-│   └── _template.md
 └── sessions/             ← Session summaries linking to everything above
-    └── _template.md
 ```
 
-### How It Works
+### The learning loop
 
-1. **Session start**: Agent reads `memory/INDEX.md` to understand stored knowledge
-2. **During work**: Agent queries memory with `scripts/memory-query.sh` for relevant context
-3. **After corrections**: Agent logs lessons in `tasks/lessons.md` (short-term capture)
-4. **On promotion**: When lessons hit 3+ occurrences, `scripts/obsidian-sync.sh` promotes them to `memory/patterns/`
-5. **Session end**: Agent writes `memory/sessions/` summary, records decisions and preferences
-6. **Graph rebuild**: `scripts/link-index.sh` updates backlinks, stats, and `.link-graph.json`
+1. **Observe** — After every correction, log a structured lesson in `tasks/lessons.md` with YAML tags (error type, root cause, fix, rule).
+2. **Store** — Lessons are tagged and queryable. Metrics track total lessons, recurring patterns, and amendment rate.
+3. **Promote** — When a pattern hits 3+ occurrences, `scripts/obsidian-sync.sh` promotes it to `memory/patterns/` as a proven rule.
+4. **Decide** — Architectural choices are recorded in `memory/decisions/` with context, alternatives, and consequences.
+5. **Learn** — User preferences accumulate in `memory/preferences/` with confidence levels that grow over time.
+6. **Link** — `scripts/link-index.sh` rebuilds the knowledge graph — backlinks, forward links, and `memory/.link-graph.json`.
+7. **Query** — Agents search memory with `scripts/memory-query.sh` instead of re-reading every file.
+8. **Amend** — Proven patterns feed amendments into `skills.md` via `scripts/lesson-updater.sh`.
+9. **Rollback** — Failed fixes get rolled back immediately. Failed rules get revised or removed.
 
 All files use **relative markdown links** (not wikilinks) and **YAML frontmatter** for metadata — standards any agent can parse. Zero dependencies on Obsidian or any external tool.
 
 ### Obsidian compatibility
 
-The `memory/` directory is also a **real Obsidian vault**. Open the folder in Obsidian.app and the native graph view + backlinks pane just work — color groups match the Control Plane theme (decisions cyan, patterns indigo, preferences amber, sessions emerald). See [`memory/README.md`](memory/README.md) for details.
+The `memory/` directory is also a **real Obsidian vault**. Open the folder in Obsidian and the native graph view + backlinks pane just work — color groups match the Control Plane theme (decisions cyan, patterns indigo, preferences amber, sessions emerald). See [`memory/README.md`](memory/README.md) for details.
 
 ### MCP memory server
 
@@ -337,6 +309,8 @@ Install the Control Plane's MCP wiring with the **🔌 Wire MCP memory server** 
 
 The Control Plane exposes git history as a first-class UI. On any memory entry, click **🕰 Time Machine** to scrub commits, preview a prior version, and restore it (auto-commits with audit trail). The Memory Browser also has a vault-wide **🕰 Time Slider** that filters cards + graph to the vault state at any chosen commit.
 
+---
+
 ## Why Train Your Agents?
 
 Untrained agents:
@@ -349,93 +323,93 @@ Untrained agents:
 
 Trained agents operate like **seasoned black belts** — plan the approach, execute with precision, verify the outcome, learn from every round.
 
+---
+
 ## Enter the Dojo
 
-1. **Copy the `skills/` folder** into your repo — or pick individual skills you need
-2. **Copy the `memory/` folder** into your repo — the persistent knowledge graph
-3. **Place `skills.md` at your repo root** — Copilot agents auto-discover this index and activate skills
-4. **Place `.github/copilot-instructions.md`** in your `.github/` folder — customize for your stack
-5. **Run `bash scripts/init.sh`** — scaffolds `tasks/todo.md` and `tasks/lessons.md`
-6. **Run `bash scripts/link-index.sh`** — initializes the memory vault graph
-7. **Create custom skills** — Use `template/SKILL.md` or the `skill-creator` skill for your team's workflows
+1. **Copy** [`skills/`](./skills) and [`optional-skills/`](./optional-skills) into your repo — or pick the individual tiers you need.
+2. **Copy** [`memory/`](./memory) — the persistent knowledge graph.
+3. **Place** [`skills.md`](./skills.md) at your repo root — Copilot agents auto-discover this index.
+4. **Place** [`.github/copilot-instructions.md`](./.github/copilot-instructions.md) in your `.github/` folder — customize for your stack.
+5. **Run** `bash scripts/init.sh` — scaffolds `tasks/todo.md` and `tasks/lessons.md`.
+6. **Run** `bash scripts/regen-skills-index.sh` — rebuilds `skills.md` and primes `.dojo/bundled-manifest.txt`.
+7. **Run** `bash scripts/link-index.sh` — initializes the memory vault graph.
+8. **Run** `bash scripts/verify.sh spec` — confirms the skill index, personas, and scripts are wired correctly.
+9. **Author** your own skills from [`template/SKILL.md`](./template/SKILL.md) — guidance lives in [`optional-skills/writing-skills`](./optional-skills/writing-skills/SKILL.md).
+
+Upgrading from pre-v1? Run `bash scripts/migrate-v1.sh` for the idempotent migration helper.
+
+---
 
 ## The Dojo Layout
 
 ```
 your-repo/
-├── skills.md                          # Skills index (auto-discovered)
-├── skills/
-│   ├── plan-before-code/
-│   │   └── SKILL.md                   # 🥋 Core Kata
-│   ├── subagent-strategy/
-│   │   └── SKILL.md                   # 🥋 Core Kata
-│   ├── self-improvement/
-│   │   ├── SKILL.md                   # 🥋 Core Kata
-│   │   └── examples/
-│   │       └── lesson-entry.md        # Worked example
-│   ├── verify-before-done/
-│   │   └── SKILL.md                   # 🥋 Core Kata
-│   ├── demand-elegance/
-│   │   └── SKILL.md                   # 🥋 Core Kata
-│   ├── autonomous-bug-fix/
-│   │   └── SKILL.md                   # 🥋 Core Kata
-│   ├── brainstorming/
-│   │   └── SKILL.md                   # 🔄 Flow Waza
-│   ├── using-git-worktrees/
-│   │   └── SKILL.md                   # 🔄 Flow Waza
-│   ├── executing-plans/
-│   │   └── SKILL.md                   # 🔄 Flow Waza
-│   ├── requesting-code-review/
-│   │   └── SKILL.md                   # 🔄 Flow Waza
-│   ├── receiving-code-review/
-│   │   └── SKILL.md                   # 🔄 Flow Waza
-│   ├── finishing-a-development-branch/
-│   │   └── SKILL.md                   # 🔄 Flow Waza
-│   ├── dispatching-parallel-agents/
-│   │   └── SKILL.md                   # 🔄 Flow Waza
-│   ├── code-review/
-│   │   └── SKILL.md                   # ⚔️ Practical Kumite
-│   ├── refactoring/
-│   │   └── SKILL.md                   # ⚔️ Practical Kumite
-│   ├── test-writing/
-│   │   └── SKILL.md                   # ⚔️ Practical Kumite
-│   ├── pr-workflow/
-│   │   └── SKILL.md                   # ⚔️ Practical Kumite
-│   ├── debugging/
-│   │   └── SKILL.md                   # ⚔️ Practical Kumite
-│   ├── codebase-onboarding/
-│   │   └── SKILL.md                   # ⚔️ Practical Kumite
-│   ├── requirements-elicitation/
-│   │   └── SKILL.md                   # ⚔️ Practical Kumite
-│   ├── skill-creator/
-│   │   └── SKILL.md                   # 🧘 Meta Dō
-│   ├── writing-skills/
-│   │   └── SKILL.md                   # 🧘 Meta Dō
-│   └── using-superpowers/
-│       └── SKILL.md                   # 🧘 Meta Dō (Activator)
-├── memory/                            # 🧠 Persistent Knowledge Graph
-│   ├── INDEX.md                       # Map of Content — agents read first
-│   ├── .link-graph.json               # Machine-readable link graph
-│   ├── decisions/                     # Architectural decision records
-│   │   └── _template.md
-│   ├── patterns/                      # Proven rules (promoted from lessons)
-│   │   └── _template.md
+├── skills.md                          # Skills index (auto-generated, auto-discovered)
+├── skills/                            # Core + practical tiers
+│   ├── using-superpowers/             # 🥋 Activator (loaded first)
+│   ├── plan-before-code/              # 🥋 Core Kata
+│   ├── durable-work/                  # 🥋 Core Kata
+│   ├── subagent-strategy/             # 🥋 Core Kata
+│   ├── self-improvement/              # 🥋 Core Kata
+│   ├── verify-before-done/            # 🥋 Core Kata
+│   ├── demand-elegance/               # 🥋 Core Kata
+│   ├── autonomous-bug-fix/            # 🥋 Core Kata
+│   ├── brainstorming/                 # 🔄 Flow Waza
+│   ├── using-git-worktrees/           # 🔄 Flow Waza
+│   ├── executing-plans/               # 🔄 Flow Waza
+│   ├── requesting-code-review/        # 🔄 Flow Waza
+│   ├── receiving-code-review/         # 🔄 Flow Waza
+│   ├── finishing-a-development-branch/# 🔄 Flow Waza
+│   ├── dispatching-parallel-agents/   # 🔄 Flow Waza
+│   ├── code-review/                   # ⚔️ Practical Kumite
+│   ├── refactoring/                   # ⚔️ Practical Kumite
+│   ├── test-writing/                  # ⚔️ Practical Kumite
+│   ├── pr-workflow/                   # ⚔️ Practical Kumite
+│   ├── debugging/                     # ⚔️ Practical Kumite
+│   ├── codebase-onboarding/           # ⚔️ Practical Kumite
+│   └── requirements-elicitation/      # ⚔️ Practical Kumite
+├── optional-skills/                   # Heavyweight / niche (install explicitly)
+│   ├── writing-skills/                # 🧘 Meta dō
+│   ├── using-mcp/                     # 🧘 Meta dō
+│   ├── calling-mcp-tools-via-subprocess/
+│   └── building-mcp-servers/
+├── agents/                            # Persona briefs + registry
+│   ├── registry.yaml                  # Single source of truth
+│   ├── architect.md
+│   ├── security-engineer.md
+│   ├── software-engineer.md
+│   ├── technical-program-manager.md
+│   └── test-engineer.md
+├── memory/                            # 🧠 Persistent knowledge graph (Obsidian vault)
+│   ├── INDEX.md                       # Map of Content
+│   ├── .link-graph.json               # Machine-readable graph
+│   ├── decisions/                     # ADRs
+│   ├── patterns/                      # Proven rules (3+ occurrences)
 │   ├── preferences/                   # Learned user preferences
-│   │   └── _template.md
-│   └── sessions/                      # Session summaries with links
-│       └── _template.md
+│   └── sessions/                      # Session summaries
 ├── spec/
-│   └── copilot-skills-spec.md         # Skill format specification
+│   └── copilot-skills-spec.md         # Skill format specification (v1)
 ├── template/
 │   └── SKILL.md                       # Starter template
+├── .dojo/                             # Per-clone state (gitignored except manifest)
+│   ├── bundled-manifest.txt           # Provenance guard for the curator
+│   ├── skill-usage.json               # Curator telemetry sidecar
+│   ├── curator-backups/               # tar.gz snapshots (rolling)
+│   ├── logs/curator/                  # Per-run audit reports
+│   └── curator.env                    # Optional curator knob overrides
 ├── .github/
 │   ├── copilot-instructions.md        # The Dojo Rules
 │   └── workflows/
 │       └── dojo-enforce.yml           # PR enforcement
 ├── scripts/
-│   ├── init.sh                        # Dojo initialization
-│   ├── lesson-updater.sh              # Pattern scanner & amendment proposer
-│   ├── verify.sh                      # Pre-PR verification
+│   ├── init.sh                        # First-clone scaffolding
+│   ├── verify.sh                      # Single enforcement gate
+│   ├── regen-skills-index.sh          # skills.md + bundled-manifest
+│   ├── curator.sh                     # Skill lifecycle
+│   ├── curator-tick.sh                # Idle-based curator trigger
+│   ├── lesson-updater.sh              # Cache-aware amendments
+│   ├── board.sh                       # Durable task board
 │   ├── link-index.sh                  # Memory vault graph builder
 │   ├── memory-query.sh                # Memory vault query tool
 │   └── obsidian-sync.sh               # Lesson → pattern promotion
@@ -444,24 +418,27 @@ your-repo/
     └── lessons.md                     # Defeat log, metrics & prevention rules
 ```
 
+---
+
 ## Choose Your Fighting Style
 
-The Code Standards in `copilot-instructions.md` ship with examples for multiple stacks:
+The Code Standards in `copilot-instructions.md` ship with examples for multiple stacks. Pick your style. Delete the others. The disciplines are **style-agnostic**.
 
-- **TypeScript** 📘: strict mode, Vitest, Tailwind, Next.js App Router
-- **Python** 🐍: pytest, Black, type hints, FastAPI/Django
-- **Java** ☕: JUnit 5, Spring Boot, Maven/Gradle
-- **Go** 🐹: standard library, table-driven tests
-- **.NET** 🛡️: xUnit, clean architecture, nullable reference types
+- 📘 **TypeScript** — strict mode, Vitest, Tailwind, Next.js App Router
+- 🐍 **Python** — pytest, Black, type hints, FastAPI / Django
+- ☕ **Java** — JUnit 5, Spring Boot, Maven / Gradle
+- 🐹 **Go** — standard library, table-driven tests
+- 🛡️ **.NET** — xUnit, clean architecture, nullable reference types
 
-Pick your style. Delete the others. The Six Disciplines are **style-agnostic**.
+---
 
 ## Origin Story
 
 The Copilot Agents Dojo distills field-tested patterns from shipping production code with AI agents — watching them fail, and figuring out what actually makes them reliable:
 
 - **Field experience** — Real-world agent sessions exposing failure modes: rushing without plans, skipping verification, repeating the same mistakes, flooding the context window. Every core kata exists because an agent failed without it.
-- **[hermes-agent](https://github.com/andreaswasita/hermes-agent)** — The reference build for spec v1, the curator pattern, durable boards, and the registry-driven CLI.
+- **[hermes-agent](https://github.com/andreaswasita/hermes-agent)** — The reference build for spec v1, the curator pattern (state machine, backups, idle trigger), durable boards, and the registry-driven CLI.
+- **[Copilot Cowork Dojo](https://github.com/andreaswasita/copilot-cowork-dojo)** — The sibling project for AI **coworkers**; this one trains AI **builders**.
 - **[obra/superpowers](https://github.com/obra/superpowers)** — The mandatory orchestration pipeline (BRAINSTORM → WORKTREE → … → LEARN) proving disciplined agents outperform freestyle ones.
 - **[Anthropic Claude](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering)** — Structured prompting, progressive disclosure, explicit verification gates.
 
@@ -469,10 +446,8 @@ The Copilot Agents Dojo distills field-tested patterns from shipping production 
 
 ## Contributing
 
-See [AGENTS.md](./AGENTS.md) for the contributor guide and [CONTRIBUTING.md](./CONTRIBUTING.md) for the high-level checklist.
+See [AGENTS.md](./AGENTS.md) for the contributor guide and [CONTRIBUTING.md](./CONTRIBUTING.md) for the high-level checklist. Changelog: [CHANGELOG.md](./CHANGELOG.md).
 
 ## License
 
 [MIT](./LICENSE)
-
-⭐ Star this dojo if you're done babysitting your AI agents. Fork it, train your agents, earn your belt.
