@@ -237,7 +237,29 @@ run_path_audit() {
       bad=$((bad + 1))
     fi
   done <<< "$files"
-  [ "$bad" -eq 0 ] && pass "all scripts respect DOJO_ROOT"
+  [ "$bad" -eq 0 ] && pass "all scripts respect DOJO_ROOT" || true
+}
+
+# =========================================================================
+# Curator provenance — bundled manifest must exist once .dojo is initialized
+# =========================================================================
+run_curator_checks() {
+  echo "[curator] Checking .dojo provenance manifest…"
+  if [ ! -d .dojo ]; then
+    warn ".dojo/ missing — run scripts/init.sh"
+    return
+  fi
+  if [ ! -f .dojo/bundled-manifest.txt ]; then
+    warn ".dojo/bundled-manifest.txt missing — run scripts/regen-skills-index.sh"
+    return
+  fi
+  local count
+  count=$(grep -cve '^\s*$' .dojo/bundled-manifest.txt || true)
+  if [ "$count" -lt 1 ]; then
+    fail ".dojo/bundled-manifest.txt is empty — regen-skills-index.sh broken?"
+    return
+  fi
+  pass ".dojo/bundled-manifest.txt has $count entries"
 }
 
 # =========================================================================
@@ -308,11 +330,11 @@ run_tests() {
 
 # --- Dispatch -------------------------------------------------------------
 case "$MODE" in
-  spec)    run_spec_checks; run_persona_checks; run_path_audit ;;
+  spec)    run_spec_checks; run_persona_checks; run_path_audit; run_curator_checks ;;
   plan)    run_plan_checks ;;
   actions) run_actions_checks ;;
   tests)   run_tests ;;
-  all)     run_spec_checks; run_persona_checks; run_path_audit; run_plan_checks; run_actions_checks; run_tests ;;
+  all)     run_spec_checks; run_persona_checks; run_path_audit; run_curator_checks; run_plan_checks; run_actions_checks; run_tests ;;
 esac
 
 echo ""

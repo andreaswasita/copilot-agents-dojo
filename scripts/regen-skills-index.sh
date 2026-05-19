@@ -186,7 +186,16 @@ case "$MODE" in
     ;;
   write)
     render > skills.md
+    # also write the bundled-skills manifest for the curator's provenance guard
+    mkdir -p .dojo
+    {
+      find skills          -mindepth 2 -maxdepth 2 -name SKILL.md 2>/dev/null \
+        | sed -E 's|^skills/||; s|/SKILL.md$||'
+      find optional-skills -mindepth 2 -maxdepth 2 -name SKILL.md 2>/dev/null \
+        | sed -E 's|^optional-skills/||; s|/SKILL.md$||'
+    } | grep -v '^\.archive' | sort -u > .dojo/bundled-manifest.txt
     echo "✅ skills.md regenerated ($(wc -l < "$TMP" | tr -d ' ') skills)"
+    echo "✅ .dojo/bundled-manifest.txt regenerated ($(wc -l < .dojo/bundled-manifest.txt | tr -d ' ') entries)"
     ;;
   check)
     new=$(mktemp); trap 'rm -f "$TMP" "$new"' EXIT
