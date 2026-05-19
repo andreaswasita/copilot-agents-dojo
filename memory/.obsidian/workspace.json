@@ -1,0 +1,60 @@
+{
+  "main": {
+    "id": "root",
+    "type": "split",
+    "children": [
+      {
+        "id": "main-tabs",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "readme",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": { "file": "README.md", "mode": "preview" }
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "left-split",
+    "type": "split",
+    "children": [
+      {
+        "id": "left-tabs",
+        "type": "tabs",
+        "children": [
+          { "id": "file-explorer-leaf", "type": "leaf", "state": { "type": "file-explorer", "state": {} } },
+          { "id": "search-leaf", "type": "leaf", "state": { "type": "search", "state": {} } }
+        ],
+        "currentTab": 0
+      }
+    ],
+    "direction": "horizontal",
+    "width": 280
+  },
+  "right": {
+    "id": "right-split",
+    "type": "split",
+    "children": [
+      {
+        "id": "right-tabs",
+        "type": "tabs",
+        "children": [
+          { "id": "backlink-leaf", "type": "leaf", "state": { "type": "backlink", "state": {} } },
+          { "id": "graph-leaf", "type": "leaf", "state": { "type": "graph", "state": {} } },
+          { "id": "outline-leaf", "type": "leaf", "state": { "type": "outline", "state": {} } }
+        ],
+        "currentTab": 1
+      }
+    ],
+    "direction": "horizontal",
+    "width": 320,
+    "collapsed": false
+  },
+  "active": "readme"
+}

@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "dojo-memory": {
+      "command": "node",
+      "args": [
+        "/absolute/path/to/copilot-agents-dojo/control-plane/packages/mcp-memory/dist/index.js",
+        "--dojo-root",
+        "/absolute/path/to/copilot-agents-dojo"
+      ]
+    }
+  }
+}

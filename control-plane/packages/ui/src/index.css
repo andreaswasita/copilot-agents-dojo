@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+@theme {
+  --color-dojo-bg: #0a0a0f;
+  --color-dojo-surface: #16161d;
+  --color-dojo-primary: #06b6d4;
+  --color-dojo-accent: #d4a406;
+  --color-dojo-border: #2a2a35;
+  --color-dojo-muted: #9ca3af;
+
+  --color-dojo-kata: #6366f1;
+  --color-dojo-waza: #06b6d4;
+  --color-dojo-kumite: #ef4444;
+  --color-dojo-do: #f59e0b;
+
+  --font-family-jp: "Noto Sans JP", system-ui, sans-serif;
+}
+
+@layer base {
+  :root {
+    --bg: #fafaf9;
+    --surface: #ffffff;
+    --text: #1c1917;
+    --primary: #0891b2;
+    --accent: #b45309;
+    --border: #e7e5e4;
+    --muted: #78716c;
+  }
+  .dark {
+    --bg: #0a0a0f;
+    --surface: #16161d;
+    --text: #fafaf9;
+    --primary: #06b6d4;
+    --accent: #d4a406;
+    --border: #2a2a35;
+    --muted: #9ca3af;
+  }
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+}

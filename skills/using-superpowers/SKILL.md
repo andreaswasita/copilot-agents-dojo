@@ -57,69 +57,88 @@ Loads the dojo framework at session start: confirms the core disciplines are act
 | Workflow scenario | Workflow shape |
 |---|---|
 | New feature | Full pipeline: brainstorm → finish |
-| Non-trivial bug fix | Skip brainstorm; start at plan |
-| One-line fix | Direct fix + `verify-before-done` |
-| Refactoring | Plan-first; emphasis on test baseline |
-| PR review | `code-review` + `receiving-code-review` |
+| Bug fix (non-trivial) | Skip brainstorm, start at plan |
+| One-line fix | Direct fix + verify-before-done |
+| Refactoring | Start at plan, emphasis on test baseline |
+| Code review | Use code-review + receiving-code-review |
 
-## Procedure
+### Skill Activation Map
 
-### Step 1: Lessons Review
+**Always active (Core Disciplines):**
+- `plan-before-code` — Plan multi-step work before touching code
+- `verify-before-done` — Prove your work with evidence
+- `self-improvement` — Capture lessons, review at session start
+- `demand-elegance` — Challenge hacky solutions
+- `autonomous-bug-fix` — Full bug cycle, zero hand-holding
+- `subagent-strategy` — Delegate research and analysis
 
-Use `view` on `tasks/lessons.md`. Surface any entries whose `error_type` or `trigger` plausibly applies to the user's current request. Do not load every lesson — only the relevant ones.
+**Workflow skills (activate in sequence):**
+- `brainstorming` → `using-git-worktrees` → `executing-plans` → `requesting-code-review` → `finishing-a-development-branch`
 
-### Step 2: In-Flight Work Check
+**On-demand skills (load when needed):**
+- `code-review` — Reviewing PRs or diffs
+- `refactoring` — Safe restructuring
+- `test-writing` — Writing meaningful tests
+- `pr-workflow` — Preparing merge-ready PRs
+- `debugging` — Systematic complex debugging
+- `codebase-onboarding` — Understanding unfamiliar repos
+- `dispatching-parallel-agents` — Concurrent sub-agent work
+- `receiving-code-review` — Processing review feedback
+- `skill-creator` / `writing-skills` — Creating new skills
 
-Use `view` on `tasks/todo.md`. If there are unchecked items from a prior session, surface them — the user may want to resume rather than start fresh.
+## Session Start Ritual
 
-### Step 3: Git State Check
+Every session begins with:
 
-Run via the `powershell` tool:
+1. Read `memory/INDEX.md` — What knowledge exists in the vault?
+2. Query relevant context — `bash scripts/memory-query.sh --type pattern --recent 5`
+3. Review `tasks/lessons.md` — Any un-promoted lessons?
+4. Check `tasks/todo.md` — Is there work in progress?
+5. Verify git status — Are we on the right branch? Clean state?
+6. Acknowledge active skills — "Dojo framework active. Memory vault loaded. All skills live."
 
-```bash
-git status --porcelain
-git branch --show-current
-```
+## Session End Ritual
 
-Confirm: on a feature branch (not main), tree is clean (or any dirt is intentional and acknowledged).
+Every non-trivial session ends with:
 
-### Step 4: Activate Acknowledgement
+1. Write session summary — `memory/sessions/YYYY-MM-DD-summary.md`
+2. Promote patterns — Any lessons at 3+ occurrences? Move to `memory/patterns/`
+3. Record decisions — Any architectural choices? Log in `memory/decisions/`
+4. Capture preferences — User corrections about style/approach? Log in `memory/preferences/`
+5. Rebuild the graph — `bash scripts/link-index.sh`
+6. Update lessons metrics — `tasks/lessons.md`
 
-Post a short visible message:
+## Enforcement Rules
 
-```text
-Dojo framework active.
-- Core disciplines loaded (6).
-- 2 relevant lessons surfaced from tasks/lessons.md.
-- No work in progress.
-- Branch: feature/<name>, clean tree.
-```
+1. **All skills are mandatory** — No skipping steps in the workflow
+2. **No code without a plan** (unless one-liner fix)
+3. **No merge without verification** — `scripts/verify.sh` or equivalent
+4. **No "done" without proof** — Tests, logs, diffs
+5. **Every correction becomes a lesson** — `tasks/lessons.md`
+6. **Every session ends with a summary** — `memory/sessions/`
+7. **Patterns are promoted, not buried** — 3+ occurrences → `memory/patterns/`
+8. **Main branch is read-only** — Work on feature branches/worktrees
 
-### Step 5: Hand Off
+## Examples
 
-The actual user request triggers the appropriate skill chain (`brainstorming`, `executing-plans`, `code-review`, etc.). This skill does not do the work — it ensures the context is correct before work begins.
+**Session Start:**
+> Agent: "Dojo framework active. Memory vault loaded (4 decisions, 7 patterns,
+> 3 preferences). Reviewed lessons.md (3 active lessons, 1 relevant to today's
+> task). No work in progress. On main branch, clean state. Ready."
 
-## Enforcement Rules (set by activation)
+**Skill Triggering:**
+> User: "I want to add real-time notifications"
+> Agent: *brainstorming activates* → asks Socratic questions → design approved
+> → *using-git-worktrees activates* → creates feature branch
+> → *plan-before-code activates* → writes plan to tasks/todo.md
+> → *executing-plans activates* → works through tasks
+> → *requesting-code-review activates* → self-reviews
+> → *finishing-a-development-branch activates* → presents merge options
 
-1. All core skills are mandatory.
-2. No code without a plan (one-liners exempted).
-3. No merge without `scripts/verify.sh --check` passing.
-4. No "done" without a Verification Results block.
-5. Every correction becomes a lesson in `tasks/lessons.md`.
-6. Main branch is read-only until `finishing-a-development-branch`.
+## Anti-Patterns
 
-## Pitfalls
-
-- **DO NOT** re-activate mid-session if already loaded. Burns turns.
-- **DO NOT** load every lesson regardless of relevance — context budget matters.
-- **DO NOT** skip the git state check. Starting on a dirty tree corrupts the diff later.
-- **DO NOT** silently start work on main. Activation must catch that.
-- **DO NOT** pretend the framework is active without actually surfacing lessons and state.
-
-## Verification
-
-- [ ] `tasks/lessons.md` was opened with `view`.
-- [ ] `tasks/todo.md` was opened with `view` and in-progress work surfaced.
-- [ ] `git status` and `git branch --show-current` ran via `powershell`.
-- [ ] The activation acknowledgement message was posted.
-- [ ] If on `main`, the user was prompted to create a feature branch before any code change.
+- **"I'll skip brainstorming, I know what to build"** — You don't. Ask questions.
+- **"I'll just commit to main this once"** — You won't "just" anything. Use a branch.
+- **"Tests take too long, I'll add them later"** — Later never comes. Test now.
+- **"The plan is in my head"** — Write it in `tasks/todo.md` or it doesn't exist.
+- **"I already know everything"** — Review `tasks/lessons.md`. You forgot something.

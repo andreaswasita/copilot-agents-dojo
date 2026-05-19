@@ -26,7 +26,8 @@ Each arrow is enforced by a flow skill in the *Core* or *Practical* tiers.
 
 Always loaded. Behavioral skills that govern *how* the agent thinks and operates — style-agnostic, language-agnostic.
 
-### 🥋 Activation
+### [`skills/self-improvement`](skills/self-improvement/SKILL.md) — Self-Improvement Loop
+🥋 After every correction, agents capture the lesson with tags and metrics. Patterns feed back into skills. Review `tasks/lessons.md` at session start. Promote proven patterns (3+ occurrences) to `memory/patterns/`. Record decisions in `memory/decisions/`. Write session summaries to `memory/sessions/`. Run `scripts/link-index.sh` to rebuild the knowledge graph.
 
 - [`using-superpowers`](skills/using-superpowers/SKILL.md) — Activates the dojo framework at the start of a session.
 
@@ -83,15 +84,15 @@ Loaded only when invoked. Heavyweight or integration-specific skills. Not part o
 
 - [`writing-skills`](optional-skills/writing-skills/SKILL.md) — Authors new SKILL.md files that conform to the dojo spec.
 
+### [`skills/requirements-elicitation`](skills/requirements-elicitation/SKILL.md) — Requirements Elicitation
+Structured requirements elicitation — Socratic questioning, user stories, Given/When/Then acceptance criteria, ambiguity elimination, and Definition of Ready gate. Role-neutral technique invoked by both TPM (business elicitation) and Architect (system specification).
+
 ---
 
 ## Core Principles
 
-- **Simplicity First** — Make every change as small as possible. Fewer lines beats more lines.
-- **No Laziness** — Find root causes. No temporary fixes. Every shortcut is technical debt.
-- **Zero Hand-Holding** — The user provides intent; the agent handles execution. No asking "which file?" or "what command?" — figure it out.
-- **Continuous Evolution** — Lessons feed back into skills. Skills get sharper over time.
-- **Mandatory Workflow** — The pipeline is not optional. Brainstorm → Plan → Execute → Review → Finish. Every time.
+### [`skills/using-superpowers`](skills/using-superpowers/SKILL.md) — Using Superpowers
+The framework activator. Loads all skills, enforces the mandatory workflow, reads `memory/INDEX.md` and reviews lessons at session start. Writes session summaries at session end.
 
 ---
 

@@ -1,0 +1,8 @@
+{
+  "accentColor": "#06b6d4",
+  "theme": "obsidian",
+  "baseFontSize": 14,
+  "interfaceFontFamily": "system-ui",
+  "textFontFamily": "system-ui",
+  "monospaceFontFamily": "ui-monospace"
+}
