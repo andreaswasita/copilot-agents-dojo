@@ -1,6 +1,6 @@
 # Copilot Agents Dojo — Skills Index
 
-A skills & discipline framework for GitHub Copilot agents. 26 production skills across three tiers. Mandatory workflow. Self-improving. Built from field-tested patterns — [Anthropic Claude](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering) prompt engineering, [obra/superpowers](https://github.com/obra/superpowers) orchestration, and the [hermes-agent](https://github.com/andreaswasita/hermes-agent) reference build.
+A skills & discipline framework for GitHub Copilot agents. 29 production skills across three tiers. Mandatory workflow. Self-improving. Built from field-tested patterns — [Anthropic Claude](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering) prompt engineering, [obra/superpowers](https://github.com/obra/superpowers) orchestration, and the [hermes-agent](https://github.com/andreaswasita/hermes-agent) reference build.
 
 > **Auto-generated.** Do not edit by hand — run `bash scripts/regen-skills-index.sh` (or `pwsh scripts/regen-skills-index.ps1` on Windows).
 
@@ -26,8 +26,7 @@ Each arrow is enforced by a flow skill in the *Core* or *Practical* tiers.
 
 Always loaded. Behavioral skills that govern *how* the agent thinks and operates — style-agnostic, language-agnostic.
 
-### [`skills/self-improvement`](skills/self-improvement/SKILL.md) — Self-Improvement Loop
-🥋 After every correction, agents capture the lesson with tags and metrics. Patterns feed back into skills. Review `tasks/lessons.md` at session start. Promote proven patterns (3+ occurrences) to `memory/patterns/`. Record decisions in `memory/decisions/`. Write session summaries to `memory/sessions/`. Run `scripts/link-index.sh` to rebuild the knowledge graph.
+### 🥋 Activation
 
 - [`using-superpowers`](skills/using-superpowers/SKILL.md) — Activates the dojo framework at the start of a session.
 
@@ -41,7 +40,7 @@ Always loaded. Behavioral skills that govern *how* the agent thinks and operates
 - [`autonomous-bug-fix`](skills/autonomous-bug-fix/SKILL.md) — Reproduces, diagnoses, fixes, and verifies bugs unaided.
 - [`demand-elegance`](skills/demand-elegance/SKILL.md) — Challenges hacky fixes on non-trivial changes.
 - [`plan-before-code`](skills/plan-before-code/SKILL.md) — Plans multi-step work before writing code.
-- [`self-improvement`](skills/self-improvement/SKILL.md) — Captures lessons and proposes skill amendments.
+- [`traceability-gate`](skills/traceability-gate/SKILL.md) — Enforces parent-link lineage across requirement layers.
 - [`verify-before-done`](skills/verify-before-done/SKILL.md) — Proves work with tests, diffs, and logs before sign-off.
 
 
@@ -59,13 +58,14 @@ Loaded on-demand. Task-specific skills that teach the agent *how to do* particul
 - [`code-review`](skills/code-review/SKILL.md) — Reviews diffs by severity to produce actionable feedback.
 - [`codebase-onboarding`](skills/codebase-onboarding/SKILL.md) — Maps an unfamiliar repo before touching its code.
 - [`debugging`](skills/debugging/SKILL.md) — Systematic root-cause investigation for hard bugs.
+- [`derive-nfr-from-driver`](skills/derive-nfr-from-driver/SKILL.md) — Derives measurable NFRs from a parent business driver.
+- [`derive-security-from-risk`](skills/derive-security-from-risk/SKILL.md) — Derives security requirements from a named threat.
 - [`executing-plans`](skills/executing-plans/SKILL.md) — Executes approved plans one task at a time, verified.
 - [`finishing-a-development-branch`](skills/finishing-a-development-branch/SKILL.md) — Verifies, summarises, and closes a development branch.
 - [`pr-workflow`](skills/pr-workflow/SKILL.md) — Prepares branches and PRs for clean, reviewable merges.
 - [`receiving-code-review`](skills/receiving-code-review/SKILL.md) — Processes review feedback until the change is approved.
 - [`refactoring`](skills/refactoring/SKILL.md) — Safe, test-backed code restructuring in small steps.
 - [`requesting-code-review`](skills/requesting-code-review/SKILL.md) — Self-reviews work against the plan before sign-off.
-- [`requirements-elicitation`](skills/requirements-elicitation/SKILL.md) — Turns vague intent into testable, gated requirements.
 - [`test-writing`](skills/test-writing/SKILL.md) — Writes meaningful tests that actually catch bugs.
 - [`using-git-worktrees`](skills/using-git-worktrees/SKILL.md) — Isolates each task in its own git worktree off main.
 
@@ -84,15 +84,15 @@ Loaded only when invoked. Heavyweight or integration-specific skills. Not part o
 
 - [`writing-skills`](optional-skills/writing-skills/SKILL.md) — Authors new SKILL.md files that conform to the dojo spec.
 
-### [`skills/requirements-elicitation`](skills/requirements-elicitation/SKILL.md) — Requirements Elicitation
-Structured requirements elicitation — Socratic questioning, user stories, Given/When/Then acceptance criteria, ambiguity elimination, and Definition of Ready gate. Role-neutral technique invoked by both TPM (business elicitation) and Architect (system specification).
-
 ---
 
 ## Core Principles
 
-### [`skills/using-superpowers`](skills/using-superpowers/SKILL.md) — Using Superpowers
-The framework activator. Loads all skills, enforces the mandatory workflow, reads `memory/INDEX.md` and reviews lessons at session start. Writes session summaries at session end.
+- **Simplicity First** — Make every change as small as possible. Fewer lines beats more lines.
+- **No Laziness** — Find root causes. No temporary fixes. Every shortcut is technical debt.
+- **Zero Hand-Holding** — The user provides intent; the agent handles execution. No asking "which file?" or "what command?" — figure it out.
+- **Continuous Evolution** — Lessons feed back into skills. Skills get sharper over time.
+- **Mandatory Workflow** — The pipeline is not optional. Brainstorm → Plan → Execute → Review → Finish. Every time.
 
 ---
 
