@@ -43,7 +43,7 @@ MODE="all"
 for arg in "$@"; do
   case "$arg" in
     --check) CHECK_MODE=true ;;
-    spec|tests|plan|actions|all) MODE="$arg" ;;
+    spec|tests|plan|actions|traceability|all) MODE="$arg" ;;
     -h|--help) sed -n '1,30p' "$0"; exit 0 ;;
     *) echo "unknown arg: $arg" >&2; exit 2 ;;
   esac
@@ -328,13 +328,36 @@ run_tests() {
   fi
 }
 
+# =========================================================================
+# Traceability gate — TOGAF red thread (spec/artifact-schema.md)
+# =========================================================================
+run_traceability_checks() {
+  echo "[traceability] Walking requirements/ for parent-link lineage…"
+  if [ ! -d requirements ]; then
+    warn "requirements/ missing — no engagements to check"
+    return
+  fi
+  local trace_args=()
+  [ "$CHECK_MODE" = true ] && trace_args+=("--strict")
+  if bash "$DOJO_ROOT/scripts/verify-traceability.sh" "${trace_args[@]}" >/tmp/dojo-trace.log 2>&1; then
+    pass "traceability gate passed"
+    grep -E '^  ⚠️' /tmp/dojo-trace.log | while IFS= read -r w; do
+      warn "${w#  ⚠️  }"
+    done
+  else
+    fail "traceability gate failed — see output below"
+    sed 's/^/    /' /tmp/dojo-trace.log
+  fi
+}
+
 # --- Dispatch -------------------------------------------------------------
 case "$MODE" in
   spec)    run_spec_checks; run_persona_checks; run_path_audit; run_curator_checks ;;
   plan)    run_plan_checks ;;
   actions) run_actions_checks ;;
   tests)   run_tests ;;
-  all)     run_spec_checks; run_persona_checks; run_path_audit; run_curator_checks; run_plan_checks; run_actions_checks; run_tests ;;
+  traceability) run_traceability_checks ;;
+  all)     run_spec_checks; run_persona_checks; run_path_audit; run_curator_checks; run_plan_checks; run_actions_checks; run_traceability_checks; run_tests ;;
 esac
 
 echo ""

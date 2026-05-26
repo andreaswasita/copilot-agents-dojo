@@ -20,9 +20,10 @@ personas:
     type: design
     file: agents/architect.md
     description: >-
-      Designs system architecture, defines technical strategy, owns the
-      engineering half of requirements (impact analysis, data flow,
-      traceability), and ensures long-term code quality.
+      Generalist design persona — coordinates across the TOGAF cascade
+      when a more specialised architect persona (business / solution /
+      platform) is not warranted. Prefer the specialised personas for
+      red-thread work.
     activation: triggered
     activation_hint: >-
       Designing systems, refactoring architecture, strategic technical
@@ -35,6 +36,73 @@ personas:
       - requirements-elicitation
       - codebase-onboarding
       - refactoring
+
+  - slug: business-architect
+    name: Business Architect
+    type: design
+    file: agents/business-architect.md
+    description: >-
+      Owns TOGAF Phase A/B. Eliciting agent — authors and ratifies
+      business drivers (BRs). The only persona allowed to author the
+      root layer of the requirement cascade. Stays naive of learned
+      derivation patterns by design.
+    activation: triggered
+    activation_hint: >-
+      Engagement kickoff, Phase A (Architecture Vision), Phase B
+      (Business Architecture), eliciting business drivers, ratifying BRs
+      at the architecture review board.
+    apply_to: ["**/*"]
+    tags: [togaf, phase-a, phase-b, requirements, elicitation, business]
+    default_skills:
+      - requirements-elicitation
+      - brainstorming
+      - traceability-gate
+      - self-improvement
+
+  - slug: solution-architect
+    name: Solution Architect
+    type: design
+    file: agents/solution-architect.md
+    description: >-
+      Owns TOGAF Phase C. Deriving agent at the solution layer —
+      authors FRs and NFRs from ratified BRs. Never authors BRs;
+      enforces the traceability gate at Phase C → D handoff.
+    activation: triggered
+    activation_hint: >-
+      Phase C (Information Systems / Data and Application Architecture),
+      deriving FRs and NFRs from ratified BRs, expressing NFRs as SLOs,
+      defining data contracts and flows.
+    apply_to: ["**/*"]
+    tags: [togaf, phase-c, requirements, fr, nfr, data]
+    default_skills:
+      - derive-nfr-from-driver
+      - requirements-elicitation
+      - traceability-gate
+      - plan-before-code
+      - self-improvement
+
+  - slug: platform-architect
+    name: Platform Architect
+    type: design
+    file: agents/platform-architect.md
+    description: >-
+      Owns TOGAF Phase D and E. Deriving agent at the technology layer
+      — authors IRs and TRs from ratified FRs/NFRs/SRs. Never authors
+      upstream requirements; enforces the traceability gate at Phase
+      D → F handoff.
+    activation: triggered
+    activation_hint: >-
+      Phase D (Technology Architecture), Phase E (Opportunities and
+      Solutions), deriving integration and technical requirements,
+      runtime topology decisions, cost and capacity anchoring.
+    apply_to: ["**/*"]
+    tags: [togaf, phase-d, phase-e, requirements, ir, tr, topology]
+    default_skills:
+      - traceability-gate
+      - derive-nfr-from-driver
+      - plan-before-code
+      - demand-elegance
+      - self-improvement
 
   - slug: technical-program-manager
     name: Technical Program Manager
@@ -96,13 +164,19 @@ personas:
     type: security
     file: agents/security-engineer.md
     description: >-
-      Ensures security compliance, identifies vulnerabilities, and embeds
-      secure-by-default practices in code and infrastructure.
+      Cross-cutting security persona — threads through TOGAF Phases B–E.
+      Authors SRs via `derive-security-from-risk`, runs threat modelling,
+      and gates any control that does not name an obligation or threat.
     activation: triggered
-    activation_hint: Security review, vuln remediation, secure feature design.
+    activation_hint: >-
+      Security review, threat modelling, deriving SRs from named
+      threats or compliance obligations, ratifying controls, vuln
+      remediation, secure feature design.
     apply_to: ["**/*"]
-    tags: [security, compliance, vulnerabilities]
+    tags: [security, compliance, vulnerabilities, togaf, sr, threat-modelling]
     default_skills:
+      - derive-security-from-risk
+      - traceability-gate
       - code-review
       - debugging
       - verify-before-done

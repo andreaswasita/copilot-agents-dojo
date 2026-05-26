@@ -6,6 +6,8 @@ code-review
 codebase-onboarding
 debugging
 demand-elegance
+derive-nfr-from-driver
+derive-security-from-risk
 dispatching-parallel-agents
 durable-work
 executing-plans
@@ -19,6 +21,7 @@ requirements-elicitation
 self-improvement
 subagent-strategy
 test-writing
+traceability-gate
 using-git-worktrees
 using-mcp
 using-superpowers
