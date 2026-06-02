@@ -43,6 +43,10 @@ Always loaded. Behavioral skills that govern *how* the agent thinks and operates
 - [`traceability-gate`](skills/traceability-gate/SKILL.md) — Enforces parent-link lineage across requirement layers.
 - [`verify-before-done`](skills/verify-before-done/SKILL.md) — Proves work with tests, diffs, and logs before sign-off.
 
+### 🔄 Workflow
+
+- [`self-improvement`](skills/self-improvement/SKILL.md) — Captures lessons and promotes recurring patterns.
+
 
 ## Practical Kumite — 実践組手
 
@@ -51,6 +55,10 @@ Loaded on-demand. Task-specific skills that teach the agent *how to do* particul
 ### 🤝 Delegation
 
 - [`dispatching-parallel-agents`](skills/dispatching-parallel-agents/SKILL.md) — Runs independent subtasks concurrently via sub-agents.
+
+### 📋 Requirements
+
+- [`requirements-elicitation`](skills/requirements-elicitation/SKILL.md) — Turns vague intent into testable requirements.
 
 ### 🔄 Workflow
 

@@ -62,6 +62,8 @@ Loads the dojo framework at session start: confirms the core disciplines are act
 | Refactoring | Start at plan, emphasis on test baseline |
 | Code review | Use code-review + receiving-code-review |
 
+## Procedure
+
 ### Skill Activation Map
 
 **Always active (Core Disciplines):**
@@ -86,7 +88,7 @@ Loads the dojo framework at session start: confirms the core disciplines are act
 - `receiving-code-review` — Processing review feedback
 - `skill-creator` / `writing-skills` — Creating new skills
 
-## Session Start Ritual
+### Session Start Ritual
 
 Every session begins with:
 
@@ -108,7 +110,7 @@ Every non-trivial session ends with:
 5. Rebuild the graph — `bash scripts/link-index.sh`
 6. Update lessons metrics — `tasks/lessons.md`
 
-## Enforcement Rules
+### Enforcement Rules
 
 1. **All skills are mandatory** — No skipping steps in the workflow
 2. **No code without a plan** (unless one-liner fix)
@@ -119,7 +121,7 @@ Every non-trivial session ends with:
 7. **Patterns are promoted, not buried** — 3+ occurrences → `memory/patterns/`
 8. **Main branch is read-only** — Work on feature branches/worktrees
 
-## Examples
+### Examples
 
 **Session Start:**
 > Agent: "Dojo framework active. Memory vault loaded (4 decisions, 7 patterns,
@@ -135,10 +137,20 @@ Every non-trivial session ends with:
 > → *requesting-code-review activates* → self-reviews
 > → *finishing-a-development-branch activates* → presents merge options
 
-## Anti-Patterns
+## Pitfalls
 
 - **"I'll skip brainstorming, I know what to build"** — You don't. Ask questions.
 - **"I'll just commit to main this once"** — You won't "just" anything. Use a branch.
 - **"Tests take too long, I'll add them later"** — Later never comes. Test now.
-- **"The plan is in my head"** — Write it in `tasks/todo.md` or it doesn't exist.
+- **"The plan is in memory only"** — Write it in `tasks/todo.md` or it doesn't exist.
 - **"I already know everything"** — Review `tasks/lessons.md`. You forgot something.
+
+## Verification
+
+- [ ] `memory/INDEX.md` was read and active context surfaced.
+- [ ] `tasks/lessons.md` reviewed and any relevant rules acknowledged.
+- [ ] `tasks/todo.md` checked for work-in-progress before starting new work.
+- [ ] `git status` confirms correct branch and clean (or known-WIP) tree.
+- [ ] Acknowledgement message issued ("Dojo framework active…").
+- [ ] All Core Discipline skills are loaded for the session.
+- [ ] Session-end ritual scheduled (summary + pattern promotion + link rebuild).

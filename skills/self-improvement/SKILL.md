@@ -1,12 +1,12 @@
 ---
 name: self-improvement
-description: >-
-  Drives the agent's continuous learning loop — capturing lessons from corrections,
-  tracking patterns, and proposing skill amendments. Use this skill at the start of
-  every session (to review past lessons), after any correction from the user, when a
-  mistake pattern recurs, or when proposing updates to skills.md. This is the dojo's
-  memory system — without it, agents repeat the same mistakes forever.
-  Integrates with the memory vault (memory/) for persistent, linked knowledge.
+description: Captures lessons and promotes recurring patterns.
+tier: core
+category: workflow
+created_by: human
+platforms: [windows, macos, linux]
+tags: [memory, lessons, patterns, continuous-learning]
+author: Andreas Wasita (@andreaswasita)
 ---
 
 # Self-Improvement Skill
@@ -43,6 +43,8 @@ Before any work begins:
 4. Filter for entries relevant to the current project, language, or task type
 5. Internalize active rules — these are your guardrails for this session
 6. Note any lessons with high occurrence counts — these are your blind spots
+
+## How to Run
 
 ```text
 1. At session start: `view tasks/lessons.md` and internalize active rules.
