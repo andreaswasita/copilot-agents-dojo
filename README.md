@@ -13,9 +13,9 @@
 ![license](https://img.shields.io/badge/license-MIT-1f6feb?style=flat-square)
 ![version](https://img.shields.io/badge/version-1.1-3fb950?style=flat-square)
 ![spec](https://img.shields.io/badge/spec-v1-1f6feb?style=flat-square)
-![skills](https://img.shields.io/badge/skills-26-d2691e?style=flat-square)
+![skills](https://img.shields.io/badge/skills-29-d2691e?style=flat-square)
 ![tiers](https://img.shields.io/badge/tiers-core%20%2F%20practical%20%2F%20optional-8b5cf6?style=flat-square)
-![agents](https://img.shields.io/badge/personas-5-14b8a6?style=flat-square)
+![agents](https://img.shields.io/badge/personas-8-14b8a6?style=flat-square)
 ![curator](https://img.shields.io/badge/curator-self--improving-f59e0b?style=flat-square)
 ![gate](https://img.shields.io/badge/enforcement-verify.sh-ec4899?style=flat-square)
 
@@ -33,8 +33,8 @@ Drop `skills/` + `optional-skills/` + `.github/copilot-instructions.md` into any
 
 **What's inside:**
 
-- **26 production skills** across `core / practical / optional` tiers
-- **5 specialized agent personas** (architect, security-engineer, software-engineer, TPM, test-engineer)
+- **29 production skills** across `core / practical / optional` tiers (25 always-discoverable + 4 optional)
+- **8 specialized agent personas** — generalist `architect`, three TOGAF specialists (business / solution / platform), plus `security-engineer`, `software-engineer`, `technical-program-manager`, `test-engineer`
 - Mandatory **BRAINSTORM → PLAN → TDD → REVIEW → FINISH** pipeline
 - **Self-improving curator** — state machine, backups, idle-based trigger, per-run audit trail
 - **Memory vault** — persistent, linked knowledge graph (Obsidian-compatible)
@@ -136,8 +136,11 @@ Personas in [agents/](./agents), with a single source of truth in [`agents/regis
 
 | Persona | Focus |
 |---|---|
-| [architect](./agents/architect.md) | System design, technical strategy, impact analysis, traceability |
-| [security-engineer](./agents/security-engineer.md) | Security compliance, vulnerability identification, secure-by-default |
+| [architect](./agents/architect.md) | Generalist design — system design, impact analysis, refactoring strategy. Prefer the specialised TOGAF personas for red-thread work. |
+| [business-architect](./agents/business-architect.md) | TOGAF Phase A/B — elicits and ratifies business drivers (BRs); root of the requirement cascade |
+| [solution-architect](./agents/solution-architect.md) | TOGAF Phase C — derives FRs and NFRs from ratified BRs; enforces the traceability gate at Phase C → D |
+| [platform-architect](./agents/platform-architect.md) | TOGAF Phase D/E — derives infrastructure (IR) and technology (TR) requirements from FRs/NFRs/SRs |
+| [security-engineer](./agents/security-engineer.md) | Security compliance, vulnerability identification, secure-by-default; authors security requirements (SRs) cross-cutting Phase B–E |
 | [software-engineer](./agents/software-engineer.md) | Feature development, bug fixes, production-quality code |
 | [technical-program-manager](./agents/technical-program-manager.md) | Project planning, requirements, Definition of Ready |
 | [test-engineer](./agents/test-engineer.md) | Test strategy, implementation, quality assurance |
