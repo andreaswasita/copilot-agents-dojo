@@ -6,6 +6,7 @@ category: workflow
 created_by: human
 platforms: [windows, macos, linux]
 tags: [security, requirements, traceability, togaf, threat-modelling]
+verifier: traceability-sample
 author: Andreas Wasita (@andreaswasita)
 ---
 

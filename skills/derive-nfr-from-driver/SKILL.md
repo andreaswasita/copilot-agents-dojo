@@ -6,6 +6,7 @@ category: workflow
 created_by: human
 platforms: [windows, macos, linux]
 tags: [requirements, traceability, nfr, togaf]
+verifier: traceability-sample
 author: Andreas Wasita (@andreaswasita)
 ---
 

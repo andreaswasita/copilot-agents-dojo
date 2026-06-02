@@ -93,6 +93,26 @@ Declare the OSes the skill's scripts and shell snippets actually work on. `verif
 
 Credit the human contributor first. Format: `Real Name (@github-handle)`. If multiple, separate with `, `. `Copilot` is a collaborator, not the lead — even if you used Copilot to draft the skill, replace any auto-attribution with your own name.
 
+### 1.5 `verifier` — Optional Promotion Gate
+
+A skill MAY declare an optional `verifier:` ID in its frontmatter. The curator (`scripts/curator.sh`) runs the named verifier before promoting the skill to `active` — via `record`, `transition` reactivation, `restore`, or the explicit `promote` verb. On verifier failure, the promotion is blocked and the event is logged to `.dojo/curator.log`.
+
+Verifier IDs are **whitelisted** in `lookup_verifier_cmd()` inside `curator.sh`. Freeform shell commands are not accepted by design — learned agent skills could otherwise smuggle arbitrary code through the activation path.
+
+Currently registered verifiers:
+
+| ID | What it runs | Skills that should use it |
+|---|---|---|
+| `traceability-sample` | `bash scripts/verify-traceability.sh requirements/sample` | Skills that derive new requirements artefacts (e.g. `derive-nfr-from-driver`, `derive-security-from-risk`) |
+
+If a skill has no `verifier:` (or the value is empty), the curator promotes it without running anything — fully backward compatible.
+
+```yaml
+verifier: traceability-sample
+```
+
+To add a new verifier, append a new case to `lookup_verifier_cmd()` and document it here. Skills referencing an unknown verifier ID are blocked from promotion until the registry is updated.
+
 ---
 
 ## 2. Body Sections (Required Order)
