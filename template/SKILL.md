@@ -38,6 +38,11 @@ author: Your Name (@your-handle)
 # mcp:
 #   required: [github]
 #   optional: [fetch]
+
+# Optional. Curator promotion gate. ID MUST resolve to a case in
+# scripts/curator.sh → lookup_verifier_cmd(). When set, the curator runs
+# the named verifier before promoting this skill to `active`. See spec §1.5.
+# verifier: traceability-sample
 ---
 
 # Template Skill

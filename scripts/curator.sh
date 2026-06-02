@@ -19,11 +19,19 @@
 #   bash scripts/curator.sh unpin  <skill>
 #   bash scripts/curator.sh archive <skill>
 #   bash scripts/curator.sh restore <skill>
+#   bash scripts/curator.sh promote <skill>             # candidate|stale → active (gated by verifier)
 #   bash scripts/curator.sh transition [--dry-run]   # age-based state machine
 #   bash scripts/curator.sh prune      [--dry-run]   # legacy alias for transition
 #   bash scripts/curator.sh backup     [--reason <s>]
 #   bash scripts/curator.sh rollback   [--list | --id <ts> | -y]
 #   bash scripts/curator.sh report
+#
+# Verifier hook (Theme 5.1):
+#   A skill's SKILL.md may declare `verifier: <id>` in its frontmatter.
+#   When the curator would promote that skill to `active` (via record /
+#   transition / restore / promote) it first runs the named verifier.
+#   On failure the promotion is blocked and the event is logged.
+#   Known verifier IDs are whitelisted in lookup_verifier_cmd() below.
 
 set -euo pipefail
 
@@ -141,6 +149,69 @@ guard_human_only() {
     echo "🛑 refusing: $path is created_by: human (curator only manages agent skills)" >&2
     return 1
   fi
+}
+
+# --- verifier registry ----------------------------------------------------
+#
+# Theme 5.1: a skill may declare a `verifier:` ID in its SKILL.md frontmatter.
+# The curator runs the named verifier before promoting the skill to `active`
+# (via record / transition reactivation / restore / promote). On verifier
+# failure, the promotion is blocked.
+#
+# Whitelist over freeform shell on purpose — verifier IDs map to known
+# commands so a malicious/accidental learned-skill cannot trigger arbitrary
+# code via the curator.
+#
+# To add a new verifier, append a case below.
+lookup_verifier_cmd() {
+  local id="$1"
+  case "$id" in
+    traceability-sample)
+      echo "bash \"$DOJO_ROOT/scripts/verify-traceability.sh\" requirements/sample"
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+# run_verifier <name> <path>  -> 0 if pass / no verifier declared, 1 if fail
+run_verifier() {
+  local name="$1" path="$2"
+  local raw; raw=$(fm_get "$path/SKILL.md" verifier 2>/dev/null || true)
+  # Trim whitespace and strip surrounding quotes
+  local id; id=$(echo "$raw" | sed -E "s/^[[:space:]]+//; s/[[:space:]]+$//; s/^['\"]//; s/['\"]$//")
+  [ -z "$id" ] && return 0
+  local cmd
+  if ! cmd=$(lookup_verifier_cmd "$id"); then
+    echo "🛑 unknown verifier '$id' declared by $name — refuse to activate" >&2
+    return 1
+  fi
+  echo "🔎 running verifier '$id' for $name…"
+  local logf; logf=$(mktemp)
+  if bash -c "$cmd" >"$logf" 2>&1; then
+    echo "  ✅ verifier '$id' passed"
+    rm -f "$logf"
+    return 0
+  else
+    local rc=$?
+    echo "  ❌ verifier '$id' failed (exit $rc). Last 10 lines:" >&2
+    tail -10 "$logf" | sed 's/^/      /' >&2
+    rm -f "$logf"
+    return 1
+  fi
+}
+
+# activate_skill <name> <path> <caller>  -> 0 on success, 1 if verifier blocks
+# Central activation funnel: every state→active transition goes through here.
+activate_skill() {
+  local name="$1" path="$2" caller="${3:-unknown}"
+  if ! run_verifier "$name" "$path"; then
+    log "blocked-by-verifier $name (caller=$caller)"
+    return 1
+  fi
+  set_field_str "$name" state "active"
+  return 0
 }
 
 # --- backup / rollback ---------------------------------------------------
@@ -321,13 +392,34 @@ verb_record() {
   local path; path=$(skill_path "$name")
   [ -z "$path" ] && { echo "❌ unknown skill: $name" >&2; exit 1; }
   ensure_entry "$name"
+
+  local prev_state
+  prev_state=$(jq -r --arg n "$name" '.skills[$n].state // "active"' "$USAGE_FILE")
+
+  # Always bump usage + timestamp regardless of activation outcome.
   local tmp; tmp=$(mktemp)
   jq --arg n "$name" --arg t "$(now_iso)" \
     '.skills[$n].uses += 1
      | .skills[$n].last_used = $t
-     | .skills[$n].state = (if .skills[$n].state == "archived" then "archived" else "active" end)
      | .generated_at = $t' \
     "$USAGE_FILE" > "$tmp" && mv "$tmp" "$USAGE_FILE"
+
+  case "$prev_state" in
+    active|archived)
+      # archived stays archived (use `restore` instead); active stays active.
+      ;;
+    candidate|stale)
+      if activate_skill "$name" "$path" "record"; then
+        log "record $name (promoted $prev_state → active)"
+        echo "📝 recorded use of $name (promoted $prev_state → active)"
+        return 0
+      else
+        echo "📝 recorded use of $name (verifier blocked; state stays $prev_state)" >&2
+        return 0
+      fi
+      ;;
+  esac
+
   log "record $name"
   echo "📝 recorded use of $name"
 }
@@ -367,6 +459,12 @@ verb_archive() {
 verb_restore() {
   local name="$1"
   [ ! -d "$ARCHIVE_DIR/$name" ] && { echo "❌ not in archive: $name" >&2; exit 1; }
+  # Gate: declared verifier must pass before un-archiving back to active.
+  if ! run_verifier "$name" "$ARCHIVE_DIR/$name"; then
+    echo "🛑 refuse to restore $name — verifier did not pass" >&2
+    log "blocked-by-verifier $name (caller=restore)"
+    exit 1
+  fi
   local parent="skills"
   local tier; tier=$(fm_get "$ARCHIVE_DIR/$name/SKILL.md" tier)
   [ "$tier" = "optional" ] && parent="optional-skills"
@@ -446,10 +544,15 @@ verb_transition() {
         record_action "$name" "archived" "last_used=${last:-never}"
         ;;
       active)
-        set_field_str "$name" state "active"
-        log "reactivate $name"
-        echo "  $name → active"
-        record_action "$name" "active" "last_used=${last:-never}"
+        if activate_skill "$name" "$path" "transition"; then
+          log "reactivate $name"
+          echo "  $name → active"
+          record_action "$name" "active" "last_used=${last:-never}"
+        else
+          log "blocked-by-verifier-reactivation $name"
+          echo "  $name → blocked-by-verifier (kept $cur_state)"
+          record_action "$name" "blocked-by-verifier" "would have reactivated from $cur_state"
+        fi
         ;;
     esac
   done < <(jq -r '.skills | keys[]' "$USAGE_FILE")
@@ -464,6 +567,31 @@ verb_transition() {
     jq --arg t "$(now_iso)" '.last_run_at = $t' "$USAGE_FILE" > "$tmp" && mv "$tmp" "$USAGE_FILE"
     end_report
     [ "$actions" -gt 0 ] && echo "↻  Run: bash scripts/regen-skills-index.sh"
+  fi
+}
+
+# Explicit candidate/stale → active path. Required when the skill carries a
+# `verifier:` and you want the activation to be an audited, deliberate act
+# instead of an automatic transition.
+verb_promote() {
+  local name="${1:-}"
+  [ -z "$name" ] && { echo "usage: curator.sh promote <skill>" >&2; exit 2; }
+  local path; path=$(skill_path "$name")
+  [ -z "$path" ] && { echo "❌ unknown skill: $name" >&2; exit 1; }
+  ensure_entry "$name"
+  local prev_state
+  prev_state=$(jq -r --arg n "$name" '.skills[$n].state // "active"' "$USAGE_FILE")
+  case "$prev_state" in
+    active)   echo "ℹ️  $name already active — nothing to do"; return 0 ;;
+    archived) echo "❌ $name is archived — use 'restore' instead" >&2; exit 1 ;;
+    candidate|stale) ;;
+    *) echo "❌ $name is in unknown state '$prev_state'" >&2; exit 1 ;;
+  esac
+  if activate_skill "$name" "$path" "promote"; then
+    log "promote $name (from $prev_state)"
+    echo "🚀 promoted $name → active (was $prev_state)"
+  else
+    exit 1
   fi
 }
 
@@ -506,11 +634,12 @@ case "$verb" in
   unpin)      verb_unpin      "$1" ;;
   archive)    verb_archive    "$1" ;;
   restore)    verb_restore    "$1" ;;
+  promote)    verb_promote    "${1:-}" ;;
   transition) verb_transition "${1:-}" ;;
   prune)      verb_transition "${1:-}" ;;  # legacy alias
   backup)     verb_backup     "$@" ;;
   rollback)   verb_rollback   "$@" ;;
   report)     verb_report ;;
-  -h|--help)  sed -n '1,32p' "$0" ;;
+  -h|--help)  sed -n '1,36p' "$0" ;;
   *) echo "unknown verb: $verb (try --help)" >&2; exit 2 ;;
 esac
