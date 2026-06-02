@@ -1,0 +1,5 @@
+# Dev-time tooling for the traceability pytest harness.
+# Pinned to a stable release. Used by:
+#   - local: pip install -r tests/requirements-dev.txt
+#   - CI:    .github/workflows/dojo-enforce.yml → traceability-tests job
+pytest==8.3.3
