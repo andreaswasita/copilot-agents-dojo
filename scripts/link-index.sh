@@ -12,8 +12,8 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(dirname "$SCRIPT_DIR")"
-MEMORY_DIR="$REPO_ROOT/memory"
+DOJO_ROOT="${DOJO_ROOT:-$(dirname "$SCRIPT_DIR")}"
+MEMORY_DIR="$DOJO_ROOT/memory"
 INDEX_FILE="$MEMORY_DIR/INDEX.md"
 GRAPH_FILE="$MEMORY_DIR/.link-graph.json"
 
