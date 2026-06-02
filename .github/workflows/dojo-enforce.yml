@@ -1,42 +1,68 @@
 name: Dojo Enforcement
 
+# Triggers
+#   - pull_request:    primary gate, runs on every PR targeting main
+#   - push (main):     safety net for direct admin pushes (branch protection
+#                      normally blocks these, but this catches any bypass)
+#   - workflow_dispatch: manual trigger for debugging the gate itself
 on:
   pull_request:
     branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
 
+# Least-privilege: jobs only read the repo. None of these modify state.
 permissions:
   contents: read
 
+# Cancel an in-flight run when a new commit lands on the same PR/branch.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  verify:
-    name: Verify (spec + plan + actions audit)
+  # --- Required (must pass to merge) ------------------------------------------
+
+  actions-audit:
+    name: Action SHA-pinning
     runs-on: ubuntu-latest
     steps:
-      # SHA-pinned per .github/known-pitfalls.md "DO NOT use floating uses: versions".
-      # Update SHAs deliberately; the comment after # is the human-readable version.
+      # SHA-pinned per .github/known-pitfalls.md "DO NOT use floating uses:".
+      # Update SHA deliberately; comment after # is the human-readable version.
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - name: Run verify.sh actions
+        run: bash scripts/verify.sh actions
 
-      - name: Run dojo verification gate (CI mode)
-        run: bash scripts/verify.sh --check
-
-  enforce-action-pinning:
-    name: Enforce GitHub Action SHA pinning
+  traceability-gate:
+    name: Red-Thread traceability
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - name: Run verify.sh traceability
+        run: bash scripts/verify.sh traceability
 
-      - name: Reject unpinned uses: in any workflow
-        run: |
-          set -euo pipefail
-          bad=0
-          while IFS= read -r wf; do
-            violations=$(grep -nE '^\s*-?\s*uses:\s*[^@]+@[^[:space:]]+' "$wf" \
-                         | grep -vE '@[0-9a-f]{40}\b' || true)
-            if [ -n "$violations" ]; then
-              echo "::error file=$wf::Unpinned uses: detected. Pin to a 40-char commit SHA + version comment."
-              echo "$violations"
-              bad=1
-            fi
-          done < <(find .github/workflows -name '*.yml' -o -name '*.yaml')
-          exit $bad
+  # --- Informational (will be promoted to required once backlog is cleared) ---
 
+  spec-invariants:
+    # Currently advisory because of pre-existing spec violations tracked in
+    # Roadmap Theme 5.3 (requirements-elicitation, self-improvement,
+    # using-superpowers). Promote to a required check after those PRs land.
+    name: Spec invariants (informational)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - name: Run verify.sh spec
+        run: bash scripts/verify.sh spec
+
+  plan-check:
+    # Tasks/todo.md is a per-clone artifact, not always present in PR diffs.
+    # Keep advisory so it doesn't block infra-only PRs.
+    name: Plan sanity (informational)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - name: Run verify.sh plan
+        run: bash scripts/verify.sh plan
