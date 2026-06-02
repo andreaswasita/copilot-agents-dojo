@@ -1,0 +1,46 @@
+# CODEOWNERS — auto-request reviewers on every PR.
+#
+# Order matters: later rules override earlier ones.
+# See: https://docs.github.com/en/repositories/managing-your-repositories-settings-and-security/customizing-your-repository/about-code-owners
+
+# Default owner for everything not matched by a more specific rule below.
+*                                       @andreaswasita
+
+# --- Framework spec & gate (highest blast radius) ---
+/spec/                                  @andreaswasita
+/scripts/verify.sh                      @andreaswasita
+/scripts/run-checks.ps1                 @andreaswasita
+/scripts/verify-traceability.sh         @andreaswasita
+/scripts/gen-rtm.sh                     @andreaswasita
+/scripts/curator.sh                     @andreaswasita
+/scripts/lesson-updater.sh              @andreaswasita
+/scripts/regen-skills-index.sh          @andreaswasita
+/.github/workflows/                     @andreaswasita
+/.github/CODEOWNERS                     @andreaswasita
+
+# --- Single sources of truth (drift detectors enforce these) ---
+/skills.md                              @andreaswasita
+/agents/registry.yaml                   @andreaswasita
+/.dojo/bundled-manifest.txt             @andreaswasita
+
+# --- Skills & personas (any SKILL.md or persona brief change needs review) ---
+/skills/                                @andreaswasita
+/optional-skills/                       @andreaswasita
+/agents/                                @andreaswasita
+/template/                              @andreaswasita
+
+# --- CLI ---
+/cli/                                   @andreaswasita
+
+# --- Memory vault patterns (curator-promoted; treat as architectural) ---
+/memory/patterns/                       @andreaswasita
+/memory/skills/                         @andreaswasita
+
+# --- Red-Thread requirements samples (PR #8) ---
+/requirements/                          @andreaswasita
+
+# --- Documentation (lower bar but still owned) ---
+/README.md                              @andreaswasita
+/AGENTS.md                              @andreaswasita
+/CHANGELOG.md                           @andreaswasita
+/docs/                                  @andreaswasita
