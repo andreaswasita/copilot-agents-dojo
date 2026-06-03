@@ -151,11 +151,21 @@ Skills with `created_by: agent` and no recent use are auto-archived by `scripts/
 
 ## Verification
 
-- **Not logging lessons** — "I'll remember next time" is a lie
-- **Logging without rules** — A lesson without a prevention rule is just a diary entry
-- **Never reviewing** — Lessons you don't review can't help you
-- **Overly specific rules** — "Don't use `parseInt` on line 47 of auth.js" won't generalize. Extract the principle.
-- **Keeping dead rules** — If a rule hasn't been relevant in months, archive it
-- **Skipping promotion** — A lesson that hits 3+ occurrences but stays in lessons.md is wasted knowledge. Promote it to `memory/patterns/`
-- **Orphaned memory files** — Files in `memory/` with no links to or from anything. Run `scripts/link-index.sh` and check for orphans
-- **Duplicating skill rules as preferences** — `memory/preferences/` is for *learned* behaviors, not hardcoded rules that already exist in skills
+Concrete checks that prove the skill is producing intended outcomes. Run at session end (or after any correction) via the `powershell` tool:
+
+```text
+bash scripts/self-improvement-verify.sh
+```
+
+The script (source: `scripts/self-improvement-verify.sh`) asserts:
+
+1. **`tasks/lessons.md` exists** — required artifact.
+2. **Every lesson has a `rule:` field** — a lesson without a prevention rule is a diary entry and fails the check.
+3. **No duplicated active rules** — the same `rule:` across multiple entries means someone cloned instead of incrementing `occurrences:`.
+4. **Threshold promotion happened** — any entry with `occurrences: 3+` must either carry `status: amended-to-skill` or have a corresponding file under `memory/patterns/`.
+5. **Memory graph has zero orphans** — runs `scripts/link-index.sh` and inspects `memory/INDEX.md`.
+6. **Today's session summary (if any) links out** — at least one link to `memory/decisions/`, `memory/patterns/`, or `memory/preferences/`.
+
+The script exits non-zero on hard failures and prints `Summary: pass=… fail=… warn=…`. Treat warnings as signal, not noise — investigate before closing the session.
+
+Beyond the script: **active rules should reduce repeat errors**. If the same `error_type` + `trigger` recurs within 5 subsequent sessions after a rule lands, the rule is wrong — rewrite or remove it per Step 4 §8.
