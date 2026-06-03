@@ -1,0 +1,106 @@
+name: Release copilot-dojo
+
+# Tag-driven release for the `copilot-dojo` npm package.
+#
+# Trigger: push a tag matching `copilot-dojo-v*.*.*` (e.g. `copilot-dojo-v0.1.0`).
+# The tag's name suffix MUST match the version in
+# `control-plane/packages/installer/package.json` — the workflow asserts
+# this before publishing to avoid mismatched releases.
+#
+# Publishes to npm with provenance attestation (sigstore-backed).
+# Requires repository secret `NPM_TOKEN` (automation token with publish
+# scope on the `copilot-dojo` package). Switch to npm trusted publishing
+# (OIDC) once the package exists on the registry.
+#
+# `workflow_dispatch` runs the same pipeline up to `npm publish --dry-run`
+# so we can validate packaging without cutting a real release.
+
+on:
+  push:
+    tags:
+      - 'copilot-dojo-v*.*.*'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Run npm publish --dry-run only (no actual publish)'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+permissions:
+  contents: read
+  id-token: write  # required for npm provenance / sigstore attestation
+
+jobs:
+  publish:
+    name: Publish copilot-dojo to npm
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: control-plane/packages/installer
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4.4.0
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+      - uses: pnpm/action-setup@7088e561eb65bb68695d245aa206f005ef30921d  # v4.1.0
+        with:
+          version: '11'
+
+      - name: Install workspace deps
+        working-directory: control-plane
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify tag matches package.json version
+        if: github.event_name == 'push'
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME}"
+          tag_version="${tag#copilot-dojo-v}"
+          pkg_version=$(node -p "require('./package.json').version")
+          if [ "$tag_version" != "$pkg_version" ]; then
+            echo "::error::Tag version ($tag_version) does not match package.json version ($pkg_version)"
+            exit 1
+          fi
+          echo "Releasing copilot-dojo@$pkg_version"
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Run tests (sanity)
+        run: pnpm run test
+
+      - name: Stage LICENSE into package
+        run: cp ../../../LICENSE ./LICENSE
+
+      - name: Publish to npm (dry-run)
+        if: github.event_name == 'workflow_dispatch' && inputs.dry_run == 'true'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --provenance --access public --dry-run
+
+      - name: Publish to npm
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.dry_run == 'false')
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --provenance --access public
+
+      - name: Summary
+        if: success()
+        run: |
+          echo "### copilot-dojo release" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then
+            echo "Dry-run completed. No package was published." >> "$GITHUB_STEP_SUMMARY"
+          else
+            version=$(node -p "require('./package.json').version")
+            echo "Published copilot-dojo@$version to npm with provenance." >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            echo "npx copilot-dojo init" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          fi

@@ -3,9 +3,11 @@
 Zero-install bootstrap for the **Copilot Agents Dojo** — a skills &
 discipline framework for GitHub Copilot agents.
 
-> **Status:** v0.1 (early access). Not yet published to npm. Run from a
-> local build or via `npx github:andreaswasita/copilot-agents-dojo` once
-> the publish workflow lands.
+> **Status:** v0.1 (early access). The release workflow at
+> `.github/workflows/release-copilot-dojo.yml` publishes to npm with
+> provenance on tag pushes matching `copilot-dojo-v*.*.*`. Until the
+> first tag lands you can still run from a clone (see
+> [Local development](#local-development)).
 
 ## What it does
 
@@ -72,6 +74,40 @@ the source via `DOJO_TARBALL_URL` (accepts `file://` URLs) for hermetic
 tests or air-gapped installs. The bundled vitest suite uses this hook to
 run with no network.
 
+## Releasing (maintainers)
+
+Releases are tag-driven. The workflow at
+`.github/workflows/release-copilot-dojo.yml` is the single source of
+truth.
+
+1. Bump `version` in `control-plane/packages/installer/package.json`.
+2. Land the bump via a normal PR (it must pass all required checks).
+3. From `main` after merge:
+
+   ```bash
+   ver=$(node -p "require('./control-plane/packages/installer/package.json').version")
+   git tag "copilot-dojo-v$ver" -m "copilot-dojo v$ver"
+   git push origin "copilot-dojo-v$ver"
+   ```
+
+4. The workflow asserts the tag suffix matches `package.json`, builds,
+   tests, then runs `npm publish --provenance --access public`.
+
+Prerequisites (one-time):
+
+- Repository secret `NPM_TOKEN` — npm automation token scoped to the
+  `copilot-dojo` package (or your scope if you fork).
+- The first publish must be done by an account with rights to claim the
+  package name. Subsequent releases are fully automated.
+- Once the package exists, switch to npm trusted publishing (OIDC) and
+  delete the `NPM_TOKEN` secret. The workflow already requests
+  `id-token: write` so no change is needed beyond removing the
+  `NODE_AUTH_TOKEN` env line.
+
+Use `workflow_dispatch` with `dry_run: true` to validate packaging
+without cutting a release — it runs the full pipeline up to
+`npm publish --dry-run` and reports the tarball contents.
+
 ## Roadmap
 
 | Theme | Description |
@@ -79,7 +115,6 @@ run with no network.
 | `custom` preset picker | Interactive multi-select over the live skill catalogue (currently rejected with a TODO error). |
 | Skill *removal* on update | Today re-runs only add/refresh. |
 | Conflict resolution | Detect hand-edited skills and prompt before clobber. |
-| npm publish workflow | `.github/workflows/publish-installer.yml` — gated on tag pushes. |
 | `dojo doctor` command | Audit an installed project for drift vs the pinned profile. |
 
 Issues and PRs: <https://github.com/andreaswasita/copilot-agents-dojo>
