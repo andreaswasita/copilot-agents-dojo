@@ -11,15 +11,26 @@
     "build": "tsc",
     "dev": "tsx src/cli.ts",
     "test": "vitest run --passWithNoTests",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "prepublishOnly": "pnpm run build"
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "engines": {
     "node": ">=20"
   },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "homepage": "https://github.com/andreaswasita/copilot-agents-dojo#readme",
+  "bugs": {
+    "url": "https://github.com/andreaswasita/copilot-agents-dojo/issues"
+  },
+  "author": "Andreas Wasita (@andreaswasita)",
   "keywords": [
     "github-copilot",
     "copilot",
