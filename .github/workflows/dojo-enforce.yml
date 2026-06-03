@@ -94,14 +94,14 @@ jobs:
       - name: Run verify.sh spec --check
         run: bash scripts/verify.sh spec --check
 
-  # --- Informational ----------------------------------------------------------
+  # --- Required ---------------------------------------------------------------
 
   plan-check:
-    # Tasks/todo.md is a per-clone artifact, not always present in PR diffs.
-    # Keep advisory so it doesn't block infra-only PRs.
-    name: Plan sanity (informational)
+    # tasks/todo.md sanity. verify.sh runs in canonical-repo mode here,
+    # asserting the scaffold template is intact (see scripts/verify.sh
+    # run_plan_checks + AGENTS.md → Task Plan Policy).
+    name: Plan sanity
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
       - name: Run verify.sh plan

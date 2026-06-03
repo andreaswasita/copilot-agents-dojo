@@ -115,6 +115,20 @@ Adopted after the litellm and Shai-Hulud incidents to limit attack surface on PR
 
 ---
 
+## Task Plan Policy
+
+`tasks/todo.md` in this repository is a **canonical scaffold template**, not a working plan for the dojo's own development. Downstream consumers (anyone who runs `bash scripts/init.sh` against their own project) fill it in for their actual work; the version that ships in this repo must stay in its scaffold form.
+
+Rules:
+
+- **PRs to this repo MUST NOT replace `tasks/todo.md` with a real plan.** Branch protection enforces this via the `Plan sanity` required check, which runs `scripts/verify.sh plan` in canonical-repo mode.
+- **Working plans for dojo PRs live elsewhere:** the agent's session folder (`~/.copilot/session-state/<session-id>/plan.md`), a scratch branch outside the canonical scaffold, or PR descriptions/issues. Not in `tasks/todo.md`.
+- **`tasks/lessons.md` IS expected to evolve** in this repo — it's the dojo's own learning log. The plan check only asserts presence, not content.
+
+`scripts/verify.sh` detects canonical-repo mode by the presence of `spec/copilot-skills-spec.md`, `skills/`, and `scripts/init.sh` together. In any other repo (a downstream consumer's clone), the same script inverts the assertion: the scaffold template warns, a real plan passes.
+
+---
+
 ## Cache-Aware Mutations
 
 Copilot caches the prompt — including the skills it loads at session start. Anything that mutates a skill, the `skills.md` index, or `.github/copilot-instructions.md` mid-session invalidates that cache and dramatically increases cost.
