@@ -87,11 +87,9 @@ jobs:
   mcp-memory-tests:
     # Vitest suite for control-plane/packages/mcp-memory — the MCP server
     # that exposes the dojo memory vault. Hermetic; uses os.tmpdir() vaults.
-    # Informational until two green runs prove stability, then promote
-    # the same way as Installer tests / Traceability tests.
-    name: MCP memory tests (informational)
+    # Required check on main after green runs on PRs #27 and #28.
+    name: MCP memory tests
     runs-on: ubuntu-latest
-    continue-on-error: true
     defaults:
       run:
         working-directory: control-plane
