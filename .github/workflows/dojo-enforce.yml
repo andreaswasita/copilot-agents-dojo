@@ -63,10 +63,9 @@ jobs:
     # Vitest suite for control-plane/packages/installer — the npx
     # copilot-dojo bootstrap CLI. Hermetic; uses a local fixture tarball
     # via DOJO_TARBALL_URL so no network is required.
-    # Informational until the surface stabilises.
-    name: Installer tests (informational)
+    # Required check on main after two green runs (PRs #22 and #23).
+    name: Installer tests
     runs-on: ubuntu-latest
-    continue-on-error: true
     defaults:
       run:
         working-directory: control-plane
