@@ -271,11 +271,29 @@ run_plan_checks() {
     fail "tasks/todo.md not found — run scripts/init.sh"
     return
   fi
+  # Canonical-repo mode: when running inside the dojo source repo itself
+  # (presence of spec/ + skills/), tasks/todo.md SHOULD be the default
+  # scaffold template — it's an artifact downstream consumers fill in,
+  # not a working plan for the dojo's own development. PR working plans
+  # live in plan.md inside the session folder (or scratch branches),
+  # not in the canonical scaffold.
+  local canonical_repo=false
+  if [ -f spec/copilot-skills-spec.md ] && [ -d skills ] && [ -f scripts/init.sh ]; then
+    canonical_repo=true
+  fi
   if grep -qE '^- \[( |x)\] Step 1$' tasks/todo.md \
      && ! grep -qE '^- \[( |x)\] (?!Step [0-9])' tasks/todo.md 2>/dev/null; then
-    warn "tasks/todo.md looks like the default template"
+    if [ "$canonical_repo" = true ]; then
+      pass "tasks/todo.md is the canonical scaffold template (expected on dojo main)"
+    else
+      warn "tasks/todo.md looks like the default template"
+    fi
   else
-    pass "tasks/todo.md has a real plan"
+    if [ "$canonical_repo" = true ]; then
+      warn "tasks/todo.md has been edited away from the scaffold template on the dojo repo (PR working plans belong in scratch state, not in the canonical scaffold)"
+    else
+      pass "tasks/todo.md has a real plan"
+    fi
   fi
   [ -f tasks/lessons.md ] && pass "tasks/lessons.md exists" \
                           || warn "tasks/lessons.md missing — run scripts/init.sh"
