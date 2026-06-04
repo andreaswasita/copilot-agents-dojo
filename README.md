@@ -330,6 +330,43 @@ Trained agents operate like **seasoned black belts** — plan the approach, exec
 
 ## Enter the Dojo
 
+### One command (recommended)
+
+Drop the whole framework into the current repo — no clone, no Python:
+
+```bash
+# macOS / Linux
+curl -fsSL https://raw.githubusercontent.com/andreaswasita/copilot-agents-dojo/main/install.sh | bash
+```
+
+```powershell
+# Windows (PowerShell)
+irm https://raw.githubusercontent.com/andreaswasita/copilot-agents-dojo/main/install.ps1 | iex
+```
+
+The installer is **re-runnable and idempotent**: it refreshes the bundled
+skills, agents, scripts, and spec while preserving your own additions —
+`tasks/`, `memory/`, custom skills, and an edited
+`.github/copilot-instructions.md` (a differing dojo version is written to
+`.github/copilot-instructions.dojo.md` for you to merge). It finishes by
+running `scripts/verify.sh spec` as a health gate.
+
+Pin a release for reproducible installs, and pass options as needed:
+
+```bash
+# bash: --ref <branch|tag>  --dir <path>  --force  --no-verify
+curl -fsSL https://raw.githubusercontent.com/andreaswasita/copilot-agents-dojo/main/install.sh | bash -s -- --ref v1.1
+```
+
+```powershell
+# PowerShell flags: -Ref <branch|tag>  -Dir <path>  -Force  -NoVerify
+# When piping (irm | iex) set env vars instead: $env:DOJO_REF='v1.1'; irm .../install.ps1 | iex
+```
+
+### Manual setup
+
+Prefer to wire it up by hand? The steps the installer automates are:
+
 1. **Copy** [`skills/`](./skills) and [`optional-skills/`](./optional-skills) into your repo — or pick the individual tiers you need.
 2. **Copy** [`memory/`](./memory) — the persistent knowledge graph.
 3. **Place** [`skills.md`](./skills.md) at your repo root — Copilot agents auto-discover this index.
