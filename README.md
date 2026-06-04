@@ -486,7 +486,7 @@ The Copilot Agents Dojo distills field-tested patterns from shipping production 
 
 ## Contributing
 
-See [AGENTS.md](./AGENTS.md) for the contributor guide and [CONTRIBUTING.md](./CONTRIBUTING.md) for the high-level checklist. Changelog: [CHANGELOG.md](./CHANGELOG.md).
+See [AGENTS.md](./AGENTS.md) for the contributor guide and [CONTRIBUTING.md](./CONTRIBUTING.md) for the high-level checklist. Keep contributions on-brand with the [brand & style guide](./docs/brand.md) — palette, wordmark, voice/tone. Changelog: [CHANGELOG.md](./CHANGELOG.md).
 
 ## License
 
