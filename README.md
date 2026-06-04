@@ -13,11 +13,11 @@
 ![license](https://img.shields.io/badge/license-MIT-1f6feb?style=flat-square)
 ![version](https://img.shields.io/badge/version-1.1-3fb950?style=flat-square)
 ![spec](https://img.shields.io/badge/spec-v1-1f6feb?style=flat-square)
-![skills](https://img.shields.io/badge/skills-29-d2691e?style=flat-square)
+![skills](https://img.shields.io/badge/skills-29-1f6feb?style=flat-square)
 ![tiers](https://img.shields.io/badge/tiers-core%20%2F%20practical%20%2F%20optional-8b5cf6?style=flat-square)
 ![agents](https://img.shields.io/badge/personas-8-14b8a6?style=flat-square)
 ![curator](https://img.shields.io/badge/curator-self--improving-f59e0b?style=flat-square)
-![gate](https://img.shields.io/badge/enforcement-verify.sh-ec4899?style=flat-square)
+![gate](https://img.shields.io/badge/enforcement-verify.sh-3fb950?style=flat-square)
 
 ---
 
