@@ -8,7 +8,7 @@
 
 *End-to-end framework to take AI agents from improvised assistants to disciplined, measurable, repeatable engineering partners.*
 
-[**📖 Wiki**](../../wiki) · [**Start Here**](#enter-the-dojo) · [**Skills**](./skills.md) · [**Agents**](./agents) · [**Spec**](./spec/copilot-skills-spec.md) · [**Contributor Guide**](./AGENTS.md)
+[**📖 Wiki**](../../wiki) · [**Start Here**](#enter-the-dojo) · [**🥋 Belt Quest**](./docs/quests/) · [**Skills**](./skills.md) · [**Agents**](./agents) · [**Spec**](./spec/copilot-skills-spec.md) · [**Contributor Guide**](./AGENTS.md)
 
 ![license](https://img.shields.io/badge/license-MIT-1f6feb?style=flat-square)
 ![version](https://img.shields.io/badge/version-1.1-3fb950?style=flat-square)
@@ -329,6 +329,11 @@ Trained agents operate like **seasoned black belts** — plan the approach, exec
 ---
 
 ## Enter the Dojo
+
+> 🥋 **New here? Walk the [Belt Quest](./docs/quests/).** An interactive, gamified
+> onboarding that takes you from 白帯 (white belt) to 黒帯 (black belt) through
+> install, the core kata, the mandatory workflow, and mastery. Published via
+> GitHub Pages (Settings → Pages → *Deploy from branch* → `main` / `/docs`).
 
 ### One command (recommended)
 
