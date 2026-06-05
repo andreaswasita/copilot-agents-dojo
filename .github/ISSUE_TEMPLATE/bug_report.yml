@@ -1,0 +1,52 @@
+name: 🐛 Bug report
+description: Something in the Dojo isn't working as documented
+title: "bug: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping keep the Dojo disciplined. Please confirm the behavior against the docs before filing — the canonical references are [`README.md`](../../README.md), [`AGENTS.md`](../../AGENTS.md), and [`spec/copilot-skills-spec.md`](../../spec/copilot-skills-spec.md).
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: A clear, concrete description of the bug. Include the named artifact (skill, script, workflow) involved.
+      placeholder: "scripts/verify.sh spec fails on a freshly scaffolded skill because…"
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+      description: What the docs/spec led you to expect instead.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Exact commands. Prefer `scripts/verify.sh` (or `scripts/run-checks.ps1` on Windows) over bare pytest so we compare like-for-like with CI.
+      value: |
+        1. 
+        2. 
+        3. 
+      render: shell
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, shell, and how you ran the gate (verify.sh / run-checks.ps1 / CI).
+      placeholder: "Windows 11, PowerShell, scripts/run-checks.ps1"
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant output
+      description: Paste the failing gate output or error. Will be rendered as code.
+      render: shell
+    validations:
+      required: false
