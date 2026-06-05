@@ -351,6 +351,93 @@ describe("FilesystemStore", () => {
     });
   });
 
+  describe("recall()", () => {
+    beforeEach(() => {
+      makeVault(root);
+      seedFile(
+        root,
+        "decisions/2026-04-12-postgres.md",
+        { type: "decision", date: "2026-04-12", status: "accepted", tags: ["db", "infra"] },
+        "# Use Postgres over DynamoDB\n\nSQL semantics needed for joins.",
+      );
+      seedFile(
+        root,
+        "decisions/2026-03-01-old-queue.md",
+        { type: "decision", date: "2026-03-01", status: "superseded", tags: ["queue"] },
+        "# Use SQS for the job queue\n\nReplaced by an in-process worker.",
+      );
+      seedFile(
+        root,
+        "patterns/retry-with-jitter.md",
+        { type: "pattern", date: "2026-04-15", status: "active", tags: ["resilience", "typescript"] },
+        "# Retry with full jitter\n\nExponential backoff multiplied by random.",
+      );
+      seedFile(
+        root,
+        "sessions/2026-05-20-debug-auth.md",
+        { type: "session", date: "2026-05-20", task: "auth debugging", tags: [] },
+        "# Debug auth flow\n\nSession exploring JWT verification.",
+      );
+    });
+
+    it("surfaces a topic-relevant decision with a reason", async () => {
+      const store = createStore(root);
+      const result = await store.recall("postgres");
+      const hit = result.items.find((i) => i.slug === "decisions/2026-04-12-postgres");
+      expect(hit).toBeDefined();
+      expect(hit?.reasons.length).toBeGreaterThan(0);
+    });
+
+    it("merges reasons for an entry matched by multiple signals (dedup by slug)", async () => {
+      const store = createStore(root);
+      const result = await store.recall("postgres");
+      const hits = result.items.filter((i) => i.slug === "decisions/2026-04-12-postgres");
+      expect(hits).toHaveLength(1);
+      // active decision + topic match => more than one reason, no duplicate reason strings.
+      expect(hits[0].reasons.length).toBe(new Set(hits[0].reasons).size);
+      expect(hits[0].reasons.length).toBeGreaterThan(1);
+    });
+
+    it("blank topic still returns active decisions but does not dump the whole vault", async () => {
+      const store = createStore(root);
+      const result = await store.recall("");
+      const slugs = result.items.map((i) => i.slug);
+      expect(slugs).toContain("decisions/2026-04-12-postgres");
+      // The superseded decision must never appear.
+      expect(slugs).not.toContain("decisions/2026-03-01-old-queue");
+    });
+
+    it("excludes superseded entries even on a topic match", async () => {
+      const store = createStore(root);
+      const result = await store.recall("queue");
+      expect(result.items.map((i) => i.slug)).not.toContain("decisions/2026-03-01-old-queue");
+    });
+
+    it("includes context patterns when language is given", async () => {
+      const store = createStore(root);
+      const result = await store.recall("anything", { language: "typescript" });
+      expect(result.items.map((i) => i.slug)).toContain("patterns/retry-with-jitter");
+    });
+
+    it("respects the limit", async () => {
+      const store = createStore(root);
+      const result = await store.recall("", { limit: 1 });
+      expect(result.items.length).toBeLessThanOrEqual(1);
+    });
+
+    it("is empty-safe on a vault with no entries", async () => {
+      const empty = mkdtempSync(join(tmpdir(), "dojo-mcp-memory-empty-"));
+      makeVault(empty);
+      try {
+        const store = createStore(empty);
+        const result = await store.recall("anything");
+        expect(result.items).toEqual([]);
+      } finally {
+        rmSync(empty, { recursive: true, force: true });
+      }
+    });
+  });
+
   it("survives entries with no frontmatter (list does not throw)", async () => {
     makeVault(root);
     writeFileSync(
