@@ -72,6 +72,50 @@ Each gap is tagged with its target theme and a rough effort (S/M/L).
 | G9 | **Slash-command + prompt-shim surface** — expose skills/personas as discoverable slash commands with generated shims | T2/T1 | M | Discoverability and activation; the peer kit's primary UX |
 | G10 | **Autonomous metric hill-climbing** — an experiment loop on a dedicated branch with a results log | T3 | L | Differentiated capability for measurable tasks (perf, bundle size, pass rate) |
 | G11 | **Gamified guided onboarding** — a training quest / first-run tour | T1 | S | Onboarding polish; cheapest win on the list |
+| G12 | **Knowledge-compounding retrieval into planning** — a `learnings-researcher`-style agent that auto-searches prior decisions/solutions at plan time | T3 | M | We *store* memory (vault + MCP) but don't *retrieve* it into planning automatically; closes the loop on assets we already have |
+| G13 | **Safety-guardrail skills** — discrete invokable guards that block destructive commands (`rm -rf`, force-push) and freeze/guard a working tree | T5 | S | We have safety *rules* in instructions, but not enforced as discoverable skills/hooks; governance-aligned, cheap |
+| G14 | **Stack auto-detection** — detect the repo's stack(s) and pre-select relevant skill packs | T1 | M | Removes manual selection; feeds the guided TUI (G3) and presets (G15) |
+| G15 | **Install presets (Starter / Pro / Full)** — tiered install depth | T1 | S | Lets first-runs pick a footprint; pairs with the TUI (G3) |
+| G16 | **Deploy / canary / production-verification skills** — extend past PR into merge→deploy→verify→monitor | T2 | L | Our workflow stops at PR; the peer kit covers the post-merge lifecycle |
+| G17 | **Cross-model review** — adjudicate a second, independent model's review of a change | T2 | M | Independent second-model review catches what one model misses |
+| G18 | **Explicit behavioral-foundation skill** — surface our discipline as a discoverable, installed skill (not just instructions) | T2 | S | The peer kit ships its behavioral guardrails as a skill; ours lives only in instructions, so it isn't independently discoverable/portable |
+
+---
+
+## 3.1 Memory: peer model vs ours
+
+The peer kit's memory is **plain-file, git-committed, local-first — no database,
+no vector store, no MCP server.** Its power is not storage but a *capture →
+promote → propagate* loop wired into the workflow:
+
+| Layer | Where | Timescale |
+|---|---|---|
+| Observations | `.<kit>/observations.jsonl` | per-session, gitignored, ephemeral |
+| Instincts (confidence-scored) | `.<kit>/instincts/project.yaml` | grows each session, **committed** |
+| Evolved skills | `.github/skills/learned-*/` | permanent |
+| Institutional knowledge | `docs/solutions/*.md` | permanent |
+| Design decisions | `docs/brainstorms/*.md` | permanent |
+| Plans | `docs/plans/*.md` | per-feature |
+| Install manifest | install-manifest (checksums) | per-install |
+
+Three reinforcing cycles:
+- **Knowledge compounding** (per-PR): a "compound" step saves solved problems →
+  a researcher agent auto-finds them on the next plan → fewer repeated mistakes.
+- **Pattern learning** (per-session): observer hooks → a `learn` step →
+  confidence-scored instincts → an `evolve` step graduates mature ones (>0.8)
+  into permanent skills.
+- **Team propagation** (per-commit): instincts are committed, so the whole team
+  inherits learned conventions without a style guide.
+
+**Where we stand by contrast.** Our memory is *infrastructure-richer* — an
+Obsidian-compatible vault (`memory/` with decisions/patterns/preferences/
+sessions, a link graph, `scripts/memory-query.sh`), an `@dojo/mcp-memory` MCP
+server, and the control plane's Postgres-backed Memory Browser + Time Machine —
+but it is **populated manually**. We lack the automatic *capture* (tool-use
+observations) and *promotion-by-confidence* (instincts → skills) that make the
+peer's memory compound on its own. The gap is the **loop, not the store**:
+G5 (capture → promote) and G12 (retrieve into planning) together close it on top
+of memory infrastructure we already have.
 
 ---
 
@@ -83,25 +127,33 @@ Sequenced by leverage and dependency. Effort and theme carried from §3.
 - **G2 · Install manifest + drift + uninstall** *(M)* — highest trust ROI; unblocks any serious distribution. No external dependency.
 - **G4 · Finish & land the tiered marketplace** *(M)* — work already started on a branch; consolidating it removes an in-flight loose end and gives granular adoption today.
 - **G6 · Security-audit skill** *(M)* — directly governance-aligned (plays to our strength), self-contained, immediately useful in any repo.
+- **G13 · Safety-guardrail skills** *(S)* — cheap, governance-aligned, high safety value; no dependency.
+- **G18 · Behavioral-foundation skill** *(S)* — surface existing discipline as a discoverable skill; near-zero cost.
 
 ### NEXT — lower the install barrier + close the test surface
 - **G1 · Binary distribution** *(L)* — the big DX unlock; depends on G2's manifest format being settled first.
 - **G3 · Guided TUI** *(M)* — rides on G1/G2.
+- **G14 · Stack auto-detection** *(M)* + **G15 · Install presets** *(S)* — feed the TUI; do alongside G3.
 - **G8 · Pipeline orchestrator** *(M)* — compose existing skills; depends on G9 for clean command surface.
 - **G9 · Slash-command + prompt shims** *(M)* — discoverability layer that G8 and the marketplace both benefit from.
+- **G12 · Knowledge-compounding retrieval into planning** *(M)* — wire a researcher step over our existing vault/MCP memory.
 - **G7 · Browser/QA skills** *(M)* — independent; schedule when test-surface parity is the priority.
 
 ### LATER — differentiated, validate first
-- **G5 · Telemetry-driven learning loop** *(L)* — powerful but must stay cache-aware (per `AGENTS.md` → Cache-Aware Mutations) and privacy-preserving (local-first, opt-in).
+- **G5 · Telemetry-driven learning loop** *(L)* — powerful but must stay cache-aware (per `AGENTS.md` → Cache-Aware Mutations) and privacy-preserving (local-first, opt-in). Pairs with G12 to close the memory loop.
 - **G10 · Autonomous metric hill-climbing** *(L)* — spike on a real measurable task before committing.
+- **G16 · Deploy / canary / production-verification skills** *(L)* — needs real deploy targets; validate demand first.
+- **G17 · Cross-model review** *(M)* — opportunistic; depends on a second model being available.
 - **G11 · Gamified onboarding** *(S)* — polish; do opportunistically once G1/G3 exist.
 
 ```
 NOW   G2 manifest/drift/uninstall ──► NEXT G1 binary dist ──► NEXT G3 guided TUI ──► LATER G11 onboarding
+                                                              ▲   G14 detect + G15 presets
 NOW   G4 marketplace ───────────────► NEXT G9 slash/shims ──► NEXT G8 orchestrator
-NOW   G6 security audit
+NOW   G6 security audit ; G13 guards ; G18 foundation skill
+                                      NEXT G12 retrieve-into-plan ─► LATER G5 learning loop ; G10 metric hill-climb
                                       NEXT G7 browser/QA
-                                      LATER G5 learning loop ; G10 metric hill-climb
+                                      LATER G16 deploy/canary ; G17 cross-model review
 ```
 
 Critical path: **G2 → G1**. The manifest schema designed in G2 is the
