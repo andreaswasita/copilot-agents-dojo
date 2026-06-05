@@ -1,157 +1,153 @@
-# Copilot Agents Dojo — Product Roadmap
+# Product Roadmap — Copilot Agents Dojo
 
-> **Status:** DRAFT — pending board approval (WAS-14). Nothing below is committed work until the board ratifies it. This document is a proposal, not a plan of record.
->
-> **Owner:** CTO (agent) · **Last updated:** 2026-06-05 · **Horizon:** ~2 quarters
->
-> Sequencing vocabulary follows the repo's existing `Theme N.M` / `Phase N` convention (see `CHANGELOG.md` and merged PRs #8–#30). This roadmap does **not** modify `tasks/todo.md` (canonical scaffold per `AGENTS.md` → Task Plan Policy).
+> **Status:** Draft for board approval · **Owner:** CTO · **Horizon:** rolling 2-quarter
+> **Baseline:** `main` @ PR #30 (one-command installer) · **Version:** v1.1
+> **Last updated:** 2026-06-05
 
----
-
-## 1. Where We Are Today (Assessment)
-
-The dojo is a **skills & discipline framework for GitHub Copilot agents** — a drop-in tree of markdown skills, a mandatory workflow, a single verification gate, and a self-improvement loop. It has matured through three numbered releases (v1.0 "Hardened", v1.1 "Self-Improving") and is currently accumulating an `[Unreleased]` distribution layer.
-
-### Product surface (as of this writing)
-
-| Area | State | Evidence |
-|---|---|---|
-| **Skills** | 29 total — 25 core/practical (`skills/`) + 4 optional (`optional-skills/`), tier-tagged, spec-conformant | `skills.md`, `spec/copilot-skills-spec.md` |
-| **Personas** | 8 persona briefs + `agents/registry.yaml` as single source (architect, business/solution/platform/security, software/test engineer, TPM) | `agents/` |
-| **Mandatory workflow** | `BRAINSTORM → WORKTREE → PLAN → EXECUTE → TEST → REVIEW → FINISH → LEARN`, each arrow backed by a flow skill | `skills.md` |
-| **Verification gate** | `scripts/verify.sh` (+ `run-checks.ps1`) — spec/plan/tests/all modes; drift detection for `skills.md`, persona registry, `DOJO_ROOT` hygiene | `AGENTS.md` → Testing |
-| **Self-improvement** | Curator state machine (`active → stale → archived`), durable backups, per-run audit, 3-layer provenance, idle-tick trigger | CHANGELOG v1.1 |
-| **CLI** (`cli/dojo_cli`) | Optional Python CLI: registry-driven commands, marketplace, scanner, profiles, generator | `cli/dojo_cli/registry.py` |
-| **Control plane** | TS monorepo (Drizzle/Postgres + Hono API + React UI + `mcp-memory` stdio server); Memory Browser, Time Machine, Time Slider | `control-plane/README.md` |
-| **Memory** | `memory/` Obsidian-compatible vault; MCP memory server wired via Install flow | `docs/memory-mcp.md` |
-| **MCP** | `mcp/registry.yaml` + 8 server manifests (azure, fetch, filesystem, git, github, ms-graph, playwright, postgres) | `mcp/servers/` |
-| **Traceability (red-thread)** | TOGAF requirement cascade (BR→FR/NFR→IR/TR/SR), derivation skills, traceability gate, RTM | PR #8 |
-| **Distribution** | One-command bootstrap (`install.sh`/`install.ps1`), `npx copilot-dojo init` v0.1, tag-driven npm publish | PRs #22, #29, #30 |
-| **CI enforcement** | `dojo-enforce.yml` split into gradable jobs; Spec/Installer/Traceability/Plan/MCP-memory promoted to **required** checks | PRs #15–#28 |
-
-### Recent momentum (last ~25 PRs)
-
-Four clear streams are already in flight, which the roadmap below formalizes rather than invents:
-
-1. **Distribution & onboarding** — installers, npx initializer, npm publish pipeline.
-2. **Self-improvement hardening** — gate-aware curator promotion, traceability test harness.
-3. **Control-plane / memory** — MCP memory server promoted to a required CI check.
-4. **CI as product contract** — incrementally promoting jobs from informational → required.
-
-### Honest gaps & risks (today)
-
-- **In-flight branches not yet merged:** `feat/cli-plugin-marketplace`, `feat/one-command-installer`, `feature/red-thread`, plus an untracked `linkedin/` + `.github/plugin/` + `plugin.json` working set. Direction is real but unconsolidated.
-- **Two stories straddle "platform" boundaries** (CLI marketplace vs. control-plane UI install) with overlapping install responsibilities — risk of two install paths drifting.
-- **Supply-chain surface grows with every new dependency** (control-plane TS deps, CLI PyPI deps, npm publish). Policy exists (`AGENTS.md` → Supply Chain) but must scale with distribution.
-- **No published adoption/efficacy metrics** — we ship discipline but cannot yet show it changes agent behavior.
-- **Windows/bash parity** is a recurring tax (jq prereq, PowerShell wrappers) that every new script must pay.
+This is the **product** roadmap — the strategic Now / Next / Later view for the board.
+It complements, and does not replace, the engineering-level
+[Roadmap & Gaps](https://github.com/andreaswasita/copilot-agents-dojo/wiki/Roadmap-and-Gaps)
+wiki page, which tracks fine-grained gaps and good-first-issues. Where the two overlap,
+the wiki is the task-level source of truth; this doc is the prioritized narrative.
 
 ---
 
-## 2. Product Themes
+## 1. Where the Product Is Today (v1.1)
 
-Five durable themes carry the roadmap. Each "Now/Next/Later" initiative maps to exactly one.
+Ground truth from the filesystem on `main`:
 
-- **T1 · Distribution & Adoption** — make the dojo trivial to install, update, and trust in any repo.
-- **T2 · Skill Quality & Coverage** — keep the 29-skill catalog sharp, fill real gaps, retire dead weight.
-- **T3 · Self-Improvement & Telemetry** — close the loop from lessons → skills → measurable behavior change.
-- **T4 · Control Plane & Memory** — the visual + MCP surface for browsing, installing, and remembering.
-- **T5 · Trust, Security & Supply Chain** — keep the attack surface small as distribution widens.
+- **29 skills** across three tiers — 25 always-discoverable in `skills/` + 4 opt-in in `optional-skills/`
+  (Core Kata, Flow Waza, Practical Kumite, Red-Thread/TOGAF, Meta Dō).
+- **8 agent personas** — generalist `architect`, three TOGAF specialists
+  (`business-architect`, `solution-architect`, `platform-architect`), plus
+  `security-engineer`, `software-engineer`, `technical-program-manager`, `test-engineer`.
+  Single source of truth in `agents/registry.yaml`; `verify.sh` blocks drift.
+- **Mandatory workflow** — `BRAINSTORM → WORKTREE → PLAN → EXECUTE → TEST → REVIEW → FINISH → LEARN`,
+  each arrow enforced by a flow skill.
+- **Single gate** — `scripts/verify.sh` (`spec / plan / tests / all` modes), Windows parity via `run-checks.ps1`.
+- **11 required CI checks** on `main` via `.github/workflows/dojo-enforce.yml`
+  (CodeQL, spec invariants, traceability, installer tests, MCP-memory tests, plan sanity, Action SHA-pinning, …).
+- **Self-improving curator** — `active → stale → archived` state machine, tar.gz backups with reversible rollback,
+  idle-gated trigger, three-layer provenance guard.
+- **Memory layer** — Obsidian-compatible Memory Vault + `@dojo/mcp-memory` MCP server + Time Machine.
+- **CLI marketplace** (`cli/dojo_cli/`) — interactive picker, profiles, generator, scanner.
+- **Control plane** (`control-plane/`) — web UI + API to browse/search/install skills & agents (packages: `db`, `installer`, `mcp-memory`, `server`, `ui`).
+- **Distribution** — `npx copilot-dojo init` zero-install bootstrap (6 presets) + tag-driven npm publish workflow with sigstore provenance (wired, awaiting first tag/`NPM_TOKEN`).
 
----
-
-## 3. Roadmap — Now / Next / Later
-
-### NOW (current cycle — finish what's in flight)
-
-- **N1 · T1 · Consolidate the distribution story.** Land/merge the in-flight installer + npx + npm-publish work behind one documented "Enter the Dojo" path; deprecate or clearly subordinate the secondary path. Resolve the untracked `plugin.json` / `.github/plugin/` working set into a real branch + PR or remove it.
-  - *Success:* one canonical install command in README; `install.sh`, `install.ps1`, and `npx copilot-dojo init` all land the same bundle and pass `verify.sh spec`; zero untracked product files on `main`.
-  - *Depends on:* nothing external; needs branch hygiene.
-- **N2 · T5 · Lock the supply-chain gate to match distribution.** Extend `dojo-enforce.yml` to enforce the `AGENTS.md` Supply Chain table on **all three** ecosystems (Actions SHA-pinning, PyPI ceilings, npm lockfile) now that we publish to npm.
-  - *Success:* CI fails on any unpinned `uses:`, any bare `>=X.Y.Z`, or a missing/uncommitted lockfile; documented in `SECURITY.md`.
-  - *Depends on:* N1 (publish pipeline must exist to guard).
-- **N3 · T2 · Catalog audit pass.** Run the curator in `--dry-run` across all 29 skills; confirm each maps to a required body section and a `verify.sh` check; flag any "should" without a verifiable assertion (spec invariant).
-  - *Success:* `verify.sh --check` green; an audit note in `tasks/lessons.md` listing any skills that need amendment.
-  - *Depends on:* nothing.
-- **N4 · T4 · Control-plane "first-run" hardening.** Make `docker compose up` → `pnpm dev` work from a clean clone with documented prereqs; ensure `mcp-memory` build + the required CI check stay green.
-  - *Success:* a fresh-clone smoke script brings up API+UI+MCP and the install flow writes a valid `.mcp.json`.
-  - *Depends on:* nothing.
-
-### NEXT (following cycle — extend the platform)
-
-- **X1 · T1 · Versioned releases + upgrade path.** Cut a tagged `v1.2` that bundles the distribution layer; ship `dojo upgrade` (or installer re-run) with a documented, provenance-aware diff so users on v1.0/v1.1 can move forward safely.
-  - *Success:* `CHANGELOG.md` v1.2 section; idempotent upgrade preserves `tasks/`, `memory/`, and user-authored skills (already a design goal of `install.sh`).
-  - *Depends on:* N1.
-- **X2 · T2 · Fill the highest-value skill gaps.** Prioritize candidate skills the workflow implies but doesn't yet cover (e.g., incident/rollback discipline, dependency-update review, observability-by-default). Author 2–4 via `optional-skills/writing-skills`.
-  - *Success:* each new skill ships with `scripts/` + `tests/` where it has deterministic logic and passes the gate; net catalog count is documented in the generated index, not hardcoded.
-  - *Depends on:* N3 audit.
-- **X3 · T3 · Efficacy telemetry (opt-in, local-first).** Extend `.dojo/skill-usage.json` telemetry into a privacy-preserving local report: which skills load, which workflow arrows fire, where agents skip the pipeline. No network egress by default.
-  - *Success:* `scripts/curator.sh report` (or a new `metrics` verb) emits a per-clone behavior summary; documented opt-in only.
-  - *Depends on:* existing curator telemetry.
-- **X4 · T4 · Marketplace ↔ control-plane unification.** Make the CLI marketplace and the control-plane Install page share one install contract (one manifest, one provenance record) so the two surfaces never drift.
-  - *Success:* a single documented install spec consumed by both `cli/dojo_cli/marketplace.py` and the UI; conformance test in CI.
-  - *Depends on:* N1.
-- **X5 · T5 · Threat model doc.** Write `docs/threat-model.md` covering the installer (remote `curl|bash`), MCP servers, and control-plane DB — referencing the litellm/Shai-Hulud rationale already in `AGENTS.md`.
-  - *Success:* documented trust boundaries + mitigations; linked from `SECURITY.md`.
-  - *Depends on:* N2 gate.
-
-### LATER (exploratory — validate before committing)
-
-- **L1 · T3 · Lesson → skill auto-promotion (assisted).** Move beyond deferred amendments toward a reviewed pipeline where recurring `tasks/lessons.md` patterns are proposed as skill diffs for human/board approval. Cache-aware by default (per `AGENTS.md` → Cache-Aware Mutations).
-- **L2 · T1 · Multi-agent-platform reach.** Evaluate whether the skill spec can target runtimes beyond Copilot (the dojo already cites the hermes-agent reference build). Spike a portability layer; do **not** commit until a second runtime is validated.
-- **L3 · T4 · Hosted/shared control plane.** Explore a team-shared deployment (auth, multi-repo, shared memory vault) — gated on X5 threat model and a real demand signal.
-- **L4 · T2 · Persona expansion + skill bundles per persona.** Richer `default_skills` bundles tied to each of the 8 personas, validated against the registry as the single source of truth.
+**Maturity read:** this is a working v1.1 framework, not a prototype. The remaining work is about
+**distribution reach, discoverability, and closing the verify loop beyond unit tests** — not core mechanics.
 
 ---
 
-## 4. Sequencing & Dependencies (at a glance)
+## 2. Strategic Themes
+
+| # | Theme | Why it matters | Primary horizon |
+|---|-------|----------------|-----------------|
+| T1 | **Distribution & frictionless adoption** | A framework only compounds if it spreads. The installer + publish pipeline exist; we have not shipped a registry release. | Now |
+| T2 | **Discoverability of skills** | Auto-activation is elegant but invisible; users can't list/invoke skills. Hurts trust and adoption. | Next |
+| T3 | **Closing the verify loop** | `verify-before-done` stops at unit tests; real verification needs browser/E2E/production smoke. | Next |
+| T4 | **Compounding knowledge cross-repo** | In-repo memory loop is closed; lessons don't yet travel between repos. | Later |
+| T5 | **Governance & supply-chain hardening** | The framework's credibility *is* its discipline. Keep the gate and supply-chain posture ahead of adoption. | Continuous |
+
+---
+
+## 3. Now / Next / Later
+
+### 🟢 NOW — current cycle (commit-ready, low risk)
+
+| Initiative | Theme | Deliverable | Depends on | Effort |
+|---|---|---|---|---|
+| **N1. Cut first npm registry release** | T1 | `copilot-dojo` published; `npx copilot-dojo init` works without `github:` ref | `NPM_TOKEN` secret or trusted publishing; tag `copilot-dojo-v0.1.0` | S |
+| **N2. Resolve traceability gate strict-mode FAIL** | T5 | `verify.sh --check` green; exempt `requirements/sample/` teaching fixture from strict `ratified_by` assertion | none | S |
+| **N3. Restore skill smoke-test coverage in gate** | T5 | `verify.sh` runs top-level `tests/` (currently only globs `skills/*/tests`, so 27 passing tests false-skip) | none | S |
+| **N4. Triage dependabot PR #21** | T5 | Decide pytest `8.3.3 → 9.0.3`; merge or pin with rationale | CI green | S |
+| **N5. Doc & badge hygiene** | T1 | README skill/persona badges match reality; fix stale cross-links; reference generated index instead of hardcoded counts | none | S |
+
+**Now exit criteria:** registry release live; `verify.sh --check` fully green; dependabot triaged; docs accurate.
+
+### 🟡 NEXT — following cycle (1–2 sprints out)
+
+| Initiative | Theme | Deliverable | Depends on | Effort |
+|---|---|---|---|---|
+| **X1. Slash-command surface for skills** | T2 | `slash:` frontmatter field → generated `.github/prompts/*.prompt.md`; `/dojo-help` listing | spec bump | M |
+| **X2. Stack auto-detection in installer/CLI** | T1/T2 | Detect `package.json`/`pyproject.toml`/`pom.xml`/`go.mod`/`*.csproj` → emit stack-specific `copilot-instructions.md` | scanner heuristics | M |
+| **X3. `browser-verify` skill + `scripts/browser-check.sh`** | T3 | Playwright-backed verification step, optional gate in `verify.sh`, screenshot + `tasks/verify-report.md` | Playwright pin (supply-chain review) | M |
+| **X4. In-repo skill catalog** | T2 | Auto-generated `docs/skills/` per-skill pages from SKILL.md frontmatter | X1 frontmatter | M |
+| **X5. `scripts/wiki-sync.sh` drift check** | T5 | CI fails when repo state and wiki drift (counts/links) | none | S |
+
+**Next exit criteria:** skills are listable/invokable; installer adapts to the host stack; the verify loop covers a browser path; wiki drift is caught by CI.
+
+### 🔵 LATER — strategic bets (validate before committing)
+
+| Initiative | Theme | Deliverable | Risk to retire first |
+|---|---|---|---|
+| **L1. Cross-repo lesson sharing** | T4 | `dojo lessons publish/subscribe`; anonymised portable lesson schema | Privacy/PII leakage; schema portability |
+| **L2. Effectiveness scoring** | T4 | Per-rule pre/post error metrics; auto-revise low-value rules | Signal quality; measurement overhead |
+| **L3. Automated lesson harvesting** | T4 | Agent auto-appends candidate lessons on correction; `lessons.md` → queryable graph | Noise/false positives; context cost |
+| **L4. `e2e-test-writing` + `production-smoke-check` skills** | T3 | E2E discipline + post-deploy 2xx/timing smoke | Overlap with X3; environment access |
+| **L5. VS Code extension** | T2 | Sidebar of active skills, one-click load | Maintenance surface vs. value |
+| **L6. New personas & stacks** | T2 | `devops-engineer`, `sre`, `data-engineer`, `ml-engineer`, …; Rust/Ruby/Kotlin/Swift examples | Demand-driven; keep registry lean |
+
+---
+
+## 4. Sequencing & Dependencies
 
 ```
-NOW   N1 consolidate distribution ─┬─► NEXT X1 versioned release ──► LATER L2 multi-runtime
-                                   ├─► NEXT X4 install unification ─► LATER L3 hosted control plane
-NOW   N2 supply-chain gate ────────┴─► NEXT X5 threat model
-NOW   N3 catalog audit ────────────────► NEXT X2 fill gaps ────────► LATER L4 persona bundles
-NOW   N4 control-plane first-run
-                                       NEXT X3 efficacy telemetry ─► LATER L1 lesson auto-promote
+NOW    N2 ─┐
+       N3 ─┼─► verify.sh --check GREEN ──► (unblocks confident releases)
+       N1 ─┘            │
+       N4 ──────────────┘
+       N5 (parallel, no deps)
+
+NEXT   X1 ─► X4 (catalog needs slash/frontmatter)
+       X2 (parallel)
+       X3 ─► L4 (e2e/smoke extend browser-verify)
+       X5 (parallel; pairs with WAS-13 wiki sync)
+
+LATER  L1 ─ L2 ─ L3  (knowledge-graph cluster, sequence after T4 schema lands)
+       L5, L6 demand-gated
 ```
 
-Critical path: **N1 distribution** unblocks the most downstream work. N2/T5 (security) is a hard gate that rides alongside every distribution step, not after it.
+**Critical path to a credible public launch:** N1 → N2/N3 (green gate) → X1 (discoverability) → X3 (verify loop). Everything else is parallelizable or demand-gated.
 
 ---
 
 ## 5. Success Metrics
 
-Tracked per-theme; all observable from the repo, CI, or local telemetry (no analytics SaaS required).
-
-| Theme | Leading metric | Target signal |
+| Theme | Leading indicator | Target (this horizon) |
 |---|---|---|
-| T1 | # of documented install paths; fresh-clone install success | Exactly 1 canonical path; clean `verify.sh spec` from `npx` + both installers |
-| T2 | % skills with a verifiable `verify.sh` assertion per "should" | 100%; `verify.sh --check` green on every PR |
-| T3 | Workflow-arrow fire rate from telemetry | Pipeline followed on ≥ baseline% of multi-step tasks |
-| T4 | Install-contract parity (CLI vs UI) | Single shared manifest; conformance test passes |
-| T5 | Unpinned deps / missing lockfiles caught by CI | 0 escape past required checks; threat model published |
-
-> All targets are **directional until the board sets baselines.** The first job of X3 is to establish honest baselines before claiming improvement.
+| T1 Distribution | npm weekly installs; `init` runs | First release live; >0 external installs |
+| T1 Distribution | Time-to-first-green-PR in a fresh repo | < 30 min from `init` |
+| T2 Discoverability | % skills invokable via slash command | 100% of core/practical tier |
+| T2 Discoverability | `/dojo-help` usage in sessions | Adopted in onboarding docs |
+| T3 Verify loop | Skills with a browser/E2E verification path | ≥ 1 shipped (`browser-verify`) |
+| T4 Knowledge | Lessons shared cross-repo | Schema + 1 publish/subscribe round-trip |
+| T5 Governance | Required CI checks green on `main` | 11/11, `verify.sh --check` clean |
+| T5 Governance | Unpinned Actions / unbounded deps | 0 (enforced by gate) |
 
 ---
 
 ## 6. Risks & Constraints
 
-- **Supply chain (highest).** Distribution widens attack surface; the `curl|bash` installer is itself a trust decision. Mitigation: enforce the `AGENTS.md` Supply Chain table in CI across Actions/PyPI/npm, publish a threat model, keep the dojo dependency-light (the CLI is "a convenience, never a hard dependency").
-- **Two install surfaces drifting** (CLI marketplace vs. control-plane UI). Mitigation: X4 unification with a single install contract + conformance test.
-- **Cache-invalidation cost.** Any mid-session skill/index mutation invalidates Copilot's prompt cache. Mitigation: keep deferred-by-default amendments (`scripts/lesson-updater.sh`); L1 auto-promotion must stay cache-aware.
-- **Canonical scaffold integrity.** `tasks/todo.md` must remain a scaffold in this repo. Mitigation: the `Plan sanity` required check already guards it; this roadmap lives in `docs/`, not in the scaffold.
-- **Windows/bash parity tax.** Every new script needs a `.ps1` mirror and must honor `DOJO_ROOT`. Mitigation: treat parity + path hygiene as part of the `verify.sh` gate (already enforced).
-- **Metric honesty.** Shipping "discipline" without efficacy data is a credibility risk. Mitigation: X3 telemetry establishes baselines before any improvement claim.
+**Supply-chain policy (from `AGENTS.md`, adopted after the litellm & Shai-Hulud incidents) is binding on every roadmap item:**
+
+- **GitHub Actions** — pin to commit SHA + version comment (`uses: actions/checkout@<sha>  # v4`). `dojo-enforce.yml` fails the build on unpinned `uses:`.
+- **PyPI / npm deps** — `>=floor,<next_major`; bare `>=X.Y.Z` without a ceiling is rejected at review. Lockfiles committed.
+- **Shell binaries** — document expected version in Prerequisites.
+- New surfaces (Playwright for X3, any npm publish tooling) must clear this policy **before** landing.
+
+**Other constraints & risks:**
+
+- **Canonical scaffold guard** — `tasks/todo.md` must stay in scaffold form; the `Plan sanity` required check blocks PRs that replace it with a real plan. Roadmap work plans live in PR descriptions / issues, never in `tasks/todo.md`.
+- **Cache-aware mutations** — changes to skills, `skills.md`, or `copilot-instructions.md` invalidate Copilot's prompt cache; default to deferred invalidation (`--now` only when correctness requires it).
+- **Distribution gating (N1)** — first npm release needs `NPM_TOKEN` or trusted publishing; this is an org/secret action outside code.
+- **Scope creep on personas/stacks (L6)** — keep `agents/registry.yaml` lean; add personas on demonstrated demand, not speculatively.
+- **Verify-loop overlap (X3 ↔ L4)** — sequence E2E/smoke after `browser-verify` to avoid duplicate Playwright surfaces.
 
 ---
 
-## 7. Approval Request
+## 7. Governance
 
-This is a **draft for board ratification (WAS-14).** Requesting approval to:
-
-1. Adopt the five themes (T1–T5) as the dojo's product spine.
-2. Commit the **NOW** column (N1–N5) as the active cycle.
-3. Treat **NEXT/LATER** as directional, re-reviewed each cycle.
-
-No item here is committed work until the board approves. On approval, NOW initiatives convert to tracked issues following the repo workflow (plan → branch → verify), and this doc becomes the roadmap of record.
+- This roadmap is a **proposal pending board approval** (per WAS-14). No item below NOW is committed work until the board approves.
+- On approval, the project lead decomposes NOW initiatives into tracked issues and delegates to CTO / Architect / specialist personas.
+- Revisited each cycle; "Recently Closed" items graduate to the wiki's history table.
