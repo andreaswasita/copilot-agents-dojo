@@ -8,7 +8,11 @@
 
 *End-to-end framework to take AI agents from improvised assistants to disciplined, measurable, repeatable engineering partners.*
 
-[**📖 Wiki**](../../wiki) · [**Start Here**](#enter-the-dojo) · [**🥋 Belt Quest**](./docs/quests/) · [**Skills**](./skills.md) · [**Agents**](./agents) · [**Spec**](./spec/copilot-skills-spec.md) · [**Contributor Guide**](./AGENTS.md)
+<p align="center">
+  <a href="https://andreaswasita.github.io/copilot-agents-dojo/quests/"><img src="https://img.shields.io/badge/🥋_New%3F_Walk_the_Belt_Quest-f59e0b?style=for-the-badge" alt="Walk the Belt Quest"></a>
+</p>
+
+[**📖 Wiki**](../../wiki) · [**Start Here**](#enter-the-dojo) · [**🥋 Belt Quest**](https://andreaswasita.github.io/copilot-agents-dojo/quests/) · [**Skills**](./skills.md) · [**Agents**](./agents) · [**Spec**](./spec/copilot-skills-spec.md) · [**Contributor Guide**](./AGENTS.md)
 
 ![license](https://img.shields.io/badge/license-MIT-1f6feb?style=flat-square)
 ![version](https://img.shields.io/badge/version-1.1-3fb950?style=flat-square)
