@@ -31,6 +31,7 @@ Forces an explicit written plan in `tasks/todo.md` before the agent edits any fi
 ## How to Run
 
 ```text
+0. Recall prior memory for the topic (memory_recall MCP tool or scripts/memory-recall.sh) and fold it into Context.
 1. Assess complexity (the 4 questions in Procedure §1).
 2. If non-trivial → write plan to tasks/todo.md using the canonical block.
 3. Validate the plan against the gap checklist.
@@ -41,6 +42,7 @@ Forces an explicit written plan in `tasks/todo.md` before the agent edits any fi
 
 | Situation | Action | Tool |
 |---|---|---|
+| Before writing a plan | Recall prior memory | `memory_recall` MCP tool, or `powershell` → `scripts/memory-recall.sh` |
 | Touch ≥3 files | Enter plan mode | `view tasks/todo.md` then `edit` |
 | Re-plan after wall hit | Append a `## Revision N` block | `edit tasks/todo.md` |
 | Check existing plan | Read current state | `view tasks/todo.md` |
@@ -48,6 +50,17 @@ Forces an explicit written plan in `tasks/todo.md` before the agent edits any fi
 | Resume across sessions | Re-read the plan first | `view tasks/todo.md` |
 
 ## Procedure
+
+### Step 0: Recall Prior Memory
+
+Before assessing complexity, surface what the dojo already knows so the plan
+compounds past knowledge instead of re-deriving it. Use the `memory_recall` MCP
+tool with the work's topic (and `language`/`fileType` when known). If that tool
+is unavailable, use `powershell` to run `scripts/memory-recall.sh --topic "<topic>"`.
+
+Fold the returned active decisions, matching patterns, and recent sessions into
+the **Context** block of the plan. This step is advisory: an empty vault or a
+recall with no hits never blocks planning — just proceed to Step 1.
 
 ### Step 1: Assess Complexity
 
@@ -71,6 +84,7 @@ Append to `tasks/todo.md` using the `edit` tool with this canonical block:
 - What: <what we're building or fixing>
 - Why: <the motivation>
 - Risk: <what could go wrong>
+- Prior memory: <decisions/patterns/sessions surfaced in Step 0, or "none">
 
 ### Steps
 - [ ] Step 1: <specific action>
@@ -107,9 +121,11 @@ Follow the plan one step at a time. Mark items complete only after the work for 
 - **DO NOT** refuse to re-plan. The first plan is almost never perfect; revise when new information arrives.
 - **DO NOT** start editing files before the plan block is committed to `tasks/todo.md`.
 - **DO NOT** mark a step `- [x]` until its verification in §2 is satisfied.
+- **DO NOT** skip Step 0 recall on familiar-looking work — the whole point is to catch a prior decision or pitfall you've forgotten. A no-hit recall is cheap; a repeated mistake is not.
 
 ## Verification
 
+- [ ] Step 0 recall was run (`memory_recall` or `scripts/memory-recall.sh`) and its findings folded into Context.
 - [ ] `tasks/todo.md` contains a `## Task:` block for the current work.
 - [ ] Every step is concrete (a different agent could execute it).
 - [ ] Verification block lists specific commands, not just "tests pass".

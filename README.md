@@ -400,6 +400,30 @@ curl -fsSL https://raw.githubusercontent.com/andreaswasita/copilot-agents-dojo/m
 # When piping (irm | iex) set env vars instead: $env:DOJO_REF='v1.1'; irm .../install.ps1 | iex
 ```
 
+### Install as a Copilot CLI plugin
+
+If you live in the [GitHub Copilot CLI](https://docs.github.com/copilot/how-tos/use-copilot-agents/use-copilot-cli),
+the dojo ships as a plugin you can install from its built-in marketplace — the
+25 core skills land in your Copilot CLI, no repo files required:
+
+```shell
+copilot plugin marketplace add andreaswasita/copilot-agents-dojo
+copilot plugin install dojo@copilot-agents-dojo
+```
+
+Verify and manage it like any other plugin:
+
+```shell
+copilot plugin list            # confirm "dojo@copilot-agents-dojo"
+copilot plugin update dojo     # pull the latest skills
+copilot plugin uninstall dojo  # remove it
+```
+
+The plugin scope is the **core** discipline skills (`skills/`). The optional
+tiers (`optional-skills/`) stay opt-in and are delivered through the installer
+or manual setup above — keeping the dojo's "core always, optional by choice"
+contract intact.
+
 ### Manual setup
 
 Prefer to wire it up by hand? The steps the installer automates are:

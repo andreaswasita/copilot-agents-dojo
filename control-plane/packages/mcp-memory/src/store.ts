@@ -56,6 +56,34 @@ export interface HistoryEntry {
   sessionId: string | null;
 }
 
+export interface RecallItem {
+  slug: string;
+  type: string;
+  title: string;
+  date: string | null;
+  reasons: string[];
+  score: number;
+  excerpt: string;
+}
+
+export interface RecallResult {
+  topic: string;
+  items: RecallItem[];
+}
+
+const STALE_STATUSES = new Set(["superseded", "retired", "deprecated"]);
+
+function isStale(e: MemoryEntry): boolean {
+  return STALE_STATUSES.has((e.status ?? "").toLowerCase());
+}
+
+function firstMeaningfulLine(markdown: string): string {
+  const lines = markdown.split("\n").map((l) => l.trim());
+  const body = lines.find((l) => l.length > 0 && !l.startsWith("#"));
+  const pick = (body ?? lines.find((l) => l.length > 0) ?? "").replace(/^#+\s*/, "");
+  return pick.length > 140 ? `${pick.slice(0, 137)}...` : pick;
+}
+
 const TYPE_TO_FOLDER: Record<string, string> = {
   decision: "decisions",
   pattern: "patterns",
@@ -178,6 +206,87 @@ export class FilesystemStore {
       if (ftKey && haystack.includes(ftKey)) return true;
       return false;
     });
+  }
+
+  /**
+   * Surface prior memory relevant to a planning topic, built by composing the
+   * existing read methods in a single pass. Returns a ranked, de-duped brief so
+   * an agent can fold past decisions/patterns/sessions into a plan BEFORE
+   * writing it. A blank topic still returns active decisions + recent context
+   * but never dumps the whole vault (an empty substring matches everything).
+   */
+  async recall(
+    topic: string,
+    opts: { language?: string; fileType?: string; limit?: number } = {},
+  ): Promise<RecallResult> {
+    const entries = await this.all();
+    const q = topic.trim().toLowerCase();
+
+    const acc = new Map<string, { entry: MemoryEntry; reasons: string[]; score: number }>();
+    const bump = (e: MemoryEntry, reason: string, pts: number): void => {
+      const cur = acc.get(e.slug) ?? { entry: e, reasons: [], score: 0 };
+      if (!cur.reasons.includes(reason)) cur.reasons.push(reason);
+      cur.score += pts;
+      acc.set(e.slug, cur);
+    };
+
+    const byDateDesc = (a: MemoryEntry, b: MemoryEntry): number =>
+      (b.date ?? "").localeCompare(a.date ?? "");
+
+    // Active decisions (status accepted, missing => accepted), most recent first.
+    const decisions = entries
+      .filter((e) => e.type === "decision" && (e.status ?? "accepted").toLowerCase() === "accepted")
+      .sort(byDateDesc);
+    for (const d of decisions.slice(0, 3)) bump(d, "active decision", 3);
+
+    // Patterns relevant to the coding context.
+    const langKey = opts.language?.toLowerCase();
+    const ftKey = opts.fileType?.toLowerCase();
+    if (langKey || ftKey) {
+      for (const p of entries.filter((e) => e.type === "pattern" && !isStale(e))) {
+        const haystack = [
+          p.markdown.toLowerCase(),
+          ...p.tags.map((t) => t.toLowerCase()),
+          JSON.stringify(p.frontmatter).toLowerCase(),
+        ].join(" ");
+        if (langKey && haystack.includes(langKey)) bump(p, `pattern: ${langKey}`, 3);
+        if (ftKey && haystack.includes(ftKey)) bump(p, `pattern: ${ftKey}`, 3);
+      }
+    }
+
+    // Recent sessions for continuity.
+    const sessions = entries.filter((e) => e.type === "session").sort(byDateDesc);
+    for (const s of sessions.slice(0, 3)) bump(s, "recent session", 1);
+
+    // Topic text match. Skip when blank: an empty substring matches everything.
+    if (q) {
+      for (const e of entries) {
+        if (isStale(e)) continue;
+        if (e.title.toLowerCase().includes(q)) bump(e, "matched title", 4);
+        else if (e.tags.some((t) => t.toLowerCase().includes(q))) bump(e, "matched tag", 3);
+        else if (e.markdown.toLowerCase().includes(q)) bump(e, "matched body", 2);
+      }
+    }
+
+    const items: RecallItem[] = [...acc.values()]
+      .map(({ entry, reasons, score }) => ({
+        slug: entry.slug,
+        type: entry.type,
+        title: entry.title,
+        date: entry.date,
+        reasons,
+        score,
+        excerpt: firstMeaningfulLine(entry.markdown),
+      }))
+      .sort(
+        (a, b) =>
+          b.score - a.score ||
+          (b.date ?? "").localeCompare(a.date ?? "") ||
+          a.slug.localeCompare(b.slug),
+      );
+
+    const limit = Math.max(1, opts.limit ?? 10);
+    return { topic: topic.trim(), items: items.slice(0, limit) };
   }
 
   async create(input: {
