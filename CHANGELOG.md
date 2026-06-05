@@ -27,6 +27,22 @@ All notable changes to the Copilot Agents Dojo are documented here. Format loose
 - README "Enter the Dojo" now leads with the one-command path; the manual 9-step
   process is retained below it.
 
+### Added — Copilot CLI plugin marketplace
+
+- **`plugin.json` (repo root) + `.github/plugin/marketplace.json`** turn the repo
+  into a [GitHub Copilot CLI](https://docs.github.com/copilot/how-tos/use-copilot-agents/use-copilot-cli)
+  plugin marketplace. Users install the dojo's core skills straight into their
+  Copilot CLI with `copilot plugin marketplace add andreaswasita/copilot-agents-dojo`
+  then `copilot plugin install dojo@copilot-agents-dojo` — no clone, no repo files.
+- **Scope is the 25 core skills** (`skills/`). Optional tiers (`optional-skills/`)
+  remain opt-in via the installer/manual path, preserving the "core always,
+  optional by choice" contract. (Copilot CLI 1.0.x loads only a plugin's default
+  `skills/` directory, so this is also the no-duplication path.)
+- **No build, no duplication:** the manifest points at the existing `skills/`
+  tree; agents and MCP configs are intentionally omitted because the dojo's
+  persona briefs are not in the CLI's `.agent.md` format.
+- README "Enter the Dojo" gains an "Install as a Copilot CLI plugin" section.
+
 ## [1.1.0] — 2026-05-20 — "Self-Improving Dojo"
 
 Closes the self-improvement gap with [hermes-agent](https://github.com/andreaswasita/hermes-agent). The curator now has a real state machine, durable backups, per-run audit trail, hardened provenance, and an idle-based trigger — without adding a daemon. Shell + agent, no install.
