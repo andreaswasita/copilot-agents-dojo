@@ -65,6 +65,36 @@ BRAINSTORM → WORKTREE → PLAN → EXECUTE → TEST → REVIEW → FINISH → 
 
 ---
 
+## 🥋 The Belt Quest
+
+New to the Dojo? Train interactively. **[The Belt Quest](./docs/quests/)** is a
+gamified, self-contained onboarding that takes you from **白帯 white belt** to
+**黒帯 black belt** — install the framework, drill the core kata, walk the
+mandatory workflow, and reach mastery.
+
+```
+⚪ 白帯 White  →  🔵 青帯 Blue  →  🟤 茶帯 Brown  →  ⚫ 黒帯 Black
+ Enter the Dojo    Core Kata        The Workflow      Mastery
+```
+
+| Belt | Phase | You learn to… |
+|------|-------|---------------|
+| ⚪ **白帯 White** | Enter the Dojo | Install the Dojo, run `verify.sh`, explore the scaffold |
+| 🔵 **青帯 Blue** | Core Kata 基本型 | Plan before code, verify before done, fix bugs autonomously |
+| 🟤 **茶帯 Brown** | The Workflow | Brainstorm → worktree → plan → execute → test → review → finish |
+| ⚫ **黒帯 Black** | Mastery | The single gate, memory vault, curator, MCP, contribute a skill |
+
+A winding stone path of **23 checkpoints**, each with copy-ready commands and a
+"stuck?" hint. Progress is saved locally, belts unlock in sequence, and finishing
+the path earns a downloadable **black-belt certificate**. No build step, no
+dependencies — one static HTML file.
+
+**Play it:** publish via GitHub Pages (**Settings → Pages → Deploy from branch →
+`main` / `/docs`**), then open `…github.io/copilot-agents-dojo/quests/`. Or open
+[`docs/quests/index.html`](./docs/quests/index.html) directly in a browser.
+
+---
+
 ## Skill Sets
 
 - [skills/](./skills) — Core + practical skill folders (always discoverable)
@@ -330,10 +360,8 @@ Trained agents operate like **seasoned black belts** — plan the approach, exec
 
 ## Enter the Dojo
 
-> 🥋 **New here? Walk the [Belt Quest](./docs/quests/).** An interactive, gamified
-> onboarding that takes you from 白帯 (white belt) to 黒帯 (black belt) through
-> install, the core kata, the mandatory workflow, and mastery. Published via
-> GitHub Pages (Settings → Pages → *Deploy from branch* → `main` / `/docs`).
+> 🥋 **New here? Walk the [Belt Quest](./docs/quests/) first** — the gamified
+> onboarding ([see above](#-the-belt-quest)). Prefer to dive straight in? Install below.
 
 ### One command (recommended)
 
