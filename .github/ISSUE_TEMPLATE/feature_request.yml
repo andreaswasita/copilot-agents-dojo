@@ -1,0 +1,43 @@
+name: ✨ Feature request
+description: Propose an improvement to the Dojo's tooling, scripts, or docs
+title: "feat: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For proposing a **new skill**, use the *Skill proposal* template instead — skills have a dedicated spec and review path.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / motivation
+      description: What friction or gap does this address? Be concrete and, where possible, measurable.
+      placeholder: "Contributors keep tripping over X because the gate doesn't catch it until CI…"
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: What you'd add or change, and which files/areas it touches (scripts/, cli/, docs/, .github/).
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Other approaches you weighed and why you set them aside.
+    validations:
+      required: false
+  - type: checkboxes
+    id: contributor-rules
+    attributes:
+      label: Contributor rules
+      description: Confirm the proposal respects the load-bearing constraints in AGENTS.md.
+      options:
+        - label: "Does not replace `tasks/todo.md` with a real plan (canonical scaffold must stay scaffold)"
+          required: true
+        - label: "Does not break `scripts/verify.sh` (the single gate)"
+          required: true
+        - label: "Follows the Supply Chain Policy for any new dependency (pinned/ceilinged)"
+          required: true

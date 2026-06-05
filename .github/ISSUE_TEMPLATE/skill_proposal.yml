@@ -1,0 +1,53 @@
+name: 🥋 Skill proposal
+description: Propose a new skill for the Dojo (skills/ or optional-skills/)
+title: "skill: "
+labels: ["enhancement", "documentation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Skills are the heart of the Dojo. Before filing, read [`spec/copilot-skills-spec.md`](../../spec/copilot-skills-spec.md) and start from [`template/SKILL.md`](../../template/SKILL.md). The reviewer checks every PR against the spec + [`.github/known-pitfalls.md`](known-pitfalls.md).
+  - type: input
+    id: skill-name
+    attributes:
+      label: Skill name
+      description: Lowercase, hyphenated folder name (e.g. `incident-triage`).
+      placeholder: "incident-triage"
+    validations:
+      required: true
+  - type: dropdown
+    id: tier
+    attributes:
+      label: Tier
+      description: Core/practical skills are always discoverable; heavyweight or niche skills go in optional-skills/.
+      options:
+        - "core — fundamental discipline, always loaded"
+        - "practical — common task, always discoverable"
+        - "optional — heavy/niche, installed explicitly"
+    validations:
+      required: true
+  - type: textarea
+    id: what-it-does
+    attributes:
+      label: What the skill does
+      description: The behavior it enforces and when it triggers. One paragraph.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why it belongs in the Dojo
+      description: The recurring failure mode it prevents. Prefer concrete examples over adjectives.
+    validations:
+      required: true
+  - type: checkboxes
+    id: spec-readiness
+    attributes:
+      label: Spec readiness
+      options:
+        - label: "Will fill in all required frontmatter (spec §1) and follow the required section order (spec §2)"
+          required: true
+        - label: "References real Copilot tools in backticks (`view`, `edit`, `grep`, `glob`, `powershell`, `web_fetch`, `task`) — not bare shell utilities (spec §3)"
+          required: true
+        - label: "Any deterministic logic ships as cross-platform `scripts/` (.sh + .ps1) with tests, and `scripts/verify.sh` passes"
+          required: true
