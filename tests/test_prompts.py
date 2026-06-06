@@ -20,6 +20,9 @@ BASH = os.environ.get("DOJO_BASH", "bash")
 GEN = REPO_ROOT / "scripts" / "regen-prompts.sh"
 PROMPTS = REPO_ROOT / ".github" / "prompts"
 
+# Built-in pipeline orchestrator shims (G8) — not derived from a skill/agent.
+PIPELINE_SHIMS = {"dojo-sprint.prompt.md", "dojo-swarm.prompt.md"}
+
 
 def _skill_ids() -> list[str]:
     return sorted(p.parent.name for p in (REPO_ROOT / "skills").glob("*/SKILL.md"))
@@ -27,6 +30,15 @@ def _skill_ids() -> list[str]:
 
 def _agent_slugs() -> list[str]:
     return sorted(p.stem for p in (REPO_ROOT / "agents").glob("*.md"))
+
+
+def _pipeline_phases() -> list[str]:
+    rows = (REPO_ROOT / "scripts" / "pipeline.tsv").read_text(encoding="utf-8").splitlines()
+    return [
+        line.split("\t", 1)[0].strip()
+        for line in rows
+        if line.strip() and not line.lstrip().startswith("#")
+    ]
 
 
 def test_generator_reports_no_drift() -> None:
@@ -58,11 +70,25 @@ def test_one_shim_per_agent() -> None:
 
 
 def test_no_orphan_shims() -> None:
-    expected = {f"dojo-{s}.prompt.md" for s in _skill_ids()} | {
-        f"dojo-agent-{a}.prompt.md" for a in _agent_slugs()
-    }
+    expected = (
+        {f"dojo-{s}.prompt.md" for s in _skill_ids()}
+        | {f"dojo-agent-{a}.prompt.md" for a in _agent_slugs()}
+        | PIPELINE_SHIMS
+    )
     actual = {p.name for p in PROMPTS.glob("dojo-*.prompt.md")}
     assert actual == expected, f"orphan/missing shims: {actual ^ expected}"
+
+
+def test_pipeline_shims_present_and_wired() -> None:
+    phases = _pipeline_phases()
+    assert phases, "scripts/pipeline.tsv has no phases"
+    for shim_name in PIPELINE_SHIMS:
+        shim = PROMPTS / shim_name
+        assert shim.is_file(), f"missing pipeline shim: {shim_name}"
+        text = shim.read_text(encoding="utf-8")
+        assert "scripts/sprint.sh" in text, f"{shim_name} does not reference the orchestrator"
+        for phase in phases:
+            assert phase in text, f"{shim_name} missing pipeline phase {phase}"
 
 
 def test_shim_shape() -> None:
