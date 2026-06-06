@@ -23,6 +23,7 @@ import kleur from "kleur";
 import { BackupSet } from "./backup.js";
 import { fetchSubtree } from "./fetch.js";
 import { renderInstructions } from "./generate.js";
+import { buildManifest, writeManifest } from "./manifest.js";
 import { PRESETS, type Preset, type PresetId, PRESET_IDS } from "./presets.js";
 import {
   PROFILE_FILENAME,
@@ -51,6 +52,7 @@ export interface InitResult {
   writtenFiles: string[];
   profilePath: string;
   instructionsPath: string;
+  manifestPath?: string;
   backupRoot?: string;
   dryRun: boolean;
 }
@@ -206,9 +208,21 @@ export async function runInit(opts: InitOptions): Promise<InitResult> {
   // Write profile.
   const profilePath = await writeProfile(targetDir, profile);
 
+  // Record a checksummed manifest of installed content (fetched files +
+  // the generated instructions). Drives `doctor` and `uninstall`.
+  const manifest = await buildManifest({
+    targetDir,
+    absFiles: [...written, instructionsPath],
+    installerVersion: opts.installerVersion,
+    preset: preset.id,
+    ref,
+  });
+  const manifestPath = await writeManifest(targetDir, manifest);
+
   console.log(kleur.green(`\n✅ Installed ${written.length} files.`));
   console.log(`   instructions: ${kleur.cyan(instructionsPath)}`);
   console.log(`   profile:      ${kleur.cyan(profilePath)}`);
+  console.log(`   manifest:     ${kleur.cyan(manifestPath)}`);
   if (backups.used) {
     console.log(`   backups:      ${kleur.dim(backups.root)}`);
   }
@@ -220,6 +234,7 @@ export async function runInit(opts: InitOptions): Promise<InitResult> {
     writtenFiles: written,
     profilePath,
     instructionsPath,
+    manifestPath,
     backupRoot: backups.used ? backups.root : undefined,
     dryRun: false,
   };
