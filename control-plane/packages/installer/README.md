@@ -20,6 +20,8 @@ agents from this repo, and writes:
 - `spec/copilot-skills-spec.md` and `template/SKILL.md` — contract docs
 - `.github/copilot-instructions.md` — the entry point Copilot loads
 - `.dojo-profile.yml` — pinning your selection for repeatable installs
+- `.dojo/install-manifest.json` — a checksummed record of every installed
+  file, powering `doctor` (drift detection) and a safe `uninstall`
 
 Any file the installer would overwrite is first snapshotted under
 `.dojo/installer-backups/<utc-ts>/` so re-runs are reversible.
@@ -41,6 +43,30 @@ npx copilot-dojo init --dry-run      # show what would happen
 | `--ref <git-ref>` | `main` | Branch, tag, or commit SHA on `andreaswasita/copilot-agents-dojo`. Pin to a tag for reproducible installs. |
 | `-y, --yes` | off | Skip confirmation prompts; default preset becomes `lean`. |
 | `--dry-run` | off | Print plan; exit before touching disk. |
+
+## Lifecycle: doctor & uninstall
+
+The manifest written at install time lets you audit and cleanly remove a
+dojo install.
+
+```bash
+npx copilot-dojo doctor              # report drift vs the manifest
+npx copilot-dojo uninstall           # remove installed files (preserves edits)
+npx copilot-dojo uninstall --force   # also remove files you have modified
+npx copilot-dojo uninstall --dry-run # show what would be removed
+```
+
+`doctor` recomputes each tracked file's checksum and classifies it as
+**ok**, **modified** (you edited it), **missing**, or **unsafe** (a symlink
+or directory replaced it). It exits `0` when clean, `1` on drift, and `2`
+when there is no manifest.
+
+`uninstall` removes only files listed in the manifest, and only when they
+are unchanged — a file you modified is **preserved** by default (use
+`--force` to remove it too). It deletes content first and retires the
+profile and manifest only on a fully clean run, so a partial or
+preserve-modified uninstall can always be retried. It never touches the
+`installer-backups` directory or anything outside the target.
 
 ## Presets
 
@@ -113,8 +139,6 @@ without cutting a release — it runs the full pipeline up to
 | Theme | Description |
 |---|---|
 | `custom` preset picker | Interactive multi-select over the live skill catalogue (currently rejected with a TODO error). |
-| Skill *removal* on update | Today re-runs only add/refresh. |
-| Conflict resolution | Detect hand-edited skills and prompt before clobber. |
-| `dojo doctor` command | Audit an installed project for drift vs the pinned profile. |
+| Orphan cleanup on update | Re-running with a smaller preset leaves files from the old preset in place; a `--prune-orphans` mode is planned. |
 
 Issues and PRs: <https://github.com/andreaswasita/copilot-agents-dojo>
