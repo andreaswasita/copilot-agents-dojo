@@ -53,7 +53,18 @@
   .quest-map{position:fixed;top:var(--top-bar);left:0;right:0;bottom:0;overflow:hidden;z-index:1}
   .quest-map svg.path-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 
-  .torii{position:absolute;right:2.2%;top:50%;transform:translateY(-50%);font-size:64px;opacity:.16;pointer-events:none;z-index:1;filter:drop-shadow(0 0 14px rgba(245,158,11,.4))}
+  .torii{position:absolute;right:2.2%;top:50%;transform:translateY(-50%);opacity:.16;pointer-events:none;z-index:1;color:var(--amber);filter:drop-shadow(0 0 14px rgba(245,158,11,.4))}
+  .torii .dojo-ico{width:172px;height:172px;stroke-width:.85}
+  /* hand-drawn icon sizing */
+  .dojo-ico{width:28px;height:28px;display:block;color:var(--text)}
+  .node .inner{color:var(--text)}
+  .node.active .inner .dojo-ico{color:#bcd4ff}
+  .node.complete.belt1 .inner .dojo-ico,.node.complete.belt2 .inner .dojo-ico,.node.complete.belt3 .inner .dojo-ico,.node.complete.belt4 .inner .dojo-ico{color:var(--green)}
+  .emoji-big .dojo-ico{width:34px;height:34px}
+  .m-node .dojo-ico{width:26px;height:26px}
+  .m-item.active .m-node .dojo-ico{color:#bcd4ff}
+  .m-check-done{color:var(--green);font-size:22px;font-weight:700}
+  .belt-emoji .dojo-ico{width:56px;height:56px;display:inline-block;stroke-width:1.5}
 
   .node{position:absolute;width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;
     cursor:pointer;transition:all .35s cubic-bezier(.4,0,.2,1);z-index:10;transform:translate(-50%,-50%)}
@@ -211,7 +222,7 @@
 
 <div class="quest-map" id="questMap">
   <svg class="path-svg" id="pathSvg" preserveAspectRatio="none"></svg>
-  <div class="torii">⛩️</div>
+  <div class="torii" id="toriiBg"></div>
 </div>
 <div id="mobileList"></div>
 
@@ -234,6 +245,46 @@
 </div>
 
 <script>
+/* ───────────────── Hand-drawn Japanese icon set (inline SVG) ─────────────────
+   Original line-art, 24×24, stroke=currentColor — license-free & self-contained. */
+function svgIco(inner){
+  return `<svg class="dojo-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inner}</svg>`;
+}
+const ICONS = {
+  dojo:    svgIco(`<path d="M3 10.2c2.6-1.4 5.6-2.1 9-2.1s6.4.7 9 2.1"/><path d="M12 5 4.5 9.6h15L12 5Z"/><path d="M6 10.5V19M18 10.5V19"/><path d="M9.5 19v-3.5a2.5 2.5 0 0 1 5 0V19"/><path d="M4 19.2h16"/>`),
+  clipboard:svgIco(`<rect x="5.5" y="4.5" width="13" height="16" rx="2"/><path d="M9 4.5V3.8a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v.7"/><path d="M8.5 11.5l2 2 4-4"/><path d="M8.5 16.5h7"/>`),
+  sprout:  svgIco(`<path d="M12 21v-7.5"/><path d="M12 13.5c0-3.3 2.2-5.5 6.5-5.5 0 3.3-2.2 5.5-6.5 5.5Z"/><path d="M12 15c0-2.7-2-4.8-5.5-4.8 0 2.7 2 4.8 5.5 4.8Z"/><path d="M7 21h10"/>`),
+  belt:    svgIco(`<path d="M2.5 10.5h7.5"/><path d="M14 10.5h7.5"/><rect x="9.5" y="8.7" width="5" height="3.6" rx="0.6"/><path d="M10.8 12.3 9 17.5"/><path d="M13.2 12.3 15 17.5"/>`),
+  map:     svgIco(`<path d="M9 4.2 4 6.2v13.6l5-2 6 2 5-2V4.2l-5 2-6-2Z"/><path d="M9 4.2v13.6"/><path d="M15 6.2v13.6"/>`),
+  enso:    svgIco(`<path d="M16.8 6A8 8 0 1 0 19.3 11.6"/><path d="M19.3 11.6 21 9.4M19.3 11.6l-2.2.3"/>`),
+  brush:   svgIco(`<path d="M20.5 4.5 12.5 12.5"/><path d="M12.8 12.2c-1.7-1.7-4.3-1.2-5.4 1-1 2.2-3.4 2.3-3.4 2.3s.1-2.5 1.2-4.7c1.1-2.2 4.4-2.4 6.1-.7Z"/>`),
+  stamp:   svgIco(`<circle cx="12" cy="8.5" r="4.5"/><path d="M9.8 8.5l1.6 1.6 3-3.2"/><path d="M6 20h12"/><path d="M9 20v-2.2a3 3 0 0 1 6 0V20"/>`),
+  bonsai:  svgIco(`<path d="M12 16.5v-3.8"/><path d="M12 12.7c-2 0-4-1-4-3 2 0 4 1 4 3Z"/><path d="M12 11.8c.2-2.4 2-4 4.2-4 0 2.3-1.8 4-4.2 4Z"/><path d="M7 16.5c0 1.7 2.2 2.3 5 2.3s5-.6 5-2.3"/><path d="M9.5 18.8h5"/>`),
+  katana:  svgIco(`<path d="M3.5 20.5 14.5 9.5"/><path d="M12.8 7.8l3.4 3.4"/><path d="M14.5 9.5 19 5"/><path d="M18 4l2 2"/>`),
+  shuriken:svgIco(`<path d="M12 3.5 14 8.3l4.8 2.2-4.8 2.2-2 4.8-2-4.8-4.8-2.2L10 8.3Z"/><circle cx="12" cy="10.8" r="1.2"/>`),
+  lantern: svgIco(`<ellipse cx="12" cy="11.5" rx="4.3" ry="5.8"/><path d="M8.1 9h7.8M7.7 11.5h8.6M8.1 14h7.8"/><path d="M12 3v2.7M9.5 5.7h5M12 17.3V20"/>`),
+  bamboo:  svgIco(`<path d="M9.5 21V4"/><path d="M7.8 7.5h3.4M7.8 12h3.4M7.8 16.5h3.4"/><path d="M14 21V8.5"/><path d="M12.6 12.5h2.8M12.6 16.5h2.8"/><path d="M9.5 9.5c2.2 0 4.2-1 4.5-3"/>`),
+  scroll:  svgIco(`<path d="M8.5 5h8.5a1.2 1.2 0 0 1 1.2 1.2v11.6a1.2 1.2 0 0 1-1.2 1.2H8.5"/><path d="M6 6.2a2 2 0 0 1 4 0v11.6a2 2 0 0 1-4 0Z"/><path d="M11.5 9.5h4M11.5 12.5h4"/>`),
+  gear:    svgIco(`<circle cx="12" cy="12" r="3"/><path d="M12 3.5v2.2M12 18.3v2.2M3.5 12h2.2M18.3 12h2.2M6 6l1.6 1.6M16.4 16.4 18 18M18 6l-1.6 1.6M7.6 16.4 6 18"/>`),
+  target:  svgIco(`<circle cx="11" cy="13" r="6.8"/><circle cx="11" cy="13" r="2.8"/><path d="M11 13 20.5 3.5"/><path d="M16.5 3.5h4v4"/>`),
+  magnifier:svgIco(`<circle cx="10.8" cy="10.8" r="6"/><path d="M19.5 19.5 15 15"/>`),
+  nobori:  svgIco(`<path d="M6 3.2v17.6"/><path d="M6 4.5h11.5v12.5H6"/><path d="M10.5 7.5v6.5M14 9v3.5"/>`),
+  torii:   svgIco(`<path d="M4.5 20.5V9"/><path d="M19.5 20.5V9"/><path d="M3 6.4c5.5-2 13-2 18 0"/><path d="M3.2 9.3h17.6"/><path d="M7.5 12.4h9"/>`),
+  scrolls: svgIco(`<rect x="4" y="5" width="16" height="4.6" rx="2.3"/><rect x="4" y="11" width="16" height="4.6" rx="2.3"/><path d="M7.6 5v4.6M7.6 11v4.6"/><path d="M5 18.2h14"/>`),
+  fuji:    svgIco(`<path d="M3 19.2h18"/><path d="M3.8 19 10 9.5l3.6 4.6 2-2.6 4.6 7.5Z"/><path d="M8.2 13.6l1.6 1.1 1.5-1.2"/><circle cx="18" cy="6.6" r="2.2"/>`),
+  link:    svgIco(`<path d="M10 8.5H8.5a3.5 3.5 0 0 0 0 7H10"/><path d="M14 15.5h1.5a3.5 3.5 0 0 0 0-7H14"/><path d="M8.8 12h6.4"/>`),
+  daruma:  svgIco(`<path d="M12 3.8c-3.6 0-6 3.2-6 7.2s2.4 8.2 6 8.2 6-4.2 6-8.2-2.4-7.2-6-7.2Z"/><path d="M9 10.2c.6-.7 1.7-.7 2.3 0M12.7 10.2c.6-.7 1.7-.7 2.3 0"/><path d="M9.3 14c1.6 1.1 4 1.1 5.4 0"/>`),
+};
+const ICON_FOR = {
+  "what-is":"dojo", "prereqs":"clipboard", "install":"sprout", "verify-install":"belt", "explore":"map",
+  "activate":"enso", "plan-before-code":"brush", "verify-before-done":"stamp", "demand-elegance":"bonsai",
+  "autonomous-bug-fix":"katana", "delegation":"shuriken",
+  "brainstorm":"lantern", "worktree":"bamboo", "plan":"scroll", "execute":"gear", "test":"target",
+  "review":"magnifier", "finish":"nobori",
+  "single-gate":"torii", "memory-vault":"scrolls", "self-improve":"fuji", "mcp":"link", "black-belt":"daruma",
+};
+function iconFor(id){ return ICONS[ICON_FOR[id]] || ICONS.torii; }
+
 /* ───────────────────────── Belt definitions ───────────────────────── */
 const BELTS = {
   1:{kanji:"白帯",en:"White Belt",color:"#e6edf3",emoji:"⚪",label:"Enter the Dojo"},
@@ -580,7 +631,7 @@ function renderMap(){
     node.innerHTML=`
       <div class="ring"></div>
       <div class="inner">
-        <span class="emoji">${c.emoji}</span>
+        <span class="emoji">${iconFor(c.id)}</span>
         <span class="check-icon">✓</span>
         ${state==="locked"?'<span class="lock">🔒</span>':''}
       </div>
@@ -610,7 +661,7 @@ function renderMobile(){
     const item=document.createElement("div");
     item.className="m-item "+state;
     item.innerHTML=`
-      <div class="m-node">${isComplete(c.id)?'✓':c.emoji}</div>
+      <div class="m-node">${isComplete(c.id)?'<span class="m-check-done">✓</span>':iconFor(c.id)}</div>
       <div class="m-text"><div class="m-title">${c.title}</div><div class="m-time">${c.time}</div></div>
       <div class="m-check">✓</div>`;
     item.onclick=()=>{ if(state==="locked") return; openPanel(c.id); };
@@ -638,7 +689,7 @@ function openPanel(id){
   activeId=id;
   const b=BELTS[c.phase];
   document.getElementById("panelBeltBar").style.background=b.color;
-  document.getElementById("panelEmoji").textContent=c.emoji;
+  document.getElementById("panelEmoji").innerHTML=iconFor(c.id);
   document.getElementById("panelKicker").innerHTML=`<span style="color:${b.color}">${b.kanji} ${b.en}</span> · ${b.label}`;
   document.getElementById("panelTitle").textContent=c.title;
   document.getElementById("panelTime").textContent="⏱ "+c.time;
@@ -754,7 +805,7 @@ function showBeltPromotion(phase){
   const earned=BELTS[phase];
   const banner=document.getElementById("banner");
   banner.innerHTML=`
-    <div class="belt-emoji">${earned.emoji}</div>
+    <div class="belt-emoji" style="color:${earned.color}">${ICONS.belt}</div>
     <div class="jp">${earned.kanji} 昇級</div>
     <h1>${earned.en} earned!</h1>
     <p>You've mastered <strong>${earned.label}</strong>.<br>Next: <strong>${next.kanji} ${next.en}</strong> — ${next.label}.</p>
@@ -765,7 +816,7 @@ function showBeltPromotion(phase){
 function showBlackBelt(){
   const banner=document.getElementById("banner");
   banner.innerHTML=`
-    <div class="belt-emoji">⚫🥋</div>
+    <div class="belt-emoji" style="color:var(--amber)">${ICONS.daruma}</div>
     <div class="jp">黒帯 — 免許皆伝</div>
     <h1>Black Belt — Dojo Master!</h1>
     <p>You've walked the full path: install → core kata → the mandatory workflow → mastery.<br>Your Copilot agents now build with discipline. 🏯</p>
@@ -811,6 +862,7 @@ function resetProgress(){
 }
 
 /* ───────────────────────── Init ───────────────────────── */
+document.getElementById("toriiBg").innerHTML=ICONS.torii;
 window.addEventListener("resize", ()=>{ renderMap(); });
 document.addEventListener("keydown", e=>{ if(e.key==="Escape"){ closePanel(); hideBanner(); } });
 renderAll();
