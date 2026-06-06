@@ -207,6 +207,7 @@ Everything in `scripts/` honors `${DOJO_ROOT:-…}` so it works from any cwd and
 | [scripts/verify.sh](./scripts/verify.sh) | **The single gate** — spec invariants + skills.md freshness + persona drift + path audit + curator manifest |
 | [scripts/run-checks.ps1](./scripts/run-checks.ps1) | Windows parity wrapper for `verify.sh` |
 | [scripts/regen-skills-index.sh](./scripts/regen-skills-index.sh) | Rebuilds `skills.md` + `.dojo/bundled-manifest.txt` from frontmatter (`.ps1` mirror included) |
+| [scripts/regen-prompts.sh](./scripts/regen-prompts.sh) | Rebuilds the `.github/prompts/*.prompt.md` slash-command shims from skill + persona frontmatter (`.ps1` mirror included) |
 | [scripts/lesson-updater.sh](./scripts/lesson-updater.sh) | Cache-aware skill amendments — deferred by default, `--now` to apply immediately |
 | [scripts/curator.sh](./scripts/curator.sh) | Skill lifecycle: `status / record / pin / unpin / archive / restore / transition / backup / rollback / report` (`.ps1` mirror included) |
 | [scripts/curator-tick.sh](./scripts/curator-tick.sh) | Idle-gated curator trigger (interval + min-idle); `.ps1` wrapper for Windows |
@@ -223,6 +224,28 @@ bash scripts/regen-skills-index.sh                # rebuild skills.md + bundled-
 bash scripts/board.sh new "Fix flaky auth test"   # open a durable task on the board
 bash scripts/link-index.sh                        # rebuild memory vault graph
 bash scripts/memory-query.sh --type pattern --recent 5
+```
+
+### Slash Commands
+
+Every skill and persona is also exposed as a discoverable GitHub Copilot
+**slash command**. `scripts/regen-prompts.sh` generates one prompt shim per
+skill and per agent under `.github/prompts/`, so in Copilot Chat you can type:
+
+```text
+/dojo-debugging          # load and apply the debugging skill
+/dojo-plan-before-code   # load and apply the planning skill
+/dojo-agent-architect    # adopt the Architect persona
+```
+
+The shims are auto-generated (never hand-edited) and kept in sync by the same
+gate as `skills.md`: `verify.sh` warns on drift and `tests/test_prompts.py`
+fails CI if they are stale. Regenerate after adding or renaming a skill or
+persona:
+
+```bash
+bash scripts/regen-prompts.sh            # write the shims
+bash scripts/regen-prompts.sh --check    # CI-style drift check
 ```
 
 ### Requirements

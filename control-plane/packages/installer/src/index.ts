@@ -15,3 +15,18 @@ export type { DojoProfile } from "./profile.js";
 export { fetchSubtree } from "./fetch.js";
 export type { FetchOptions, FetchResult } from "./fetch.js";
 export { renderInstructions } from "./generate.js";
+export {
+  MANIFEST_FILENAME,
+  ManifestError,
+  buildManifest,
+  readManifest,
+  writeManifest,
+  sha256File,
+  isSafeRelPath,
+  safeResolve,
+} from "./manifest.js";
+export type { InstallManifest, ManifestFile } from "./manifest.js";
+export { runDoctor } from "./doctor.js";
+export type { DoctorReport, DoctorOptions } from "./doctor.js";
+export { runUninstall } from "./uninstall.js";
+export type { UninstallOptions, UninstallResult } from "./uninstall.js";
