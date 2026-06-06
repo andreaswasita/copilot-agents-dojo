@@ -288,9 +288,9 @@ function iconFor(id){ return ICONS[ICON_FOR[id]] || ICONS.torii; }
 /* ───────────────────────── Belt definitions ───────────────────────── */
 const BELTS = {
   1:{kanji:"白帯",en:"White Belt",color:"#e6edf3",emoji:"⚪",label:"Enter the Dojo"},
-  2:{kanji:"青帯",en:"Blue Belt", color:"#1f6feb",emoji:"🔵",label:"Core Kata"},
-  3:{kanji:"茶帯",en:"Brown Belt",color:"#a16838",emoji:"🟤",label:"The Workflow"},
-  4:{kanji:"黒帯",en:"Black Belt",color:"#f59e0b",emoji:"⚫",label:"Mastery"},
+  2:{kanji:"青帯",en:"Blue Belt", color:"#1f6feb",emoji:"🔵",label:"Drill the Kata"},
+  3:{kanji:"茶帯",en:"Brown Belt",color:"#a16838",emoji:"🟤",label:"The Belt Test"},
+  4:{kanji:"黒帯",en:"Black Belt",color:"#f59e0b",emoji:"⚫",label:"Make It Yours"},
 };
 
 const REPO="https://github.com/andreaswasita/copilot-agents-dojo";
@@ -365,164 +365,188 @@ const CHECKPOINTS = [
     learn:"using-superpowers is the activator — it loads every skill at session start."
   },
   {
-    id:"plan-before-code", phase:2, emoji:"📝", title:"Kata: Plan before code", time:"4 min",
-    desc:"The first discipline. Any task of <strong>3+ steps</strong> gets a written plan first — bite-sized, checkable tasks in <code>tasks/todo.md</code> — confirmed before a single line is written. No silent large refactors.",
-    toggle:"I plan multi-step work before touching code ✓",
+    id:"plan-before-code", phase:2, emoji:"📝", title:"Drill: make it plan first", time:"5 min",
+    desc:"Time to <strong>drive</strong>. Give your agent a real multi-step task and watch the kata fire: it stops, writes a plan to <code>tasks/todo.md</code>, and waits for your approval before writing a line. Your move — read the plan, tweak it, then say go.",
+    toggle:"I made my agent plan first — and approved it before any code ✓",
     skill:{label:"plan-before-code",name:"skills/plan-before-code",href:REPO+"/blob/main/skills/plan-before-code/SKILL.md"},
-    stuck:"Try it: ask the agent to add a non-trivial feature. A disciplined agent stops and writes a plan to <code>tasks/todo.md</code> for your approval before coding. If it dives straight in, remind it of the kata.",
-    learn:"3+ steps ⇒ plan first. One source of truth: tasks/todo.md. Approve, then execute."
+    copies:[{label:"💬 Paste into Copilot",text:"Add input validation to the signup form. Plan it in tasks/todo.md and wait for my approval before you write any code."}],
+    stuck:"What good looks like: a plan of 3–6 bite-sized, checkable steps you can approve or amend <em>before</em> code exists. If the agent dives straight into editing, stop it — \"plan it first.\"",
+    learn:"You set intent; the agent plans. Approve the plan, then it builds. No silent refactors."
   },
   {
-    id:"verify-before-done", phase:2, emoji:"✅", title:"Kata: Verify before done", time:"4 min",
-    desc:"The prime directive: <strong>never claim \"done\" without proof.</strong> Evidence = the repo's own tests/build pass, the diff was reviewed, and the working tree is clean. No proof, not done.",
-    toggle:"I never mark work done without evidence ✓",
+    id:"verify-before-done", phase:2, emoji:"✅", title:"Drill: demand proof", time:"4 min",
+    desc:"Never take \"done\" on faith. When the agent says it's finished, make it <strong>show evidence</strong>: tests passing, a clean <code>git status</code>, and the diff. The kata is simple — no proof, not done.",
+    toggle:"I refused \"done\" until the agent showed evidence ✓",
     skill:{label:"verify-before-done",name:"skills/verify-before-done",href:REPO+"/blob/main/skills/verify-before-done/SKILL.md"},
-    copies:[{label:"The proof command",text:"bash scripts/verify.sh"}],
-    stuck:"Proof is concrete: passing tests, a clean <code>git status</code>, and a diff you've read line by line. The agent records the evidence before flipping a task to complete. \"Looks right\" is not proof.",
-    learn:"Done = tests pass + diff reviewed + tree clean. Record the evidence. No proof, not done."
+    copies:[
+      {label:"💬 Paste into Copilot",text:"Before you call that done, run the tests and show me the output and the full diff."},
+      {label:"The proof command",text:"bash scripts/verify.sh"},
+    ],
+    stuck:"What good looks like: green tests, a clean tree, and a diff you've actually read. \"Looks right\" is not proof. If it can't show evidence, it isn't finished.",
+    learn:"Done = tests pass + diff reviewed + tree clean. Make the agent prove it every time."
   },
   {
-    id:"demand-elegance", phase:2, emoji:"💎", title:"Kata: Demand elegance", time:"3 min",
-    desc:"Challenge hacky fixes and accidental complexity on non-trivial changes. A complete, correct solution beats a minimal one; a clean one beats an over-engineered one. <strong>Simplicity first</strong> — fewer lines beats more lines.",
-    toggle:"I challenge shortcuts without over-engineering ✓",
+    id:"demand-elegance", phase:2, emoji:"💎", title:"Drill: reject the hack", time:"4 min",
+    desc:"First attempts are often clumsy. When you smell a shortcut, copy-paste sprawl, or needless complexity, <strong>send it back</strong> — ask for the simplest version that still works. Like a bonsai, it's shaped by pruning, not piling on.",
+    toggle:"I pushed back on a hacky solution and got a cleaner one ✓",
     skill:{label:"demand-elegance",name:"skills/demand-elegance",href:REPO+"/blob/main/skills/demand-elegance/SKILL.md"},
-    stuck:"Balance matters: this kata fights <em>both</em> hacky shortcuts and gold-plating. For a genuinely simple fix, skip it — don't manufacture complexity. For anything non-trivial, push for the elegant solution.",
-    learn:"Simplicity first. Challenge hacks on non-trivial work; don't over-engineer simple fixes."
+    copies:[{label:"💬 Paste into Copilot",text:"This works but feels hacky. What's the simplest version? Refactor for clarity — don't add complexity."}],
+    stuck:"What good looks like: fewer lines that read clearly. But don't gold-plate a trivial fix either — the kata cuts <em>both</em> hacks and over-engineering.",
+    learn:"Simplicity first. Prune accidental complexity; don't manufacture it. Clarity wins."
   },
   {
-    id:"autonomous-bug-fix", phase:2, emoji:"🐛", title:"Kata: Autonomous bug fix", time:"4 min",
-    desc:"When you hand the agent a bug, it owns the whole loop: <strong>reproduce → diagnose root cause → fix → verify</strong>. Zero hand-holding — no asking \"which file?\" or \"what command?\". It never hands back a half-diagnosed bug or guesses without reproducing.",
-    toggle:"Bugs get reproduced, root-caused, fixed, and verified ✓",
+    id:"autonomous-bug-fix", phase:2, emoji:"🐛", title:"Drill: hand it a bug", time:"5 min",
+    desc:"Give the agent a real bug and <strong>step back</strong>. A trained agent reproduces it first, finds the root cause, fixes it, and verifies the fix — without asking you which file or what command. You just confirm it's truly gone.",
+    toggle:"My agent reproduced, root-caused, fixed, and verified a bug solo ✓",
     skill:{label:"autonomous-bug-fix",name:"skills/autonomous-bug-fix",href:REPO+"/blob/main/skills/autonomous-bug-fix/SKILL.md"},
-    stuck:"The discipline is <em>reproduce first</em>. A fix without a reproduction is a guess. Pair this with <strong>debugging</strong> (a Practical skill) for systematic root-cause investigation on the hard ones.",
-    learn:"Reproduce → diagnose → fix → verify. No guessing, no half-diagnosed handoffs."
+    copies:[{label:"💬 Paste into Copilot",text:"There's a bug: <describe it>. Reproduce it first, find the root cause, fix it, then prove it's fixed."}],
+    stuck:"What good looks like: a <em>reproduction before a fix</em>. A change with no repro is a guess. The katana cuts the root cause, not the symptom.",
+    learn:"Reproduce → diagnose → fix → verify. Hand off the bug, not the babysitting."
   },
   {
-    id:"delegation", phase:2, emoji:"🤝", title:"Kata: Delegate & stay durable", time:"4 min",
-    desc:"Pick the right execution scope. <strong>subagent-strategy</strong> offloads research and parallel reads to keep the main context clean. <strong>durable-work</strong> picks the board (<code>tasks/board/</code>) over sub-agents for work that must survive across turns.",
-    toggle:"I delegate research to sub-agents and durable work to the board ✓",
+    id:"delegation", phase:2, emoji:"🤝", title:"Drill: delegate the grunt work", time:"4 min",
+    desc:"On anything big, make the agent <strong>parallelize</strong>: dispatch sub-agents to research and read across the codebase while the main thread stays clean. You orchestrate; it fans out and reports back.",
+    toggle:"I had my agent delegate research while I stayed in control ✓",
     skill:{label:"subagent-strategy",name:"skills/subagent-strategy",href:REPO+"/blob/main/skills/subagent-strategy/SKILL.md"},
-    stuck:"Rule of thumb — sub-agent: focused research <em>inside</em> this turn (not durable). Board: work resumed later or handed to another agent (durable). Limits: depth 2, 3 concurrent children. Don't exceed without reason.",
-    learn:"Sub-agents = in-turn research. Board = cross-turn durability. Respect depth 2 / 3 concurrent."
+    copies:[{label:"💬 Paste into Copilot",text:"Before changing anything, dispatch sub-agents to map how authentication flows through this codebase, then summarize what you found."}],
+    stuck:"What good looks like: fast, parallel reconnaissance that doesn't clog your main conversation. Sub-agents = in-session research; the board (<code>tasks/board/</code>) = work you'll resume later.",
+    learn:"Delegate research to sub-agents; keep durable work on the board. Stay the orchestrator."
   },
 
-  /* ── Phase 3 · 茶帯 Brown Belt — The Mandatory Workflow ── */
+  /* ── Phase 3 · 茶帯 Brown Belt — Your first belt test: one real change, end to end ── */
   {
-    id:"brainstorm", phase:3, emoji:"💡", title:"① Brainstorm", time:"4 min",
-    desc:"Step one of the pipeline. For a new feature, the agent refines your rough idea through a few sharp <strong>Socratic questions</strong> into an approved design — before any code. Get the approach right while course-corrections are still cheap.",
-    toggle:"New features start with an approved design ✓",
+    id:"brainstorm", phase:3, emoji:"💡", title:"Belt test ①: brainstorm a real change", time:"5 min",
+    desc:"Your brown-belt test is one <strong>real</strong> change taken through the entire pipeline. Pick something small in your own repo, then start the kata: let the agent ask a few sharp questions and shape it into an agreed design — before any code. This is the task you'll carry through the next six steps.",
+    toggle:"I turned a real idea into an approved design ✓",
     skill:{label:"brainstorming",name:"skills/brainstorming",href:REPO+"/blob/main/skills/brainstorming/SKILL.md"},
-    stuck:"This is where ambiguity dies. Expect the agent to ask before assuming — scope, edge cases, behavioral choices. Approve the design, then it moves on. Skip only for genuinely trivial fixes.",
-    learn:"Pipeline step 1: refine the idea via Socratic Q&A into an approved design before code."
+    copies:[{label:"💬 Paste into Copilot",text:"I want to add <your small feature>. Brainstorm it with me first — ask whatever you need, then propose a design before coding."}],
+    stuck:"What good looks like: the agent interrogates the fuzzy bits — scope, edge cases, behavior — instead of assuming. You leave with a design you both agree on.",
+    learn:"Start every real change with an agreed design. Ambiguity dies here, cheaply."
   },
   {
-    id:"worktree", phase:3, emoji:"🌿", title:"② Isolate in a worktree", time:"4 min",
-    desc:"Never commit straight to <code>main</code>. Each task gets an isolated workspace — a git worktree or feature branch — and the agent confirms a <strong>clean, green test baseline</strong> before changing anything.",
-    toggle:"Work is isolated on a branch with a green baseline ✓",
+    id:"worktree", phase:3, emoji:"🌿", title:"Belt test ②: isolate it", time:"4 min",
+    desc:"Take that same change onto an <strong>isolated branch or worktree</strong>, and confirm the tests are green <em>before</em> you touch anything. A clean baseline means any breakage you see later is yours — not pre-existing.",
+    toggle:"My change lives on its own branch with a green baseline ✓",
     skill:{label:"using-git-worktrees",name:"skills/using-git-worktrees",href:REPO+"/blob/main/skills/using-git-worktrees/SKILL.md"},
-    copies:[{label:"Create an isolated worktree",text:"git worktree add ../dojo-feat -b feat/my-task"}],
-    stuck:"Worktrees let multiple isolated checkouts share one repo — no stashing, no branch-thrash. A feature branch works too. The non-negotiable: verify the baseline is green <em>before</em> you touch code, so failures you see later are yours.",
-    learn:"Pipeline step 2: isolate on a worktree/branch off main; confirm a green baseline first."
+    copies:[
+      {label:"💬 Paste into Copilot",text:"Set up an isolated worktree/branch for this change and confirm the test baseline is green before we start."},
+      {label:"Or do it yourself",text:"git worktree add ../dojo-feat -b feat/my-change"},
+    ],
+    stuck:"What good looks like: a fresh branch off main and a baseline test run that passes. Never build on red — you won't know what you broke.",
+    learn:"Isolate every change; verify a green baseline first. Never commit straight to main."
   },
   {
-    id:"plan", phase:3, emoji:"🗺️", title:"③ Plan into tasks", time:"3 min",
-    desc:"Break the work into bite-sized, checkable tasks in <code>tasks/todo.md</code> — one source of truth, kept current. Each task should be small enough to verify on its own.",
-    toggle:"The work is broken into checkable tasks ✓",
+    id:"plan", phase:3, emoji:"🗺️", title:"Belt test ③: plan it", time:"3 min",
+    desc:"Turn the agreed design into <strong>bite-sized, checkable tasks</strong> in <code>tasks/todo.md</code> and approve them. This is your map for the rest of the test — each task small enough to verify on its own.",
+    toggle:"My change is broken into approved, checkable tasks ✓",
     skill:{label:"plan-before-code",name:"skills/plan-before-code",href:REPO+"/blob/main/skills/plan-before-code/SKILL.md"},
-    stuck:"In this repo, <code>tasks/todo.md</code> ships as a <em>scaffold template</em> — downstream consumers fill it in. Working plans for the dojo's own PRs live in the session folder or PR description, not in the canonical scaffold.",
-    learn:"Pipeline step 3: bite-sized checkable tasks in tasks/todo.md, kept as the single source of truth."
+    copies:[{label:"💬 Paste into Copilot",text:"Break the agreed design into small, checkable tasks in tasks/todo.md, then wait for my approval."}],
+    stuck:"What good looks like: a short list where every item is independently verifiable. If a task is too big to verify in one go, split it.",
+    learn:"A good plan is a checklist of verifiable steps. Approve it, then execute."
   },
   {
-    id:"execute", phase:3, emoji:"⚙️", title:"④ Execute one task at a time", time:"4 min",
-    desc:"Work the plan <strong>one task at a time</strong>, verifying each before moving on, committing per logical unit with a clear message. No big-bang commits, no half-finished tasks left dangling.",
-    toggle:"Tasks are executed and verified one at a time ✓",
+    id:"execute", phase:3, emoji:"⚙️", title:"Belt test ④: build it task by task", time:"5 min",
+    desc:"Work the plan <strong>one task at a time</strong>. After each, the agent verifies and commits before moving on. No big-bang commits — when you're done, the git history should read like your plan.",
+    toggle:"I executed the plan one verified task at a time ✓",
     skill:{label:"executing-plans",name:"skills/executing-plans",href:REPO+"/blob/main/skills/executing-plans/SKILL.md"},
-    stuck:"Discipline here is sequencing. Finish-and-verify task N before starting N+1. Each commit maps to one checkable item, so the history reads like the plan.",
-    learn:"Pipeline step 4: one task at a time, verify each, commit per logical unit."
+    copies:[{label:"💬 Paste into Copilot",text:"Work tasks/todo.md one task at a time. Verify and commit each before starting the next. Don't batch them."}],
+    stuck:"What good looks like: tidy, sequential commits — one per checkable item. Finish-and-verify task N before touching N+1.",
+    learn:"One task at a time, verify each, commit per unit. The history mirrors the plan."
   },
   {
-    id:"test", phase:3, emoji:"🧪", title:"⑤ Test — RED → GREEN → REFACTOR", time:"5 min",
-    desc:"Every behavioral change gets a test. Write/extend the failing test (<strong>RED</strong>), make it pass (<strong>GREEN</strong>), then clean up (<strong>REFACTOR</strong>). Use the repo's existing test commands — never invent new tooling.",
-    toggle:"Every behavioral change is test-backed ✓",
+    id:"test", phase:3, emoji:"🧪", title:"Belt test ⑤: prove it with tests", time:"5 min",
+    desc:"For each behavior you change, drive <strong>RED → GREEN → REFACTOR</strong>: a failing test first, then make it pass, then tidy. Aim at the target — assert behavior and invariants, using the repo's existing test tooling.",
+    toggle:"Every behavior change in my task is backed by a real test ✓",
     skill:{label:"test-writing",name:"skills/test-writing",href:REPO+"/blob/main/skills/test-writing/SKILL.md"},
-    copies:[{label:"Run only the test suite",text:"bash scripts/verify.sh tests"}],
-    stuck:"Critical rule — <strong>no change-detector tests.</strong> Don't snapshot current data (counts, list contents, version literals); they fail on every legitimate change. Assert <em>invariants</em> and behavior instead.",
-    learn:"Pipeline step 5: RED→GREEN→REFACTOR. Test invariants, not snapshots of current data."
+    copies:[
+      {label:"💬 Paste into Copilot",text:"Write a failing test for this behavior first, then make it pass. Assert the behavior, not a snapshot of current data."},
+      {label:"Run the suite",text:"bash scripts/verify.sh tests"},
+    ],
+    stuck:"What good looks like: tests that would catch a real regression. Avoid change-detectors that snapshot counts or lists — they break on every legit edit.",
+    learn:"RED→GREEN→REFACTOR. Test invariants and behavior, never a snapshot of today's data."
   },
   {
-    id:"review", phase:3, emoji:"🔍", title:"⑥ Review against the plan", time:"4 min",
-    desc:"Before asking anyone else, the agent <strong>self-reviews the diff</strong> against the plan — reading every changed line, hunting leftovers, debug prints, and scope creep. Then it processes incoming feedback until the change is approved.",
-    toggle:"I self-review every diff against the plan ✓",
+    id:"review", phase:3, emoji:"🔍", title:"Belt test ⑥: self-review", time:"4 min",
+    desc:"Before anyone else sees it, have the agent <strong>self-review the diff against the plan</strong> — every changed line, hunting leftovers, debug prints, and scope creep. Then make it act on what it finds.",
+    toggle:"I had my agent self-review the diff against the plan ✓",
     skill:{label:"requesting-code-review",name:"skills/requesting-code-review",href:REPO+"/blob/main/skills/requesting-code-review/SKILL.md"},
-    stuck:"Two skills pair here: <strong>requesting-code-review</strong> (self-review before sign-off) and <strong>receiving-code-review</strong> (process feedback and iterate). <strong>code-review</strong> reviews diffs by severity for high signal-to-noise.",
-    learn:"Pipeline step 6: self-review the diff line by line against the plan before sign-off."
+    copies:[{label:"💬 Paste into Copilot",text:"Self-review this diff against tasks/todo.md. Flag leftovers, debug code, and anything outside the plan — then fix them."}],
+    stuck:"What good looks like: the agent catches its own stray console logs, half-done edits, and scope creep <em>before</em> you do. A magnifier on every line.",
+    learn:"Self-review against the plan, line by line, before sign-off. Catch it before review does."
   },
   {
-    id:"finish", phase:3, emoji:"🏁", title:"⑦ Finish the branch", time:"4 min",
-    desc:"Run the single gate, present merge options, then clean up the branch/worktree and leave no temp files. A finished branch is verified, merge-decided, and tidied — not just \"code works on my machine\".",
-    toggle:"Branches are verified, merged, and cleaned up ✓",
+    id:"finish", phase:3, emoji:"🏁", title:"Belt test ⑦: ship it & raise the banner", time:"4 min",
+    desc:"Run the gate, open a clean PR, merge, and tear down the worktree. Your first real change has gone through the <strong>entire pipeline</strong> — brainstorm to ship. Raise the nobori: 茶帯 brown belt earned.",
+    toggle:"I took a real change through the whole pipeline and shipped it ✓",
     skill:{label:"finishing-a-development-branch",name:"skills/finishing-a-development-branch",href:REPO+"/blob/main/skills/finishing-a-development-branch/SKILL.md"},
-    copies:[{label:"Final gate before merge",text:"bash scripts/verify.sh"}],
-    stuck:"Pair with <strong>pr-workflow</strong> to prepare a clean, reviewable PR. The finish step also removes the worktree (<code>git worktree remove</code>) so you don't accumulate stale checkouts.",
-    learn:"Pipeline step 7: verify + merge decision + cleanup. No stale branches or temp files."
+    copies:[
+      {label:"💬 Paste into Copilot",text:"Run the gate, summarize the change, and prepare a clean PR. After it merges, remove the worktree and leave no temp files."},
+      {label:"The gate",text:"bash scripts/verify.sh"},
+    ],
+    stuck:"What good looks like: gate green, a reviewable PR, and no stale branches or scratch files left behind. Finished means tidied, not just \"works on my machine.\"",
+    learn:"Finish = verify + clean PR + cleanup. A real change, start to ship, on the rails."
   },
 
-  /* ── Phase 4 · 黒帯 Black Belt — Mastery ── */
+  /* ── Phase 4 · 黒帯 Black Belt — Make the Dojo yours: rituals that compound ── */
   {
-    id:"single-gate", phase:4, emoji:"🚪", title:"The single gate in CI", time:"4 min",
-    desc:"<code>scripts/verify.sh</code> is the <strong>only</strong> enforcement entry point — wire it as your one gate in CI and pre-PR. It checks spec invariants, <code>skills.md</code> freshness, persona drift, a path audit, and the curator manifest, all behind one command.",
-    toggle:"verify.sh is my single CI / pre-PR gate ✓",
-    skill:{label:"dojo-enforce.yml",name:".github/workflows/dojo-enforce.yml",href:REPO+"/blob/main/.github/workflows/dojo-enforce.yml"},
-    copies:[{label:"CI mode — fail on any drift",text:"bash scripts/verify.sh --check"}],
-    stuck:"One gate, not ten. The Windows parity wrapper is <code>scripts/run-checks.ps1</code>. Supply-chain rule for any workflow you add: pin GitHub Actions to a commit SHA with a version comment.",
-    learn:"verify.sh is the single gate. --check is CI mode. Pin Actions to SHA in any new workflow."
+    id:"single-gate", phase:4, emoji:"🚪", title:"Make the gate a reflex", time:"4 min",
+    desc:"Black belt is about <strong>habits that compound</strong>. Start here: make <code>scripts/verify.sh</code> your single gate — run it before every PR, and wire it into CI. One command stands between you and a messy merge.",
+    toggle:"verify.sh is now my reflex before every PR ✓",
+    skill:{label:"The enforcement workflow",name:".github/workflows/dojo-enforce.yml",href:REPO+"/blob/main/.github/workflows/dojo-enforce.yml"},
+    copies:[
+      {label:"Before every PR",text:"bash scripts/verify.sh"},
+      {label:"In CI — fail on any drift",text:"bash scripts/verify.sh --check"},
+    ],
+    stuck:"What good looks like: you stop hand-checking things — the gate does it. Wire it into CI so it runs on every push, not just when you remember. (Windows: <code>scripts/run-checks.ps1</code>.)",
+    learn:"One gate, every PR. Make verify.sh a reflex and let CI enforce it."
   },
   {
-    id:"memory-vault", phase:4, emoji:"🧠", title:"Tend the memory vault", time:"5 min",
-    desc:"<code>memory/</code> is the agent's persistent, linked knowledge graph (Obsidian-compatible): <code>decisions/</code>, <code>patterns/</code>, <code>preferences/</code>, <code>sessions/</code>. Read <code>memory/INDEX.md</code> at every session start; rebuild the link graph after edits.",
-    toggle:"I read INDEX.md at session start and rebuild the link graph ✓",
+    id:"memory-vault", phase:4, emoji:"🧠", title:"Teach it something that sticks", time:"5 min",
+    desc:"Correct the agent once — then make the lesson <strong>persist</strong>. Have it log the correction to <code>tasks/lessons.md</code>, and capture a real design decision in the memory vault. Next session it reads them back, so you never explain the same thing twice.",
+    toggle:"I taught my agent a lesson that survives to the next session ✓",
     skill:{label:"Memory vault docs",name:"docs/memory-mcp.md",href:REPO+"/blob/main/docs/memory-mcp.md"},
     copies:[
+      {label:"💬 Paste into Copilot",text:"Log what you just got wrong as a lesson in tasks/lessons.md so you don't repeat it next time."},
       {label:"Rebuild the link graph",text:"bash scripts/link-index.sh"},
-      {label:"Query the vault",text:"bash scripts/memory-query.sh --backlinks-for memory/INDEX.md"},
     ],
-    stuck:"Use <em>relative markdown links</em> between memory files (not wikilinks). Query with <code>memory-query.sh</code> before reading files by hand. Each subfolder has a <code>_template.md</code> defining the required structure.",
-    learn:"memory/ is a linked knowledge graph. Read INDEX.md first; run link-index.sh after edits."
+    stuck:"What good looks like: a correction today becomes a rule the agent recalls tomorrow. The point isn't the files — it's the loop. Have it read <code>memory/INDEX.md</code> when your next session starts.",
+    learn:"Capture corrections and decisions so they persist. The repo gets smarter every session."
   },
   {
-    id:"self-improve", phase:4, emoji:"📈", title:"Self-improvement & the curator", time:"5 min",
-    desc:"After any correction, log the lesson in <code>tasks/lessons.md</code>. Patterns seen <strong>3+ times</strong> get promoted to <code>memory/patterns/</code>. The <strong>curator</strong> is a state machine that ages unused agent-made skills (active → stale → archived) — and <strong>never deletes</strong>.",
-    toggle:"Lessons are logged; recurring patterns get promoted ✓",
+    id:"self-improve", phase:4, emoji:"📈", title:"Climb: turn lessons into rules", time:"5 min",
+    desc:"When the same lesson shows up <strong>three or more times</strong>, promote it into a standing rule the agent always follows. That's how a white-belt agent becomes a black-belt one — a steady climb, not one big leap. The curator quietly ages skills you no longer use, and <strong>never deletes</strong>.",
+    toggle:"I promoted a recurring lesson into a standing rule ✓",
     skill:{label:"self-improvement",name:"skills/self-improvement",href:REPO+"/blob/main/skills/self-improvement/SKILL.md"},
     copies:[
-      {label:"Preview a curator run (safe)",text:"bash scripts/curator-tick.sh --force --dry-run"},
       {label:"Scan lessons for patterns",text:"bash scripts/lesson-updater.sh"},
+      {label:"Preview a curator run (safe)",text:"bash scripts/curator-tick.sh --force --dry-run"},
     ],
-    stuck:"The curator's max destructive action is <em>archive</em> to <code>skills/.archive/</code>, always after a tarball backup. Bundled skills, <code>created_by: human</code>, and <code>pinned: true</code> are exempt. It's idle-triggered — don't run it every prompt.",
-    learn:"Log lessons → promote 3+ patterns. The curator ages skills but never deletes; backups first."
+    stuck:"What good looks like: your agent stops repeating the same mistakes because the pattern is now a rule. The curator only ever <em>archives</em> (after a backup) — bundled, human-made, and pinned skills are exempt.",
+    learn:"Promote 3×-seen lessons into rules. Mastery compounds — review, promote, repeat."
   },
   {
-    id:"mcp", phase:4, emoji:"🔌", title:"Wire the MCP memory server", time:"5 min",
-    desc:"The Control Plane ships an <strong>MCP memory server</strong> so any MCP-capable agent can read/write the vault. Wired up, agents auto-resume: they call <code>memory_recent_sessions</code> + <code>memory_decisions_active</code> on startup and write a session on completion.",
-    toggle:"The MCP memory server is wired (or I know how) ✓",
-    skill:{label:"Memory MCP reference",name:"docs/memory-mcp.md",href:REPO+"/blob/main/docs/memory-mcp.md"},
-    skill2:{label:"Example MCP configs",name:"control-plane/.../examples",href:REPO+"/tree/main/control-plane/packages/mcp-memory/examples"},
-    stuck:"Optional but powerful. Use the \"Wire MCP memory server\" toggle in the installer, or copy a sample config from <code>control-plane/packages/mcp-memory/examples/</code>. See <code>optional-skills/using-mcp</code> to verify the wiring.",
-    learn:"The MCP memory server gives any agent read/write to the vault + session auto-resume."
+    id:"mcp", phase:4, emoji:"🔌", title:"Power-up: memory across sessions", time:"5 min",
+    desc:"Optional power-up. Wire the <strong>MCP memory server</strong> so sessions auto-resume: the agent recalls recent work and active decisions the moment it starts, and writes a summary when it finishes. Continuity, without you re-explaining context.",
+    toggle:"My agent remembers across sessions — or I know how to wire it ✓",
+    skill:{label:"Memory MCP guide",name:"docs/memory-mcp.md",href:REPO+"/blob/main/docs/memory-mcp.md"},
+    skill2:{label:"using-mcp (verify it)",name:"optional-skills/using-mcp",href:REPO+"/blob/main/optional-skills/using-mcp/SKILL.md"},
+    copies:[{label:"💬 Paste into Copilot",text:"Help me wire up the MCP memory server from the example config, then confirm you can read the memory vault."}],
+    stuck:"What good looks like: a new session that already knows where you left off. Use the installer's MCP toggle or an example config under <code>control-plane/packages/mcp-memory/examples/</code>. Skip it if you're keeping things lightweight.",
+    learn:"Wire MCP for session auto-resume — recall on start, summary on finish. Optional but potent."
   },
   {
-    id:"black-belt", phase:4, emoji:"⚫", title:"Earn your Black Belt — contribute a skill", time:"6 min",
-    desc:"Mastery is giving back. Author a new skill: copy <code>template/SKILL.md</code>, fill the required frontmatter and section order from the spec, reference real Copilot tools (<code>view</code>, <code>edit</code>, <code>grep</code>…), regenerate the index, and pass the gate. <strong>黒帯 — you've earned it.</strong>",
-    toggle:"I can author a spec-compliant skill and pass the gate ✓",
+    id:"black-belt", phase:4, emoji:"⚫", title:"黒帯: extend your dojo", time:"6 min",
+    desc:"The final test of mastery: <strong>teach the Dojo a new move.</strong> Take a workflow you keep repeating and capture it as your own skill — from <code>template/SKILL.md</code>, passing the gate. The agent will discover and follow it forever after. Fill in the daruma's eye — your goal is met. 🙇",
+    toggle:"I extended my dojo with a custom skill — 黒帯 earned ✓",
     skill:{label:"writing-skills",name:"optional-skills/writing-skills",href:REPO+"/blob/main/optional-skills/writing-skills/SKILL.md"},
     skill2:{label:"The skill spec (v1)",name:"spec/copilot-skills-spec.md",href:REPO+"/blob/main/spec/copilot-skills-spec.md"},
     copies:[
+      {label:"💬 Paste into Copilot",text:"I keep repeating <this workflow>. Capture it as a new skill from template/SKILL.md, then run the gate to prove it's valid."},
       {label:"Start from the template",text:"cp template/SKILL.md skills/my-skill/SKILL.md"},
-      {label:"Regenerate the index",text:"bash scripts/regen-skills-index.sh"},
-      {label:"Prove it passes",text:"bash scripts/verify.sh"},
+      {label:"Regenerate + prove",text:"bash scripts/regen-skills-index.sh && bash scripts/verify.sh"},
     ],
-    stuck:"Reviewer checks your PR against <code>.github/known-pitfalls.md</code> + the spec. Reference real Copilot tools in backticks, not bare shell utilities. Ship <code>.sh</code> + <code>.ps1</code> for any deterministic logic. Then open the PR — and bow out. 🙇",
-    learn:"Black belt = contribute. template → spec-compliant SKILL.md → regen index → verify.sh → PR."
+    stuck:"What good looks like: a tight, repeatable play written down — the agent now performs it on cue. Keep the skill small, reference real Copilot tools in backticks, and pass the gate. Then go run a whole task with zero hand-holding.",
+    learn:"Black belt = teach the Dojo new moves. Capture your repeatable plays as skills that compound."
   },
 ];
 
