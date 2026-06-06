@@ -1,6 +1,6 @@
 # Copilot Agents Dojo — Skills Index
 
-A skills & discipline framework for GitHub Copilot agents. 29 production skills across three tiers. Mandatory workflow. Self-improving. Built from field-tested patterns — [Anthropic Claude](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering) prompt engineering, [obra/superpowers](https://github.com/obra/superpowers) orchestration, and the [hermes-agent](https://github.com/andreaswasita/hermes-agent) reference build.
+A skills & discipline framework for GitHub Copilot agents. 31 production skills across three tiers. Mandatory workflow. Self-improving. Built from field-tested patterns — [Anthropic Claude](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering) prompt engineering, [obra/superpowers](https://github.com/obra/superpowers) orchestration, and the [hermes-agent](https://github.com/andreaswasita/hermes-agent) reference build.
 
 > **Auto-generated.** Do not edit by hand — run `bash scripts/regen-skills-index.sh` (or `pwsh scripts/regen-skills-index.ps1` on Windows).
 
@@ -38,8 +38,10 @@ Always loaded. Behavioral skills that govern *how* the agent thinks and operates
 ### 🥋 Discipline
 
 - [`autonomous-bug-fix`](skills/autonomous-bug-fix/SKILL.md) — Reproduces, diagnoses, fixes, and verifies bugs unaided.
+- [`behavioral-foundation`](skills/behavioral-foundation/SKILL.md) — Surfaces the dojo's non-negotiable prime directives.
 - [`demand-elegance`](skills/demand-elegance/SKILL.md) — Challenges hacky fixes on non-trivial changes.
 - [`plan-before-code`](skills/plan-before-code/SKILL.md) — Plans multi-step work before writing code.
+- [`safety-guardrails`](skills/safety-guardrails/SKILL.md) — Flags risky shell commands and unsafe tree ops.
 - [`traceability-gate`](skills/traceability-gate/SKILL.md) — Enforces parent-link lineage across requirement layers.
 - [`verify-before-done`](skills/verify-before-done/SKILL.md) — Proves work with tests, diffs, and logs before sign-off.
 
@@ -63,8 +65,8 @@ Loaded on-demand. Task-specific skills that teach the agent *how to do* particul
 ### 🔄 Workflow
 
 - [`brainstorming`](skills/brainstorming/SKILL.md) — Refines rough ideas into approved designs before code.
-- [`code-review`](skills/code-review/SKILL.md) — Reviews diffs by severity to produce actionable feedback.
 - [`codebase-onboarding`](skills/codebase-onboarding/SKILL.md) — Maps an unfamiliar repo before touching its code.
+- [`code-review`](skills/code-review/SKILL.md) — Reviews diffs by severity to produce actionable feedback.
 - [`debugging`](skills/debugging/SKILL.md) — Systematic root-cause investigation for hard bugs.
 - [`derive-nfr-from-driver`](skills/derive-nfr-from-driver/SKILL.md) — Derives measurable NFRs from a parent business driver.
 - [`derive-security-from-risk`](skills/derive-security-from-risk/SKILL.md) — Derives security requirements from a named threat.

@@ -1,9 +1,10 @@
 autonomous-bug-fix
+behavioral-foundation
 brainstorming
 building-mcp-servers
 calling-mcp-tools-via-subprocess
-code-review
 codebase-onboarding
+code-review
 debugging
 demand-elegance
 derive-nfr-from-driver
@@ -18,6 +19,7 @@ receiving-code-review
 refactoring
 requesting-code-review
 requirements-elicitation
+safety-guardrails
 self-improvement
 subagent-strategy
 test-writing
