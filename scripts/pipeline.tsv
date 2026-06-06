@@ -1,0 +1,17 @@
+# Copilot Agents Dojo — Mandatory pipeline (single source of truth).
+#
+# One row per phase, in order. Tab-separated: PHASE<TAB>skill<TAB>what happens.
+# Read by scripts/sprint.sh (the orchestrator) and scripts/regen-prompts.sh
+# (the /dojo-sprint and /dojo-swarm slash-command shims) so the script, the
+# prompts, the tests, and the README can never drift apart. Edit here only.
+#
+# Canonical order matches README "The Mandatory Workflow":
+#   BRAINSTORM -> WORKTREE -> PLAN -> EXECUTE -> TEST -> REVIEW -> FINISH -> LEARN
+BRAINSTORM	brainstorming	Socratic refinement into an approved design
+WORKTREE	using-git-worktrees	Isolated workspace on a feature branch
+PLAN	plan-before-code	Bite-sized tasks written to tasks/todo.md
+EXECUTE	executing-plans	One task at a time, verifying each before the next
+TEST	test-writing	RED then GREEN then REFACTOR for every behaviour change
+REVIEW	requesting-code-review	Self-review the diff against the plan
+FINISH	finishing-a-development-branch	Verify, decide the merge, clean up the branch
+LEARN	self-improvement	Log lessons, promote patterns, update the memory vault

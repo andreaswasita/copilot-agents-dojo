@@ -67,6 +67,18 @@ BRAINSTORM → WORKTREE → PLAN → EXECUTE → TEST → REVIEW → FINISH → 
 | 7 | [`finishing-a-development-branch`](skills/finishing-a-development-branch/SKILL.md) | Verify + merge decision + cleanup |
 | 8 | [`self-improvement`](skills/self-improvement/SKILL.md) | Log lessons, promote patterns, update memory vault |
 
+**One command runs the whole sprint.** In Copilot Chat, `/dojo-sprint <goal>`
+walks every phase above in order; `/dojo-swarm <goal>` does the same but fans
+EXECUTE + TEST out to parallel sub-agents. Both are driven by
+[`scripts/sprint.sh`](./scripts/sprint.sh), whose phase→skill map is the single
+source of truth in [`scripts/pipeline.tsv`](./scripts/pipeline.tsv):
+
+```bash
+bash scripts/sprint.sh steps                 # print the phase → skill map
+bash scripts/sprint.sh start "Fix flaky auth test"   # scaffold + checklist
+bash scripts/sprint.sh finish                # run the single gate, then merge/learn
+```
+
 ---
 
 ## 🥋 The Belt Quest
@@ -208,6 +220,7 @@ Everything in `scripts/` honors `${DOJO_ROOT:-…}` so it works from any cwd and
 | [scripts/run-checks.ps1](./scripts/run-checks.ps1) | Windows parity wrapper for `verify.sh` |
 | [scripts/regen-skills-index.sh](./scripts/regen-skills-index.sh) | Rebuilds `skills.md` + `.dojo/bundled-manifest.txt` from frontmatter (`.ps1` mirror included) |
 | [scripts/regen-prompts.sh](./scripts/regen-prompts.sh) | Rebuilds the `.github/prompts/*.prompt.md` slash-command shims from skill + persona frontmatter (`.ps1` mirror included) |
+| [scripts/sprint.sh](./scripts/sprint.sh) | **One-command pipeline orchestrator** — `steps / start / gate / finish`; drives the mandatory 8-step workflow from `pipeline.tsv` (`.ps1` mirror included) |
 | [scripts/lesson-updater.sh](./scripts/lesson-updater.sh) | Cache-aware skill amendments — deferred by default, `--now` to apply immediately |
 | [scripts/curator.sh](./scripts/curator.sh) | Skill lifecycle: `status / record / pin / unpin / archive / restore / transition / backup / rollback / report` (`.ps1` mirror included) |
 | [scripts/curator-tick.sh](./scripts/curator-tick.sh) | Idle-gated curator trigger (interval + min-idle); `.ps1` wrapper for Windows |
@@ -236,12 +249,15 @@ skill and per agent under `.github/prompts/`, so in Copilot Chat you can type:
 /dojo-debugging          # load and apply the debugging skill
 /dojo-plan-before-code   # load and apply the planning skill
 /dojo-agent-architect    # adopt the Architect persona
+/dojo-sprint <goal>      # run the whole pipeline end to end
+/dojo-swarm <goal>       # same, with parallel sub-agents for execution
 ```
 
 The shims are auto-generated (never hand-edited) and kept in sync by the same
 gate as `skills.md`: `verify.sh` warns on drift and `tests/test_prompts.py`
-fails CI if they are stale. Regenerate after adding or renaming a skill or
-persona:
+fails CI if they are stale. The two pipeline shims (`/dojo-sprint`,
+`/dojo-swarm`) are generated from `scripts/pipeline.tsv`. Regenerate after
+adding or renaming a skill or persona:
 
 ```bash
 bash scripts/regen-prompts.sh            # write the shims
