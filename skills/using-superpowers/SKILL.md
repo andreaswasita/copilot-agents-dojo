@@ -43,11 +43,13 @@ Loads the dojo framework at session start: confirms the core disciplines are act
 
 | Always-on (core) | Why it loads at every session |
 |---|---|
+| `behavioral-foundation` | The five non-negotiable prime directives |
 | `plan-before-code` | Forces planning before any multi-step work |
 | `verify-before-done` | Evidence required for any "done" claim |
 | `self-improvement` | Lessons captured every correction |
 | `demand-elegance` | Hacky solutions get challenged |
 | `autonomous-bug-fix` | Full bug cycle without hand-holding |
+| `safety-guardrails` | Destructive commands get a preflight check |
 | `subagent-strategy` | Delegation is a first-class option |
 
 | Workflow chain (practical) | Triggered when |
@@ -67,11 +69,13 @@ Loads the dojo framework at session start: confirms the core disciplines are act
 ### Skill Activation Map
 
 **Always active (Core Disciplines):**
+- `behavioral-foundation` — The five non-negotiable prime directives (the charter)
 - `plan-before-code` — Plan multi-step work before touching code
 - `verify-before-done` — Prove your work with evidence
 - `self-improvement` — Capture lessons, review at session start
 - `demand-elegance` — Challenge hacky solutions
 - `autonomous-bug-fix` — Full bug cycle, zero hand-holding
+- `safety-guardrails` — Preflight check before destructive commands
 - `subagent-strategy` — Delegate research and analysis
 
 **Workflow skills (activate in sequence):**
