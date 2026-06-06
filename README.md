@@ -8,16 +8,20 @@
 
 *End-to-end framework to take AI agents from improvised assistants to disciplined, measurable, repeatable engineering partners.*
 
-[**📖 Wiki**](../../wiki) · [**Start Here**](#enter-the-dojo) · [**Skills**](./skills.md) · [**Agents**](./agents) · [**Spec**](./spec/copilot-skills-spec.md) · [**Contributor Guide**](./AGENTS.md)
+<p align="center">
+  <a href="https://andreaswasita.github.io/copilot-agents-dojo/quests/"><img src="https://img.shields.io/badge/🥋_New%3F_Walk_the_Belt_Quest-f59e0b?style=for-the-badge" alt="Walk the Belt Quest"></a>
+</p>
+
+[**📖 Wiki**](../../wiki) · [**Start Here**](#enter-the-dojo) · [**🥋 Belt Quest**](https://andreaswasita.github.io/copilot-agents-dojo/quests/) · [**Skills**](./skills.md) · [**Agents**](./agents) · [**Spec**](./spec/copilot-skills-spec.md) · [**Contributor Guide**](./AGENTS.md)
 
 ![license](https://img.shields.io/badge/license-MIT-1f6feb?style=flat-square)
 ![version](https://img.shields.io/badge/version-1.1-3fb950?style=flat-square)
 ![spec](https://img.shields.io/badge/spec-v1-1f6feb?style=flat-square)
-![skills](https://img.shields.io/badge/skills-29-d2691e?style=flat-square)
+![skills](https://img.shields.io/badge/skills-29-1f6feb?style=flat-square)
 ![tiers](https://img.shields.io/badge/tiers-core%20%2F%20practical%20%2F%20optional-8b5cf6?style=flat-square)
 ![agents](https://img.shields.io/badge/personas-8-14b8a6?style=flat-square)
 ![curator](https://img.shields.io/badge/curator-self--improving-f59e0b?style=flat-square)
-![gate](https://img.shields.io/badge/enforcement-verify.sh-ec4899?style=flat-square)
+![gate](https://img.shields.io/badge/enforcement-verify.sh-3fb950?style=flat-square)
 
 ---
 
@@ -62,6 +66,36 @@ BRAINSTORM → WORKTREE → PLAN → EXECUTE → TEST → REVIEW → FINISH → 
 | 6 | [`requesting-code-review`](skills/requesting-code-review/SKILL.md) | Self-review against plan |
 | 7 | [`finishing-a-development-branch`](skills/finishing-a-development-branch/SKILL.md) | Verify + merge decision + cleanup |
 | 8 | [`self-improvement`](skills/self-improvement/SKILL.md) | Log lessons, promote patterns, update memory vault |
+
+---
+
+## 🥋 The Belt Quest
+
+New to the Dojo? Train interactively. **[The Belt Quest](./docs/quests/)** is a
+gamified, self-contained onboarding that takes you from **白帯 white belt** to
+**黒帯 black belt** — install the framework, drill the core kata, walk the
+mandatory workflow, and reach mastery.
+
+```
+⚪ 白帯 White  →  🔵 青帯 Blue  →  🟤 茶帯 Brown  →  ⚫ 黒帯 Black
+ Enter the Dojo    Core Kata        The Workflow      Mastery
+```
+
+| Belt | Phase | You learn to… |
+|------|-------|---------------|
+| ⚪ **白帯 White** | Enter the Dojo | Install the Dojo, run `verify.sh`, explore the scaffold |
+| 🔵 **青帯 Blue** | Core Kata 基本型 | Plan before code, verify before done, fix bugs autonomously |
+| 🟤 **茶帯 Brown** | The Workflow | Brainstorm → worktree → plan → execute → test → review → finish |
+| ⚫ **黒帯 Black** | Mastery | The single gate, memory vault, curator, MCP, contribute a skill |
+
+A winding stone path of **23 checkpoints**, each with copy-ready commands and a
+"stuck?" hint. Progress is saved locally, belts unlock in sequence, and finishing
+the path earns a downloadable **black-belt certificate**. No build step, no
+dependencies — one static HTML file.
+
+**Play it:** publish via GitHub Pages (**Settings → Pages → Deploy from branch →
+`main` / `/docs`**), then open `…github.io/copilot-agents-dojo/quests/`. Or open
+[`docs/quests/index.html`](./docs/quests/index.html) directly in a browser.
 
 ---
 
@@ -330,6 +364,70 @@ Trained agents operate like **seasoned black belts** — plan the approach, exec
 
 ## Enter the Dojo
 
+> 🥋 **New here? Walk the [Belt Quest](./docs/quests/) first** — the gamified
+> onboarding ([see above](#-the-belt-quest)). Prefer to dive straight in? Install below.
+
+### One command (recommended)
+
+Drop the whole framework into the current repo — no clone, no Python:
+
+```bash
+# macOS / Linux
+curl -fsSL https://raw.githubusercontent.com/andreaswasita/copilot-agents-dojo/main/install.sh | bash
+```
+
+```powershell
+# Windows (PowerShell)
+irm https://raw.githubusercontent.com/andreaswasita/copilot-agents-dojo/main/install.ps1 | iex
+```
+
+The installer is **re-runnable and idempotent**: it refreshes the bundled
+skills, agents, scripts, and spec while preserving your own additions —
+`tasks/`, `memory/`, custom skills, and an edited
+`.github/copilot-instructions.md` (a differing dojo version is written to
+`.github/copilot-instructions.dojo.md` for you to merge). It finishes by
+running `scripts/verify.sh spec` as a health gate.
+
+Pin a release for reproducible installs, and pass options as needed:
+
+```bash
+# bash: --ref <branch|tag>  --dir <path>  --force  --no-verify
+curl -fsSL https://raw.githubusercontent.com/andreaswasita/copilot-agents-dojo/main/install.sh | bash -s -- --ref v1.1
+```
+
+```powershell
+# PowerShell flags: -Ref <branch|tag>  -Dir <path>  -Force  -NoVerify
+# When piping (irm | iex) set env vars instead: $env:DOJO_REF='v1.1'; irm .../install.ps1 | iex
+```
+
+### Install as a Copilot CLI plugin
+
+If you live in the [GitHub Copilot CLI](https://docs.github.com/copilot/how-tos/use-copilot-agents/use-copilot-cli),
+the dojo ships as a plugin you can install from its built-in marketplace — the
+25 core skills land in your Copilot CLI, no repo files required:
+
+```shell
+copilot plugin marketplace add andreaswasita/copilot-agents-dojo
+copilot plugin install dojo@copilot-agents-dojo
+```
+
+Verify and manage it like any other plugin:
+
+```shell
+copilot plugin list            # confirm "dojo@copilot-agents-dojo"
+copilot plugin update dojo     # pull the latest skills
+copilot plugin uninstall dojo  # remove it
+```
+
+The plugin scope is the **core** discipline skills (`skills/`). The optional
+tiers (`optional-skills/`) stay opt-in and are delivered through the installer
+or manual setup above — keeping the dojo's "core always, optional by choice"
+contract intact.
+
+### Manual setup
+
+Prefer to wire it up by hand? The steps the installer automates are:
+
 1. **Copy** [`skills/`](./skills) and [`optional-skills/`](./optional-skills) into your repo — or pick the individual tiers you need.
 2. **Copy** [`memory/`](./memory) — the persistent knowledge graph.
 3. **Place** [`skills.md`](./skills.md) at your repo root — Copilot agents auto-discover this index.
@@ -449,7 +547,7 @@ The Copilot Agents Dojo distills field-tested patterns from shipping production 
 
 ## Contributing
 
-See [AGENTS.md](./AGENTS.md) for the contributor guide and [CONTRIBUTING.md](./CONTRIBUTING.md) for the high-level checklist. Changelog: [CHANGELOG.md](./CHANGELOG.md).
+See [AGENTS.md](./AGENTS.md) for the contributor guide and [CONTRIBUTING.md](./CONTRIBUTING.md) for the high-level checklist. Keep contributions on-brand with the [brand & style guide](./docs/brand.md) — palette, wordmark, voice/tone. Changelog: [CHANGELOG.md](./CHANGELOG.md).
 
 ## License
 

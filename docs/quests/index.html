@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Copilot Agents Dojo 🏯 — Belt Quest</title>
+<meta name="description" content="Train your GitHub Copilot agents. Earn your belt — 白帯 White to 黒帯 Black — through the Dojo's mandatory workflow.">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --ink:#0d1117;--ink2:#161b22;--panel:#161b22;--panel2:#1c2230;
+    --blue:#1f6feb;--green:#3fb950;--amber:#f59e0b;--violet:#8b5cf6;--teal:#14b8a6;
+    --text:#e6edf3;--text-muted:#9aa7b4;--border:#2b3340;
+    --white-belt:#e6edf3;--blue-belt:#1f6feb;--brown-belt:#a16838;--black-belt:#0b0e14;
+    --panel-w:480px;--top-bar:54px;
+  }
+  html,body{height:100%;overflow:hidden;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:var(--text);
+    background:
+      radial-gradient(1200px 600px at 80% -10%,rgba(31,111,235,.10),transparent 60%),
+      radial-gradient(900px 500px at 10% 110%,rgba(245,158,11,.08),transparent 60%),
+      var(--ink);
+  }
+  /* faint shoji-grid texture */
+  body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.5;
+    background-image:linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);
+    background-size:44px 44px}
+
+  .top-bar{position:fixed;top:0;left:0;right:0;height:var(--top-bar);background:rgba(13,17,23,.85);backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px;padding:0 22px;z-index:100}
+  .top-bar .title{font-size:15px;font-weight:700;white-space:nowrap;letter-spacing:.3px}
+  .top-bar .title .mark{font-weight:400}
+  .top-bar .title span{color:var(--blue)}
+  .belt-pill{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;padding:4px 11px;border-radius:999px;
+    border:1px solid var(--border);background:var(--ink2);white-space:nowrap}
+  .belt-pill .swatch{width:13px;height:13px;border-radius:3px;border:1px solid rgba(255,255,255,.25)}
+  .progress-wrap{flex:1;max-width:440px;margin:0 auto;display:flex;align-items:center;gap:10px}
+  .progress-track{flex:1;height:9px;background:var(--ink2);border:1px solid var(--border);border-radius:6px;overflow:hidden}
+  .progress-fill{height:100%;width:0;border-radius:6px;transition:width .6s cubic-bezier(.4,0,.2,1),background .6s}
+  .progress-label{font-size:12.5px;color:var(--text-muted);min-width:84px;text-align:right}
+  .btn-reset{background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:6px 12px;border-radius:7px;
+    cursor:pointer;font-size:12px;white-space:nowrap;transition:all .2s}
+  .btn-reset:hover{border-color:var(--amber);color:var(--amber)}
+
+  .phase-label{position:absolute;font-weight:800;text-transform:uppercase;letter-spacing:3px;color:var(--text-muted);opacity:.6;pointer-events:none;z-index:3}
+  .phase-label .kanji{display:block;font-size:22px;letter-spacing:6px;opacity:.9;margin-bottom:2px}
+  .phase-label .en{font-size:12px}
+  .phase-label .swatch{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:middle;border:1px solid rgba(255,255,255,.3)}
+  .phase-label.p1{top:74px;left:1.6%}.phase-label.p2{top:74px;left:27%}.phase-label.p3{top:74px;left:52%}.phase-label.p4{top:74px;left:77.5%}
+  .phase-divider{position:absolute;top:var(--top-bar);bottom:0;width:1px;
+    background:linear-gradient(to bottom,transparent,var(--border) 14%,var(--border) 86%,transparent);opacity:.7;pointer-events:none}
+  .phase-divider.d1{left:25.5%}.phase-divider.d2{left:50.5%}.phase-divider.d3{left:75.5%}
+
+  .quest-map{position:fixed;top:var(--top-bar);left:0;right:0;bottom:0;overflow:hidden;z-index:1}
+  .quest-map svg.path-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+
+  .torii{position:absolute;right:2.2%;top:50%;transform:translateY(-50%);font-size:64px;opacity:.16;pointer-events:none;z-index:1;filter:drop-shadow(0 0 14px rgba(245,158,11,.4))}
+
+  .node{position:absolute;width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    cursor:pointer;transition:all .35s cubic-bezier(.4,0,.2,1);z-index:10;transform:translate(-50%,-50%)}
+  .node .ring{position:absolute;inset:-5px;border-radius:50%;border:2px solid var(--border);transition:all .35s}
+  .node .inner{width:100%;height:100%;border-radius:50%;background:var(--panel2);display:flex;align-items:center;justify-content:center;
+    font-size:23px;position:relative;z-index:1;transition:all .35s;border:2px solid var(--border)}
+  .node .lock{position:absolute;font-size:14px;opacity:.8}
+  .node.active .ring{border-color:var(--blue);box-shadow:0 0 22px rgba(31,111,235,.45);animation:pulse-ring 2s infinite}
+  .node.active .inner{border-color:var(--blue);background:rgba(31,111,235,.16);transform:scale(1.1)}
+  .node.active .lock{display:none}
+  .node.complete .ring{border-color:var(--green);box-shadow:0 0 14px rgba(63,185,80,.3)}
+  .node.complete .inner{border-color:var(--green);background:rgba(63,185,80,.18)}
+  .node.complete .lock{display:none}
+  .node.locked{cursor:not-allowed}
+  .node.locked .inner{opacity:.45;filter:grayscale(.4)}
+  .node:not(.locked):hover{transform:translate(-50%,-50%) scale(1.12)}
+  .node .label{position:absolute;top:calc(100% + 11px);white-space:nowrap;font-size:11px;font-weight:600;color:var(--text-muted);
+    text-align:center;pointer-events:none;transition:color .3s;max-width:130px;left:50%;transform:translateX(-50%);line-height:1.25}
+  .node.active .label{color:var(--blue)}.node.complete .label{color:var(--green)}
+  .check-icon{display:none;color:var(--green)}.node.complete .check-icon{display:block}.node.complete .emoji{display:none}
+  @keyframes pulse-ring{0%,100%{box-shadow:0 0 20px rgba(31,111,235,.3)}50%{box-shadow:0 0 34px rgba(31,111,235,.6)}}
+
+  /* belt-tinted node rings per phase when complete */
+  .node.complete.belt1 .inner{border-color:var(--white-belt)}
+  .node.complete.belt2 .inner{border-color:var(--blue-belt)}
+  .node.complete.belt3 .inner{border-color:var(--brown-belt)}
+  .node.complete.belt4 .inner{border-color:var(--amber)}
+
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;opacity:0;pointer-events:none;transition:opacity .3s}
+  .overlay.open{opacity:1;pointer-events:auto}
+  .panel{position:fixed;top:0;right:0;bottom:0;width:var(--panel-w);max-width:94vw;background:var(--panel);
+    border-left:1px solid var(--border);z-index:210;transform:translateX(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);
+    display:flex;flex-direction:column;overflow-y:auto;box-shadow:-8px 0 40px rgba(0,0,0,.5)}
+  .panel.open{transform:translateX(0)}
+  .panel-belt-bar{height:5px;width:100%;background:var(--border)}
+  .panel-header{padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:13px}
+  .panel-header .emoji-big{font-size:34px;line-height:1}
+  .panel-header .meta{flex:1}
+  .panel-header .meta .kicker{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);margin-bottom:5px}
+  .panel-header .meta h2{font-size:19px;font-weight:800;margin-bottom:4px}
+  .panel-header .meta .time{font-size:12px;color:var(--text-muted)}
+  .panel-close{background:none;border:none;color:var(--text-muted);font-size:23px;cursor:pointer;padding:2px 4px;line-height:1}
+  .panel-close:hover{color:var(--text)}
+  .panel-body{flex:1;padding:20px 24px 30px;display:flex;flex-direction:column;gap:16px}
+  .panel-body .desc{font-size:14px;line-height:1.6;color:var(--text)}
+  .panel-body .desc code{background:var(--ink2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;font-size:12.5px;font-family:'Cascadia Code','Fira Code',monospace}
+  .panel-body .desc strong{color:#fff}
+  .panel-body a{color:var(--blue)}
+
+  .copy-group{display:flex;flex-direction:column;gap:10px}
+  .copy-label{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-muted);margin-bottom:5px}
+  .copy-block{position:relative;background:var(--ink2);border:1px solid var(--border);border-radius:9px;padding:12px 46px 12px 14px;
+    font-family:'Cascadia Code','Fira Code',monospace;font-size:12.5px;line-height:1.5;color:var(--text);white-space:pre-wrap;word-break:break-word}
+  .copy-btn{position:absolute;top:8px;right:8px;background:var(--panel2);border:1px solid var(--border);color:var(--text-muted);
+    width:30px;height:30px;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
+  .copy-btn:hover{background:var(--blue);color:#fff;border-color:var(--blue)}
+  .copy-btn.copied{background:var(--green);color:#fff;border-color:var(--green)}
+
+  .substeps{list-style:none;padding:0;display:flex;flex-direction:column;gap:7px;margin-top:2px}
+  .substeps li{font-size:13px;color:var(--text-muted);padding-left:20px;position:relative;line-height:1.5}
+  .substeps li::before{content:'';position:absolute;left:2px;top:7px;width:8px;height:8px;border-radius:50%;border:2px solid var(--teal)}
+
+  .toggle-done{display:flex;align-items:center;gap:11px;padding:13px 16px;border-radius:10px;border:2px solid var(--border);
+    background:transparent;cursor:pointer;font-size:14px;font-weight:700;color:var(--text);transition:all .25s;width:100%;text-align:left}
+  .toggle-done .dot{width:23px;height:23px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;
+    transition:all .25s;flex-shrink:0;font-size:13px}
+  .toggle-done:hover{border-color:var(--green)}
+  .toggle-done.checked{border-color:var(--green);background:rgba(63,185,80,.1)}
+  .toggle-done.checked .dot{background:var(--green);border-color:var(--green);color:#fff}
+
+  .stuck-toggle{background:none;border:none;color:var(--amber);font-size:13px;cursor:pointer;padding:2px 0;display:flex;align-items:center;gap:6px;font-weight:600}
+  .stuck-toggle:hover{text-decoration:underline}
+  .stuck-content{max-height:0;overflow:hidden;transition:max-height .35s;font-size:13px;color:var(--text-muted);line-height:1.65}
+  .stuck-content.open{max-height:600px}
+  .stuck-content p{margin-top:9px}
+
+  .skill-card{display:flex;align-items:center;gap:12px;padding:11px 15px;border-radius:11px;text-decoration:none;
+    background:linear-gradient(135deg,rgba(139,92,246,.13),rgba(31,111,235,.13));border:1px solid rgba(139,92,246,.32);transition:all .2s}
+  .skill-card:hover{border-color:rgba(139,92,246,.6);transform:translateY(-1px);box-shadow:0 6px 18px rgba(139,92,246,.18)}
+  .skill-card .ico{width:38px;height:38px;border-radius:9px;background:linear-gradient(135deg,var(--violet),var(--blue));display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+  .skill-card .info{display:flex;flex-direction:column;gap:1px;min-width:0}
+  .skill-card .info .l{font-size:10.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px}
+  .skill-card .info .n{font-size:14px;color:#fff;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .skill-card .arrow{margin-left:auto;color:var(--text-muted);font-size:17px}
+
+  /* celebration */
+  .confetti{position:fixed;width:10px;height:16px;pointer-events:none;z-index:999;border-radius:2px}
+  .banner{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);background:rgba(22,27,34,.98);
+    border:2px solid var(--amber);border-radius:18px;padding:34px 56px;text-align:center;z-index:1000;
+    transition:transform .55s cubic-bezier(.175,.885,.32,1.275);box-shadow:0 20px 70px rgba(0,0,0,.6);max-width:90vw}
+  .banner.show{transform:translate(-50%,-50%) scale(1)}
+  .banner .belt-emoji{font-size:46px;margin-bottom:8px}
+  .banner h1{font-size:26px;margin-bottom:6px}
+  .banner .jp{font-size:15px;color:var(--amber);letter-spacing:4px;margin-bottom:10px}
+  .banner p{color:var(--text-muted);font-size:14.5px;line-height:1.5}
+  .banner .cert-actions{display:flex;gap:10px;justify-content:center;margin-top:18px;flex-wrap:wrap}
+  .banner button.cta{background:var(--amber);border:none;color:#1b1300;font-weight:700;padding:10px 18px;border-radius:9px;cursor:pointer;font-size:13.5px}
+  .banner button.cta.ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
+  .banner canvas{max-width:340px;width:100%;border-radius:10px;border:1px solid var(--border);margin-top:6px}
+
+  .credit{position:fixed;bottom:9px;left:50%;transform:translateX(-50%);font-size:11px;color:var(--text-muted);opacity:.6;pointer-events:none;letter-spacing:.3px;z-index:5;text-align:center}
+  .credit a{color:var(--text-muted);pointer-events:auto}
+
+  .panel::-webkit-scrollbar{width:7px}.panel::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+
+  #mobileList{display:none}
+  @media(max-width:820px){
+    html,body{overflow:auto;height:auto}
+    :root{--top-bar:50px}
+    body::before{display:none}
+    .top-bar{padding:0 12px;gap:8px}
+    .top-bar .title{font-size:12.5px}
+    .belt-pill{display:none}
+    .progress-wrap{max-width:none;gap:7px}
+    .progress-label{min-width:62px;font-size:11.5px}
+    .btn-reset{padding:5px 9px;font-size:11px}
+    .quest-map,.phase-label,.phase-divider,.path-svg,.torii{display:none!important}
+    #mobileList{display:flex;flex-direction:column;padding:62px 16px 90px;gap:0}
+    .m-phase-header{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted);padding:22px 0 12px}
+    .m-phase-header:first-child{padding-top:4px}
+    .m-phase-header .kanji{font-size:18px;letter-spacing:3px;color:var(--text)}
+    .m-phase-header .sw{width:12px;height:12px;border-radius:3px;border:1px solid rgba(255,255,255,.3)}
+    .m-item{display:flex;align-items:center;gap:14px;padding:13px 0;position:relative;cursor:pointer}
+    .m-item::before{content:'';position:absolute;left:25px;top:0;bottom:0;width:2px;background:var(--border);z-index:0}
+    .m-item:last-child::before{bottom:50%}
+    .m-node{width:50px;height:50px;border-radius:50%;background:var(--panel2);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:21px;flex-shrink:0;position:relative;z-index:1;transition:all .3s}
+    .m-item.complete .m-node{border-color:var(--green);background:rgba(63,185,80,.18)}
+    .m-item.active .m-node{border-color:var(--blue);background:rgba(31,111,235,.16);box-shadow:0 0 12px rgba(31,111,235,.35)}
+    .m-item.locked .m-node{opacity:.45}
+    .m-text{flex:1;min-width:0}
+    .m-text .m-title{font-size:15px;font-weight:700;color:var(--text)}
+    .m-item.complete .m-title{color:var(--green)}
+    .m-item.active .m-title{color:var(--blue)}
+    .m-item.locked .m-title{color:var(--text-muted)}
+    .m-text .m-time{font-size:12px;color:var(--text-muted)}
+    .m-check{color:var(--green);font-size:18px;flex-shrink:0;opacity:0;transition:opacity .3s}
+    .m-item.complete .m-check{opacity:1}
+    .panel{width:100%;max-width:100%;border-left:none;border-radius:18px 18px 0 0;top:auto;bottom:0;max-height:88vh;transform:translateY(100%)}
+    .panel.open{transform:translateY(0)}
+    .banner{padding:24px 26px}.banner h1{font-size:21px}
+    .credit{position:relative;transform:none;left:0;padding:20px 0}
+  }
+</style>
+</head>
+<body>
+<div class="top-bar">
+  <div class="title"><span>Copilot Agents Dojo</span> <span class="mark">🏯</span> — Belt Quest</div>
+  <div class="belt-pill" id="beltPill"><span class="swatch" id="beltSwatch"></span><span id="beltName">白帯 White Belt</span></div>
+  <div class="progress-wrap">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-label" id="progressLabel">0 / 0</div>
+  </div>
+  <button class="btn-reset" onclick="resetProgress()">Reset</button>
+</div>
+
+<div class="quest-map" id="questMap">
+  <svg class="path-svg" id="pathSvg" preserveAspectRatio="none"></svg>
+  <div class="torii">⛩️</div>
+</div>
+<div id="mobileList"></div>
+
+<div class="overlay" id="overlay" onclick="closePanel()"></div>
+<div class="panel" id="panel">
+  <div class="panel-belt-bar" id="panelBeltBar"></div>
+  <div class="panel-header">
+    <div class="emoji-big" id="panelEmoji"></div>
+    <div class="meta"><div class="kicker" id="panelKicker"></div><h2 id="panelTitle"></h2><div class="time" id="panelTime"></div></div>
+    <button class="panel-close" onclick="closePanel()">✕</button>
+  </div>
+  <div class="panel-body" id="panelBody"></div>
+</div>
+
+<div class="banner" id="banner"></div>
+
+<div class="credit">
+  Copilot Agents Dojo — Belt Quest ·
+  <a href="https://github.com/andreaswasita/copilot-agents-dojo" target="_blank" rel="noopener">github.com/andreaswasita/copilot-agents-dojo</a>
+</div>
+
+<script>
+/* ───────────────────────── Belt definitions ───────────────────────── */
+const BELTS = {
+  1:{kanji:"白帯",en:"White Belt",color:"#e6edf3",emoji:"⚪",label:"Enter the Dojo"},
+  2:{kanji:"青帯",en:"Blue Belt", color:"#1f6feb",emoji:"🔵",label:"Core Kata"},
+  3:{kanji:"茶帯",en:"Brown Belt",color:"#a16838",emoji:"🟤",label:"The Workflow"},
+  4:{kanji:"黒帯",en:"Black Belt",color:"#f59e0b",emoji:"⚫",label:"Mastery"},
+};
+
+const REPO="https://github.com/andreaswasita/copilot-agents-dojo";
+const RAW="https://raw.githubusercontent.com/andreaswasita/copilot-agents-dojo/main";
+
+/* ───────────────────────── Quest checkpoints ──────────────────────── */
+const CHECKPOINTS = [
+  /* ── Phase 1 · 白帯 White Belt — Enter the Dojo ── */
+  {
+    id:"what-is", phase:1, emoji:"🏯", title:"What is the Dojo?", time:"3 min",
+    desc:"The <strong>Copilot Agents Dojo</strong> is a discipline framework for your GitHub Copilot agents. Drop <code>skills/</code> + <code>.github/copilot-instructions.md</code> into any repo and agents auto-discover the index and follow a mandatory workflow. Inside: <strong>29 production skills</strong> across three tiers, <strong>8 specialized personas</strong>, a self-improving curator, and a single CI gate — <code>scripts/verify.sh</code>.",
+    toggle:"Got it — the Dojo trains agents to build with discipline ✓",
+    skill:{label:"Read the README",name:"copilot-agents-dojo",href:REPO},
+    stuck:"Where ATV scaffolds an environment, the Dojo enforces a <em>discipline</em>: every non-trivial task runs BRAINSTORM → WORKTREE → PLAN → EXECUTE → TEST → REVIEW → FINISH → LEARN. No skipping, no improvising.",
+    learn:"The Dojo = 29 skills + 8 personas + 1 mandatory workflow + 1 verify gate."
+  },
+  {
+    id:"prereqs", phase:1, emoji:"📋", title:"Check your prerequisites", time:"3 min",
+    desc:"Before you install, confirm the basics are on your <code>PATH</code>: <strong>git</strong>, <strong>bash</strong> (git-bash on Windows), and <strong>jq</strong> (used by the curator and lesson-updater). A GitHub Copilot subscription in your IDE or the Copilot CLI is what actually runs the skills.",
+    toggle:"Prerequisites verified ✓",
+    copies:[
+      {label:"Check git",text:"git --version"},
+      {label:"Check bash",text:"bash --version"},
+      {label:"Install jq (Windows)",text:"winget install jqlang.jq"},
+    ],
+    stuck:"<code>jq</code> is the only non-obvious dependency. macOS: <code>brew install jq</code> · Linux: <code>sudo apt install jq</code> · Windows: <code>winget install jqlang.jq</code> (or <code>scoop install jq</code>). Everything else is text-based and works without extra tooling.",
+    learn:"Required: git + bash + jq. The skills run inside your Copilot session."
+  },
+  {
+    id:"install", phase:1, emoji:"⚡", title:"Install the Dojo", time:"4 min",
+    desc:"One command, no clone, no Python. The bootstrap installer drops the framework into your current repo, seeds <code>tasks/</code> and the <code>memory/</code> vault, and is <strong>idempotent</strong> — re-running refreshes bundled files and backs up any collisions.",
+    toggle:"Dojo installed into my repo ✓",
+    copies:[
+      {label:"macOS / Linux (bash)",text:"curl -fsSL "+RAW+"/install.sh | bash"},
+      {label:"Windows (PowerShell)",text:"irm "+RAW+"/install.ps1 | iex"},
+    ],
+    stuck:"Run it from your project root. It writes <code>skills/</code>, <code>optional-skills/</code>, <code>agents/</code>, <code>scripts/</code>, <code>skills.md</code>, and <code>.github/copilot-instructions.md</code>. Your existing <code>copilot-instructions.md</code> is never clobbered — a new version lands as <code>.dojo.md</code> for you to merge.",
+    learn:"One curl/irm one-liner installs the whole framework. Idempotent and backup-safe."
+  },
+  {
+    id:"verify-install", phase:1, emoji:"🥋", title:"Verify the install", time:"3 min",
+    desc:"The installer runs <code>scripts/verify.sh spec</code> automatically, but run it yourself to learn the gate. <strong>spec</strong> mode validates the wiring — skill frontmatter, <code>skills.md</code> freshness, persona registry, path audit, curator manifest — without auditing your own repo's plan or tests.",
+    toggle:"verify.sh spec passes green ✓",
+    copies:[
+      {label:"Run the gate (spec mode)",text:"bash scripts/verify.sh spec"},
+      {label:"Windows parity wrapper",text:"pwsh scripts/run-checks.ps1"},
+    ],
+    skill:{label:"verify.sh — the single gate",name:"scripts/verify.sh",href:REPO+"/blob/main/scripts/verify.sh"},
+    stuck:"Four modes: <code>spec</code> (default), <code>plan</code>, <code>tests</code>, <code>all</code>. A healthy install passes <code>spec</code> even if your host repo isn't fully dojo-compliant yet — spec checks the framework, not your workflow.",
+    learn:"verify.sh has 4 modes. spec validates the framework wiring; it's your pre-PR gate."
+  },
+  {
+    id:"explore", phase:1, emoji:"📂", title:"Explore what got installed", time:"5 min",
+    desc:"Tour the scaffold. <code>skills/*/SKILL.md</code> are the kata agents auto-discover. <code>agents/*.md</code> are persona briefs (with <code>registry.yaml</code> as the source of truth). <code>.github/copilot-instructions.md</code> is the runtime prompt loaded every session. <code>skills.md</code> is the generated master index.",
+    toggle:"Explored the scaffold ✓",
+    copies:[
+      {label:"List the skills",text:"ls skills/"},
+      {label:"List the personas",text:"ls agents/"},
+      {label:"Read the skills index",text:"cat skills.md"},
+    ],
+    stuck:"Key files: <code>skills.md</code> = the index Copilot reads · <code>.github/copilot-instructions.md</code> = your customizable system prompt (set your stack here) · <code>memory/INDEX.md</code> = the knowledge vault map · <code>tasks/todo.md</code> = where plans live.",
+    learn:"skills/ = kata · agents/ = personas · skills.md = index · copilot-instructions.md = runtime prompt."
+  },
+
+  /* ── Phase 2 · 青帯 Blue Belt — Core Kata 基本型 ── */
+  {
+    id:"activate", phase:2, emoji:"🥋", title:"Activate your superpowers", time:"4 min",
+    desc:"Open a Copilot session in the repo. The <strong>using-superpowers</strong> skill activates the framework at session start: load all skills, read <code>memory/INDEX.md</code>, review <code>tasks/lessons.md</code>, check git status. From here, the agent follows the mandatory workflow — never improvises.",
+    toggle:"Superpowers activated — the agent loaded the kata ✓",
+    skill:{label:"using-superpowers",name:"skills/using-superpowers",href:REPO+"/blob/main/skills/using-superpowers/SKILL.md"},
+    stuck:"Just start chatting with Copilot in the repo. Because <code>.github/copilot-instructions.md</code> is loaded automatically, the agent already knows the rules. Ask it: \"What's your mandatory workflow?\" to confirm the kata loaded.",
+    learn:"using-superpowers is the activator — it loads every skill at session start."
+  },
+  {
+    id:"plan-before-code", phase:2, emoji:"📝", title:"Kata: Plan before code", time:"4 min",
+    desc:"The first discipline. Any task of <strong>3+ steps</strong> gets a written plan first — bite-sized, checkable tasks in <code>tasks/todo.md</code> — confirmed before a single line is written. No silent large refactors.",
+    toggle:"I plan multi-step work before touching code ✓",
+    skill:{label:"plan-before-code",name:"skills/plan-before-code",href:REPO+"/blob/main/skills/plan-before-code/SKILL.md"},
+    stuck:"Try it: ask the agent to add a non-trivial feature. A disciplined agent stops and writes a plan to <code>tasks/todo.md</code> for your approval before coding. If it dives straight in, remind it of the kata.",
+    learn:"3+ steps ⇒ plan first. One source of truth: tasks/todo.md. Approve, then execute."
+  },
+  {
+    id:"verify-before-done", phase:2, emoji:"✅", title:"Kata: Verify before done", time:"4 min",
+    desc:"The prime directive: <strong>never claim \"done\" without proof.</strong> Evidence = the repo's own tests/build pass, the diff was reviewed, and the working tree is clean. No proof, not done.",
+    toggle:"I never mark work done without evidence ✓",
+    skill:{label:"verify-before-done",name:"skills/verify-before-done",href:REPO+"/blob/main/skills/verify-before-done/SKILL.md"},
+    copies:[{label:"The proof command",text:"bash scripts/verify.sh"}],
+    stuck:"Proof is concrete: passing tests, a clean <code>git status</code>, and a diff you've read line by line. The agent records the evidence before flipping a task to complete. \"Looks right\" is not proof.",
+    learn:"Done = tests pass + diff reviewed + tree clean. Record the evidence. No proof, not done."
+  },
+  {
+    id:"demand-elegance", phase:2, emoji:"💎", title:"Kata: Demand elegance", time:"3 min",
+    desc:"Challenge hacky fixes and accidental complexity on non-trivial changes. A complete, correct solution beats a minimal one; a clean one beats an over-engineered one. <strong>Simplicity first</strong> — fewer lines beats more lines.",
+    toggle:"I challenge shortcuts without over-engineering ✓",
+    skill:{label:"demand-elegance",name:"skills/demand-elegance",href:REPO+"/blob/main/skills/demand-elegance/SKILL.md"},
+    stuck:"Balance matters: this kata fights <em>both</em> hacky shortcuts and gold-plating. For a genuinely simple fix, skip it — don't manufacture complexity. For anything non-trivial, push for the elegant solution.",
+    learn:"Simplicity first. Challenge hacks on non-trivial work; don't over-engineer simple fixes."
+  },
+  {
+    id:"autonomous-bug-fix", phase:2, emoji:"🐛", title:"Kata: Autonomous bug fix", time:"4 min",
+    desc:"When you hand the agent a bug, it owns the whole loop: <strong>reproduce → diagnose root cause → fix → verify</strong>. Zero hand-holding — no asking \"which file?\" or \"what command?\". It never hands back a half-diagnosed bug or guesses without reproducing.",
+    toggle:"Bugs get reproduced, root-caused, fixed, and verified ✓",
+    skill:{label:"autonomous-bug-fix",name:"skills/autonomous-bug-fix",href:REPO+"/blob/main/skills/autonomous-bug-fix/SKILL.md"},
+    stuck:"The discipline is <em>reproduce first</em>. A fix without a reproduction is a guess. Pair this with <strong>debugging</strong> (a Practical skill) for systematic root-cause investigation on the hard ones.",
+    learn:"Reproduce → diagnose → fix → verify. No guessing, no half-diagnosed handoffs."
+  },
+  {
+    id:"delegation", phase:2, emoji:"🤝", title:"Kata: Delegate & stay durable", time:"4 min",
+    desc:"Pick the right execution scope. <strong>subagent-strategy</strong> offloads research and parallel reads to keep the main context clean. <strong>durable-work</strong> picks the board (<code>tasks/board/</code>) over sub-agents for work that must survive across turns.",
+    toggle:"I delegate research to sub-agents and durable work to the board ✓",
+    skill:{label:"subagent-strategy",name:"skills/subagent-strategy",href:REPO+"/blob/main/skills/subagent-strategy/SKILL.md"},
+    stuck:"Rule of thumb — sub-agent: focused research <em>inside</em> this turn (not durable). Board: work resumed later or handed to another agent (durable). Limits: depth 2, 3 concurrent children. Don't exceed without reason.",
+    learn:"Sub-agents = in-turn research. Board = cross-turn durability. Respect depth 2 / 3 concurrent."
+  },
+
+  /* ── Phase 3 · 茶帯 Brown Belt — The Mandatory Workflow ── */
+  {
+    id:"brainstorm", phase:3, emoji:"💡", title:"① Brainstorm", time:"4 min",
+    desc:"Step one of the pipeline. For a new feature, the agent refines your rough idea through a few sharp <strong>Socratic questions</strong> into an approved design — before any code. Get the approach right while course-corrections are still cheap.",
+    toggle:"New features start with an approved design ✓",
+    skill:{label:"brainstorming",name:"skills/brainstorming",href:REPO+"/blob/main/skills/brainstorming/SKILL.md"},
+    stuck:"This is where ambiguity dies. Expect the agent to ask before assuming — scope, edge cases, behavioral choices. Approve the design, then it moves on. Skip only for genuinely trivial fixes.",
+    learn:"Pipeline step 1: refine the idea via Socratic Q&A into an approved design before code."
+  },
+  {
+    id:"worktree", phase:3, emoji:"🌿", title:"② Isolate in a worktree", time:"4 min",
+    desc:"Never commit straight to <code>main</code>. Each task gets an isolated workspace — a git worktree or feature branch — and the agent confirms a <strong>clean, green test baseline</strong> before changing anything.",
+    toggle:"Work is isolated on a branch with a green baseline ✓",
+    skill:{label:"using-git-worktrees",name:"skills/using-git-worktrees",href:REPO+"/blob/main/skills/using-git-worktrees/SKILL.md"},
+    copies:[{label:"Create an isolated worktree",text:"git worktree add ../dojo-feat -b feat/my-task"}],
+    stuck:"Worktrees let multiple isolated checkouts share one repo — no stashing, no branch-thrash. A feature branch works too. The non-negotiable: verify the baseline is green <em>before</em> you touch code, so failures you see later are yours.",
+    learn:"Pipeline step 2: isolate on a worktree/branch off main; confirm a green baseline first."
+  },
+  {
+    id:"plan", phase:3, emoji:"🗺️", title:"③ Plan into tasks", time:"3 min",
+    desc:"Break the work into bite-sized, checkable tasks in <code>tasks/todo.md</code> — one source of truth, kept current. Each task should be small enough to verify on its own.",
+    toggle:"The work is broken into checkable tasks ✓",
+    skill:{label:"plan-before-code",name:"skills/plan-before-code",href:REPO+"/blob/main/skills/plan-before-code/SKILL.md"},
+    stuck:"In this repo, <code>tasks/todo.md</code> ships as a <em>scaffold template</em> — downstream consumers fill it in. Working plans for the dojo's own PRs live in the session folder or PR description, not in the canonical scaffold.",
+    learn:"Pipeline step 3: bite-sized checkable tasks in tasks/todo.md, kept as the single source of truth."
+  },
+  {
+    id:"execute", phase:3, emoji:"⚙️", title:"④ Execute one task at a time", time:"4 min",
+    desc:"Work the plan <strong>one task at a time</strong>, verifying each before moving on, committing per logical unit with a clear message. No big-bang commits, no half-finished tasks left dangling.",
+    toggle:"Tasks are executed and verified one at a time ✓",
+    skill:{label:"executing-plans",name:"skills/executing-plans",href:REPO+"/blob/main/skills/executing-plans/SKILL.md"},
+    stuck:"Discipline here is sequencing. Finish-and-verify task N before starting N+1. Each commit maps to one checkable item, so the history reads like the plan.",
+    learn:"Pipeline step 4: one task at a time, verify each, commit per logical unit."
+  },
+  {
+    id:"test", phase:3, emoji:"🧪", title:"⑤ Test — RED → GREEN → REFACTOR", time:"5 min",
+    desc:"Every behavioral change gets a test. Write/extend the failing test (<strong>RED</strong>), make it pass (<strong>GREEN</strong>), then clean up (<strong>REFACTOR</strong>). Use the repo's existing test commands — never invent new tooling.",
+    toggle:"Every behavioral change is test-backed ✓",
+    skill:{label:"test-writing",name:"skills/test-writing",href:REPO+"/blob/main/skills/test-writing/SKILL.md"},
+    copies:[{label:"Run only the test suite",text:"bash scripts/verify.sh tests"}],
+    stuck:"Critical rule — <strong>no change-detector tests.</strong> Don't snapshot current data (counts, list contents, version literals); they fail on every legitimate change. Assert <em>invariants</em> and behavior instead.",
+    learn:"Pipeline step 5: RED→GREEN→REFACTOR. Test invariants, not snapshots of current data."
+  },
+  {
+    id:"review", phase:3, emoji:"🔍", title:"⑥ Review against the plan", time:"4 min",
+    desc:"Before asking anyone else, the agent <strong>self-reviews the diff</strong> against the plan — reading every changed line, hunting leftovers, debug prints, and scope creep. Then it processes incoming feedback until the change is approved.",
+    toggle:"I self-review every diff against the plan ✓",
+    skill:{label:"requesting-code-review",name:"skills/requesting-code-review",href:REPO+"/blob/main/skills/requesting-code-review/SKILL.md"},
+    stuck:"Two skills pair here: <strong>requesting-code-review</strong> (self-review before sign-off) and <strong>receiving-code-review</strong> (process feedback and iterate). <strong>code-review</strong> reviews diffs by severity for high signal-to-noise.",
+    learn:"Pipeline step 6: self-review the diff line by line against the plan before sign-off."
+  },
+  {
+    id:"finish", phase:3, emoji:"🏁", title:"⑦ Finish the branch", time:"4 min",
+    desc:"Run the single gate, present merge options, then clean up the branch/worktree and leave no temp files. A finished branch is verified, merge-decided, and tidied — not just \"code works on my machine\".",
+    toggle:"Branches are verified, merged, and cleaned up ✓",
+    skill:{label:"finishing-a-development-branch",name:"skills/finishing-a-development-branch",href:REPO+"/blob/main/skills/finishing-a-development-branch/SKILL.md"},
+    copies:[{label:"Final gate before merge",text:"bash scripts/verify.sh"}],
+    stuck:"Pair with <strong>pr-workflow</strong> to prepare a clean, reviewable PR. The finish step also removes the worktree (<code>git worktree remove</code>) so you don't accumulate stale checkouts.",
+    learn:"Pipeline step 7: verify + merge decision + cleanup. No stale branches or temp files."
+  },
+
+  /* ── Phase 4 · 黒帯 Black Belt — Mastery ── */
+  {
+    id:"single-gate", phase:4, emoji:"🚪", title:"The single gate in CI", time:"4 min",
+    desc:"<code>scripts/verify.sh</code> is the <strong>only</strong> enforcement entry point — wire it as your one gate in CI and pre-PR. It checks spec invariants, <code>skills.md</code> freshness, persona drift, a path audit, and the curator manifest, all behind one command.",
+    toggle:"verify.sh is my single CI / pre-PR gate ✓",
+    skill:{label:"dojo-enforce.yml",name:".github/workflows/dojo-enforce.yml",href:REPO+"/blob/main/.github/workflows/dojo-enforce.yml"},
+    copies:[{label:"CI mode — fail on any drift",text:"bash scripts/verify.sh --check"}],
+    stuck:"One gate, not ten. The Windows parity wrapper is <code>scripts/run-checks.ps1</code>. Supply-chain rule for any workflow you add: pin GitHub Actions to a commit SHA with a version comment.",
+    learn:"verify.sh is the single gate. --check is CI mode. Pin Actions to SHA in any new workflow."
+  },
+  {
+    id:"memory-vault", phase:4, emoji:"🧠", title:"Tend the memory vault", time:"5 min",
+    desc:"<code>memory/</code> is the agent's persistent, linked knowledge graph (Obsidian-compatible): <code>decisions/</code>, <code>patterns/</code>, <code>preferences/</code>, <code>sessions/</code>. Read <code>memory/INDEX.md</code> at every session start; rebuild the link graph after edits.",
+    toggle:"I read INDEX.md at session start and rebuild the link graph ✓",
+    skill:{label:"Memory vault docs",name:"docs/memory-mcp.md",href:REPO+"/blob/main/docs/memory-mcp.md"},
+    copies:[
+      {label:"Rebuild the link graph",text:"bash scripts/link-index.sh"},
+      {label:"Query the vault",text:"bash scripts/memory-query.sh --backlinks-for memory/INDEX.md"},
+    ],
+    stuck:"Use <em>relative markdown links</em> between memory files (not wikilinks). Query with <code>memory-query.sh</code> before reading files by hand. Each subfolder has a <code>_template.md</code> defining the required structure.",
+    learn:"memory/ is a linked knowledge graph. Read INDEX.md first; run link-index.sh after edits."
+  },
+  {
+    id:"self-improve", phase:4, emoji:"📈", title:"Self-improvement & the curator", time:"5 min",
+    desc:"After any correction, log the lesson in <code>tasks/lessons.md</code>. Patterns seen <strong>3+ times</strong> get promoted to <code>memory/patterns/</code>. The <strong>curator</strong> is a state machine that ages unused agent-made skills (active → stale → archived) — and <strong>never deletes</strong>.",
+    toggle:"Lessons are logged; recurring patterns get promoted ✓",
+    skill:{label:"self-improvement",name:"skills/self-improvement",href:REPO+"/blob/main/skills/self-improvement/SKILL.md"},
+    copies:[
+      {label:"Preview a curator run (safe)",text:"bash scripts/curator-tick.sh --force --dry-run"},
+      {label:"Scan lessons for patterns",text:"bash scripts/lesson-updater.sh"},
+    ],
+    stuck:"The curator's max destructive action is <em>archive</em> to <code>skills/.archive/</code>, always after a tarball backup. Bundled skills, <code>created_by: human</code>, and <code>pinned: true</code> are exempt. It's idle-triggered — don't run it every prompt.",
+    learn:"Log lessons → promote 3+ patterns. The curator ages skills but never deletes; backups first."
+  },
+  {
+    id:"mcp", phase:4, emoji:"🔌", title:"Wire the MCP memory server", time:"5 min",
+    desc:"The Control Plane ships an <strong>MCP memory server</strong> so any MCP-capable agent can read/write the vault. Wired up, agents auto-resume: they call <code>memory_recent_sessions</code> + <code>memory_decisions_active</code> on startup and write a session on completion.",
+    toggle:"The MCP memory server is wired (or I know how) ✓",
+    skill:{label:"Memory MCP reference",name:"docs/memory-mcp.md",href:REPO+"/blob/main/docs/memory-mcp.md"},
+    skill2:{label:"Example MCP configs",name:"control-plane/.../examples",href:REPO+"/tree/main/control-plane/packages/mcp-memory/examples"},
+    stuck:"Optional but powerful. Use the \"Wire MCP memory server\" toggle in the installer, or copy a sample config from <code>control-plane/packages/mcp-memory/examples/</code>. See <code>optional-skills/using-mcp</code> to verify the wiring.",
+    learn:"The MCP memory server gives any agent read/write to the vault + session auto-resume."
+  },
+  {
+    id:"black-belt", phase:4, emoji:"⚫", title:"Earn your Black Belt — contribute a skill", time:"6 min",
+    desc:"Mastery is giving back. Author a new skill: copy <code>template/SKILL.md</code>, fill the required frontmatter and section order from the spec, reference real Copilot tools (<code>view</code>, <code>edit</code>, <code>grep</code>…), regenerate the index, and pass the gate. <strong>黒帯 — you've earned it.</strong>",
+    toggle:"I can author a spec-compliant skill and pass the gate ✓",
+    skill:{label:"writing-skills",name:"optional-skills/writing-skills",href:REPO+"/blob/main/optional-skills/writing-skills/SKILL.md"},
+    skill2:{label:"The skill spec (v1)",name:"spec/copilot-skills-spec.md",href:REPO+"/blob/main/spec/copilot-skills-spec.md"},
+    copies:[
+      {label:"Start from the template",text:"cp template/SKILL.md skills/my-skill/SKILL.md"},
+      {label:"Regenerate the index",text:"bash scripts/regen-skills-index.sh"},
+      {label:"Prove it passes",text:"bash scripts/verify.sh"},
+    ],
+    stuck:"Reviewer checks your PR against <code>.github/known-pitfalls.md</code> + the spec. Reference real Copilot tools in backticks, not bare shell utilities. Ship <code>.sh</code> + <code>.ps1</code> for any deterministic logic. Then open the PR — and bow out. 🙇",
+    learn:"Black belt = contribute. template → spec-compliant SKILL.md → regen index → verify.sh → PR."
+  },
+];
+
+/* ───────────────────────── State ───────────────────────── */
+const STORE_KEY="dojo-belt-quest-v1";
+let done = loadState();
+const total = CHECKPOINTS.length;
+
+function loadState(){
+  try{
+    const v=JSON.parse(localStorage.getItem(STORE_KEY)||"{}");
+    return (v && typeof v==="object" && !Array.isArray(v)) ? v : {};
+  }catch(e){ return {}; }
+}
+function saveState(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(done)); }catch(e){} }
+
+function isComplete(id){ return !!done[id]; }
+function indexOf(id){ return CHECKPOINTS.findIndex(c=>c.id===id); }
+function isUnlocked(i){ if(i===0) return true; return isComplete(CHECKPOINTS[i-1].id); }
+function completedCount(){ return CHECKPOINTS.filter(c=>isComplete(c.id)).length; }
+
+function currentBelt(){
+  // Completion is a contiguous prefix, so the belt you're training in is the
+  // phase of the first incomplete checkpoint (or Black if all are done).
+  const firstIncomplete=CHECKPOINTS.find(c=>!isComplete(c.id));
+  return firstIncomplete?firstIncomplete.phase:4;
+}
+
+/* ───────────────────────── Layout (desktop serpentine path) ─────────── */
+function nodePositions(){
+  // Distribute nodes within their phase column; serpentine vertically.
+  const byPhase={1:[],2:[],3:[],4:[]};
+  CHECKPOINTS.forEach((c,i)=>byPhase[c.phase].push({c,i}));
+  const colCenters={1:13.5,2:38,3:63,4:88}; // % of width
+  const pos={};
+  Object.keys(byPhase).forEach(p=>{
+    const arr=byPhase[p];
+    const n=arr.length;
+    const topPad=24, botPad=16; // % of map height
+    arr.forEach((o,k)=>{
+      const t = n===1?0.5:(k/(n-1));
+      const y = topPad + t*(100-topPad-botPad);
+      // gentle horizontal wave around the column center
+      const wave = Math.sin(k*1.15 + (+p))*4.2;
+      pos[o.c.id]={x:colCenters[p]+wave, y, idx:o.i};
+    });
+  });
+  return pos;
+}
+
+/* ───────────────────────── Render: desktop map ───────────────────────── */
+function renderMap(){
+  const map=document.getElementById("questMap");
+  // clear old nodes (keep svg + torii)
+  map.querySelectorAll(".node,.phase-label,.phase-divider").forEach(e=>e.remove());
+  document.querySelectorAll(".phase-label,.phase-divider").forEach(e=>e.remove());
+
+  // phase labels + dividers
+  for(let p=1;p<=4;p++){
+    const b=BELTS[p];
+    const lab=document.createElement("div");
+    lab.className="phase-label p"+p;
+    lab.innerHTML=`<span class="kanji">${b.kanji}</span><span class="en"><span class="swatch" style="background:${b.color}"></span>${b.emoji} ${b.en} · ${b.label}</span>`;
+    document.body.appendChild(lab);
+  }
+  ["d1","d2","d3"].forEach(d=>{const el=document.createElement("div");el.className="phase-divider "+d;document.body.appendChild(el);});
+
+  const pos=nodePositions();
+  const rect=map.getBoundingClientRect();
+
+  // draw serpentine path through nodes in order
+  const svg=document.getElementById("pathSvg");
+  svg.setAttribute("viewBox",`0 0 ${rect.width} ${rect.height}`);
+  let d="";
+  CHECKPOINTS.forEach((c,i)=>{
+    const x=pos[c.id].x/100*rect.width;
+    const y=pos[c.id].y/100*rect.height;
+    if(i===0){ d=`M ${x} ${y}`; }
+    else{
+      const px=pos[CHECKPOINTS[i-1].id].x/100*rect.width;
+      const py=pos[CHECKPOINTS[i-1].id].y/100*rect.height;
+      const mx=(px+x)/2;
+      d+=` C ${mx} ${py}, ${mx} ${y}, ${x} ${y}`;
+    }
+  });
+  const completedFrac=completedCount()/total;
+  svg.innerHTML=`
+    <defs>
+      <linearGradient id="pathGrad" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#e6edf3"/><stop offset="33%" stop-color="#1f6feb"/>
+        <stop offset="66%" stop-color="#a16838"/><stop offset="100%" stop-color="#f59e0b"/>
+      </linearGradient>
+    </defs>
+    <path d="${d}" fill="none" stroke="#2b3340" stroke-width="3" stroke-dasharray="2 9" stroke-linecap="round"/>
+    <path d="${d}" fill="none" stroke="url(#pathGrad)" stroke-width="3.5" stroke-linecap="round"
+          pathLength="1" stroke-dasharray="1" stroke-dashoffset="${1-completedFrac}" style="transition:stroke-dashoffset .6s"/>
+  `;
+
+  // nodes
+  CHECKPOINTS.forEach((c,i)=>{
+    const node=document.createElement("div");
+    const state=isComplete(c.id)?"complete":(isUnlocked(i)?"active":"locked");
+    node.className=`node belt${c.phase} ${state}`;
+    node.style.left=pos[c.id].x+"%";
+    node.style.top=pos[c.id].y+"%";
+    node.innerHTML=`
+      <div class="ring"></div>
+      <div class="inner">
+        <span class="emoji">${c.emoji}</span>
+        <span class="check-icon">✓</span>
+        ${state==="locked"?'<span class="lock">🔒</span>':''}
+      </div>
+      <div class="label">${c.title}</div>`;
+    node.onclick=()=>{ if(state==="locked"){ shake(node); return; } openPanel(c.id); };
+    map.appendChild(node);
+  });
+}
+
+function shake(el){ el.animate([{transform:'translate(-50%,-50%)'},{transform:'translate(calc(-50% - 5px),-50%)'},{transform:'translate(calc(-50% + 5px),-50%)'},{transform:'translate(-50%,-50%)'}],{duration:260}); }
+
+/* ───────────────────────── Render: mobile list ───────────────────────── */
+function renderMobile(){
+  const list=document.getElementById("mobileList");
+  list.innerHTML="";
+  let lastPhase=0;
+  CHECKPOINTS.forEach((c,i)=>{
+    if(c.phase!==lastPhase){
+      lastPhase=c.phase;
+      const b=BELTS[c.phase];
+      const h=document.createElement("div");
+      h.className="m-phase-header";
+      h.innerHTML=`<span class="sw" style="background:${b.color}"></span><span class="kanji">${b.kanji}</span> ${b.emoji} ${b.en} — ${b.label}`;
+      list.appendChild(h);
+    }
+    const state=isComplete(c.id)?"complete":(isUnlocked(i)?"active":"locked");
+    const item=document.createElement("div");
+    item.className="m-item "+state;
+    item.innerHTML=`
+      <div class="m-node">${isComplete(c.id)?'✓':c.emoji}</div>
+      <div class="m-text"><div class="m-title">${c.title}</div><div class="m-time">${c.time}</div></div>
+      <div class="m-check">✓</div>`;
+    item.onclick=()=>{ if(state==="locked") return; openPanel(c.id); };
+    list.appendChild(item);
+  });
+}
+
+/* ───────────────────────── Progress + belt pill ───────────────────────── */
+function updateProgress(){
+  const c=completedCount();
+  const fill=document.getElementById("progressFill");
+  fill.style.width=(c/total*100)+"%";
+  const belt=currentBelt();
+  fill.style.background=`linear-gradient(90deg,#e6edf3,${BELTS[belt].color})`;
+  document.getElementById("progressLabel").textContent=`${c} / ${total}`;
+  const b=BELTS[belt];
+  document.getElementById("beltName").textContent=`${b.kanji} ${b.en}`;
+  document.getElementById("beltSwatch").style.background=b.color;
+}
+
+/* ───────────────────────── Panel ───────────────────────── */
+let activeId=null;
+function openPanel(id){
+  const c=CHECKPOINTS.find(x=>x.id===id); if(!c) return;
+  activeId=id;
+  const b=BELTS[c.phase];
+  document.getElementById("panelBeltBar").style.background=b.color;
+  document.getElementById("panelEmoji").textContent=c.emoji;
+  document.getElementById("panelKicker").innerHTML=`<span style="color:${b.color}">${b.kanji} ${b.en}</span> · ${b.label}`;
+  document.getElementById("panelTitle").textContent=c.title;
+  document.getElementById("panelTime").textContent="⏱ "+c.time;
+
+  const body=document.getElementById("panelBody");
+  body.innerHTML="";
+
+  const desc=document.createElement("div"); desc.className="desc"; desc.innerHTML=c.desc; body.appendChild(desc);
+
+  if(c.copies&&c.copies.length){
+    const g=document.createElement("div"); g.className="copy-group";
+    c.copies.forEach(cp=>{
+      const wrap=document.createElement("div");
+      wrap.innerHTML=`<div class="copy-label">${cp.label}</div>`;
+      const block=document.createElement("div"); block.className="copy-block"; block.textContent=cp.text;
+      const btn=document.createElement("button"); btn.className="copy-btn"; btn.title="Copy"; btn.innerHTML="⧉";
+      btn.onclick=()=>copyText(cp.text,btn);
+      block.appendChild(btn); wrap.appendChild(block); g.appendChild(wrap);
+    });
+    body.appendChild(g);
+  }
+
+  [c.skill,c.skill2].forEach(s=>{ if(!s) return;
+    const a=document.createElement("a"); a.className="skill-card"; a.href=s.href; a.target="_blank"; a.rel="noopener";
+    a.innerHTML=`<div class="ico">🥋</div><div class="info"><div class="l">${s.label}</div><div class="n">${s.name}</div></div><div class="arrow">↗</div>`;
+    body.appendChild(a);
+  });
+
+  if(c.stuck){
+    const st=document.createElement("button"); st.className="stuck-toggle"; st.innerHTML="🤔 Stuck? Show a hint";
+    const sc=document.createElement("div"); sc.className="stuck-content"; sc.innerHTML=`<p>${c.stuck}</p>`;
+    st.onclick=()=>{ sc.classList.toggle("open"); st.innerHTML=sc.classList.contains("open")?"🤔 Hide hint":"🤔 Stuck? Show a hint"; };
+    body.appendChild(st); body.appendChild(sc);
+  }
+
+  const tog=document.createElement("button");
+  tog.className="toggle-done"+(isComplete(id)?" checked":"");
+  tog.innerHTML=`<span class="dot">${isComplete(id)?'✓':''}</span><span>${c.toggle}</span>`;
+  tog.onclick=()=>toggleDone(id,tog);
+  body.appendChild(tog);
+
+  if(c.learn){
+    const learn=document.createElement("div");
+    learn.style.cssText="font-size:12.5px;color:var(--text-muted);border-left:3px solid var(--teal);padding:8px 12px;background:var(--ink2);border-radius:0 8px 8px 0;line-height:1.5";
+    learn.innerHTML=`<strong style="color:var(--teal)">帯 Belt wisdom:</strong> ${c.learn}`;
+    body.appendChild(learn);
+  }
+
+  document.getElementById("overlay").classList.add("open");
+  document.getElementById("panel").classList.add("open");
+}
+function closePanel(){
+  document.getElementById("overlay").classList.remove("open");
+  document.getElementById("panel").classList.remove("open");
+  activeId=null;
+}
+
+function copyText(text,btn){
+  const ok=()=>{ btn.classList.add("copied"); btn.innerHTML="✓"; setTimeout(()=>{btn.classList.remove("copied");btn.innerHTML="⧉";},1400); };
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(ok).catch(()=>fallbackCopy(text,ok)); }
+  else fallbackCopy(text,ok);
+}
+function fallbackCopy(text,ok){ const ta=document.createElement("textarea");ta.value=text;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");ok();}catch(e){}document.body.removeChild(ta); }
+
+/* ───────────────────────── Completion logic ───────────────────────── */
+function toggleDone(id,tog){
+  const wasComplete=isComplete(id);
+  const c=CHECKPOINTS.find(x=>x.id===id);
+  const i=indexOf(id);
+  const phaseBefore=phaseComplete(c.phase);
+  if(wasComplete){
+    // Keep completion a contiguous prefix: clearing one clears everything after it.
+    for(let k=i;k<CHECKPOINTS.length;k++){ delete done[CHECKPOINTS[k].id]; }
+  } else {
+    done[id]=Date.now();
+  }
+  saveState();
+  tog.classList.toggle("checked",!wasComplete);
+  tog.querySelector(".dot").textContent=!wasComplete?'✓':'';
+  renderAll();
+
+  if(!wasComplete){
+    burstConfetti();
+    const phaseAfter=phaseComplete(c.phase);
+    if(!phaseBefore && phaseAfter){
+      if(c.phase===4 && completedCount()===total) showBlackBelt();
+      else showBeltPromotion(c.phase);
+    }
+  }
+}
+function phaseComplete(p){ return CHECKPOINTS.filter(c=>c.phase===p).every(c=>isComplete(c.id)); }
+
+function renderAll(){ renderMap(); renderMobile(); updateProgress(); }
+
+/* ───────────────────────── Celebration ───────────────────────── */
+function burstConfetti(){
+  const colors=["#e6edf3","#1f6feb","#a16838","#f59e0b","#3fb950","#8b5cf6","#14b8a6"];
+  for(let i=0;i<70;i++){
+    const el=document.createElement("div"); el.className="confetti";
+    el.style.background=colors[i%colors.length];
+    el.style.left=(45+Math.random()*10)+"vw"; el.style.top="50vh";
+    document.body.appendChild(el);
+    const ang=Math.random()*Math.PI*2, dist=120+Math.random()*340;
+    el.animate([
+      {transform:`translate(0,0) rotate(0deg)`,opacity:1},
+      {transform:`translate(${Math.cos(ang)*dist}px,${Math.sin(ang)*dist+260}px) rotate(${Math.random()*720}deg)`,opacity:0}
+    ],{duration:1100+Math.random()*900,easing:"cubic-bezier(.2,.6,.3,1)"}).onfinish=()=>el.remove();
+  }
+}
+
+function showBeltPromotion(phase){
+  const next=BELTS[phase+1]||BELTS[4];
+  const earned=BELTS[phase];
+  const banner=document.getElementById("banner");
+  banner.innerHTML=`
+    <div class="belt-emoji">${earned.emoji}</div>
+    <div class="jp">${earned.kanji} 昇級</div>
+    <h1>${earned.en} earned!</h1>
+    <p>You've mastered <strong>${earned.label}</strong>.<br>Next: <strong>${next.kanji} ${next.en}</strong> — ${next.label}.</p>
+    <div class="cert-actions"><button class="cta" onclick="hideBanner()">続ける · Continue</button></div>`;
+  showBanner();
+}
+
+function showBlackBelt(){
+  const banner=document.getElementById("banner");
+  banner.innerHTML=`
+    <div class="belt-emoji">⚫🥋</div>
+    <div class="jp">黒帯 — 免許皆伝</div>
+    <h1>Black Belt — Dojo Master!</h1>
+    <p>You've walked the full path: install → core kata → the mandatory workflow → mastery.<br>Your Copilot agents now build with discipline. 🏯</p>
+    <canvas id="certCanvas" width="640" height="360"></canvas>
+    <div class="cert-actions">
+      <button class="cta" onclick="downloadCert()">⬇ Download certificate</button>
+      <button class="cta ghost" onclick="hideBanner()">閉じる · Close</button>
+    </div>`;
+  showBanner();
+  drawCert();
+}
+function showBanner(){ const b=document.getElementById("banner"); b.classList.add("show"); }
+function hideBanner(){ document.getElementById("banner").classList.remove("show"); }
+
+function drawCert(){
+  const cv=document.getElementById("certCanvas"); if(!cv) return;
+  const x=cv.getContext("2d"), W=cv.width, H=cv.height;
+  const g=x.createLinearGradient(0,0,W,H); g.addColorStop(0,"#0d1117"); g.addColorStop(1,"#161b22");
+  x.fillStyle=g; x.fillRect(0,0,W,H);
+  x.strokeStyle="#f59e0b"; x.lineWidth=4; x.strokeRect(16,16,W-32,H-32);
+  x.strokeStyle="#2b3340"; x.lineWidth=1; x.strokeRect(26,26,W-52,H-52);
+  x.textAlign="center";
+  x.fillStyle="#f59e0b"; x.font="600 26px 'Segoe UI',sans-serif"; x.fillText("黒帯 · 免許皆伝", W/2, 84);
+  x.fillStyle="#e6edf3"; x.font="700 30px 'Segoe UI',sans-serif"; x.fillText("Copilot Agents Dojo", W/2, 140);
+  x.font="400 16px 'Segoe UI',sans-serif"; x.fillStyle="#9aa7b4"; x.fillText("certifies the bearer has earned the rank of", W/2, 174);
+  x.fillStyle="#fff"; x.font="800 38px 'Segoe UI',sans-serif"; x.fillText("BLACK BELT 🥋", W/2, 222);
+  x.fillStyle="#9aa7b4"; x.font="400 14px 'Segoe UI',sans-serif";
+  x.fillText("Install · Core Kata · Mandatory Workflow · Mastery", W/2, 262);
+  x.fillStyle="#3fb950"; x.font="600 15px 'Segoe UI',sans-serif";
+  x.fillText("All "+total+" checkpoints complete", W/2, 296);
+  x.fillStyle="#57606a"; x.font="400 12px 'Segoe UI',sans-serif";
+  x.fillText(new Date().toISOString().slice(0,10)+"  ·  github.com/andreaswasita/copilot-agents-dojo", W/2, 326);
+}
+function downloadCert(){
+  const cv=document.getElementById("certCanvas"); if(!cv) return;
+  const a=document.createElement("a"); a.download="dojo-black-belt.png"; a.href=cv.toDataURL("image/png"); a.click();
+}
+
+/* ───────────────────────── Reset ───────────────────────── */
+function resetProgress(){
+  if(!confirm("Reset all belt progress? This clears your saved checkpoints.")) return;
+  done={}; saveState(); hideBanner(); closePanel(); renderAll();
+}
+
+/* ───────────────────────── Init ───────────────────────── */
+window.addEventListener("resize", ()=>{ renderMap(); });
+document.addEventListener("keydown", e=>{ if(e.key==="Escape"){ closePanel(); hideBanner(); } });
+renderAll();
+</script>
+</body>
+</html>

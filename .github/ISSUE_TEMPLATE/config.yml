@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 Read the docs first
+    url: https://github.com/andreaswasita/copilot-agents-dojo#readme
+    about: README, AGENTS.md, and the skill spec answer most "how do I…" questions.
+  - name: 💬 Questions & ideas
+    url: https://github.com/andreaswasita/copilot-agents-dojo/discussions
+    about: Open-ended questions, design discussion, and show-and-tell.
