@@ -179,6 +179,15 @@ run_spec_checks() {
     warn "skills.md missing"
   fi
 
+  # prompts drift: generated slash-command shims must match skills/ + agents/
+  if [ -d .github/prompts ]; then
+    if bash scripts/regen-prompts.sh --check >/dev/null 2>&1; then
+      pass ".github/prompts matches skills/ and agents/"
+    else
+      warn ".github/prompts drift — regenerate via scripts/regen-prompts.sh"
+    fi
+  fi
+
   if [ "$FAILED" -eq 0 ]; then pass "spec invariants OK"; fi
 }
 
