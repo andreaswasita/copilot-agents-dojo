@@ -30,3 +30,5 @@ export { runDoctor } from "./doctor.js";
 export type { DoctorReport, DoctorOptions } from "./doctor.js";
 export { runUninstall } from "./uninstall.js";
 export type { UninstallOptions, UninstallResult } from "./uninstall.js";
+export { detectStacks, recommendPreset, summarizeStacks } from "./detect.js";
+export type { Detection, StackEvidence, StackId } from "./detect.js";

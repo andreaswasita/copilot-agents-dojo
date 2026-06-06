@@ -17,6 +17,7 @@ import { runInit } from "./init.js";
 import { ManifestError } from "./manifest.js";
 import { runDoctor } from "./doctor.js";
 import { runUninstall } from "./uninstall.js";
+import { detectStacks } from "./detect.js";
 import { PRESET_IDS, type PresetId } from "./presets.js";
 
 // __dirname-equivalent inside ESM
@@ -165,6 +166,31 @@ async function main(): Promise<void> {
         }
         throw err;
       }
+    });
+
+  program
+    .command("detect")
+    .description("Detect the project's stack(s) and suggest a preset (read-only)")
+    .argument("[target]", "target directory (default: cwd)", ".")
+    .action(async (target: string) => {
+      const targetDir = resolve(target);
+      const detection = await detectStacks(targetDir);
+      console.log(kleur.bold("\n🔎 copilot-dojo detect"));
+      console.log(`   target: ${kleur.cyan(targetDir)}`);
+      if (detection.stacks.length === 0) {
+        console.log(kleur.dim("   no recognised stack"));
+      } else {
+        for (const s of detection.stacks) {
+          console.log(`   • ${kleur.cyan(s.label)} ${kleur.dim(`(${s.markers.join(", ")})`)}`);
+        }
+      }
+      console.log(
+        `   signals: ${detection.hasTests ? "tests" : "no tests"}, ${detection.hasCI ? "CI" : "no CI"}`,
+      );
+      console.log(
+        `   suggested preset: ${kleur.green(detection.recommendedPreset)} — ${detection.reason}`,
+      );
+      for (const w of detection.warnings) console.log(kleur.dim(`   ⚠ ${w}`));
     });
 
   await program.parseAsync(process.argv);
