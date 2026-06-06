@@ -55,8 +55,9 @@
 
   .torii{position:absolute;right:2.2%;top:50%;transform:translateY(-50%);opacity:.16;pointer-events:none;z-index:1;color:var(--amber);filter:drop-shadow(0 0 14px rgba(245,158,11,.4))}
   .torii .dojo-ico{width:172px;height:172px;stroke-width:.85}
-  /* hand-drawn icon sizing */
-  .dojo-ico{width:28px;height:28px;display:block;color:var(--text)}
+  /* hand-drawn icon sizing (torii watermark + belt banner) */
+  .dojo-ico{width:28px;height:28px;display:block;color:var(--text);object-fit:contain;user-select:none;-webkit-user-drag:none}
+  img.dojo-ico{filter:drop-shadow(0 1px 2px rgba(0,0,0,.45))}
   .node .inner{color:var(--text)}
   .node.active .inner .dojo-ico{color:#bcd4ff}
   .node.complete.belt1 .inner .dojo-ico,.node.complete.belt2 .inner .dojo-ico,.node.complete.belt3 .inner .dojo-ico,.node.complete.belt4 .inner .dojo-ico{color:var(--green)}
@@ -242,6 +243,7 @@
 <div class="credit">
   Copilot Agents Dojo — Belt Quest ·
   <a href="https://github.com/andreaswasita/copilot-agents-dojo" target="_blank" rel="noopener">github.com/andreaswasita/copilot-agents-dojo</a>
+  · emoji by <a href="https://github.com/jdecked/twemoji" target="_blank" rel="noopener">Twemoji</a> (CC-BY 4.0)
 </div>
 
 <script>
@@ -275,15 +277,19 @@ const ICONS = {
   link:    svgIco(`<path d="M10 8.5H8.5a3.5 3.5 0 0 0 0 7H10"/><path d="M14 15.5h1.5a3.5 3.5 0 0 0 0-7H14"/><path d="M8.8 12h6.4"/>`),
   daruma:  svgIco(`<path d="M12 3.8c-3.6 0-6 3.2-6 7.2s2.4 8.2 6 8.2 6-4.2 6-8.2-2.4-7.2-6-7.2Z"/><path d="M9 10.2c.6-.7 1.7-.7 2.3 0M12.7 10.2c.6-.7 1.7-.7 2.3 0"/><path d="M9.3 14c1.6 1.1 4 1.1 5.4 0"/>`),
 };
-const ICON_FOR = {
-  "what-is":"dojo", "prereqs":"clipboard", "install":"sprout", "verify-install":"belt", "explore":"map",
-  "activate":"enso", "plan-before-code":"brush", "verify-before-done":"stamp", "demand-elegance":"bonsai",
-  "autonomous-bug-fix":"katana", "delegation":"shuriken",
-  "brainstorm":"lantern", "worktree":"bamboo", "plan":"scroll", "execute":"gear", "test":"target",
-  "review":"magnifier", "finish":"nobori",
-  "single-gate":"torii", "memory-vault":"scrolls", "self-improve":"fuji", "mcp":"link", "black-belt":"daruma",
-};
-function iconFor(id){ return ICONS[ICON_FOR[id]] || ICONS.torii; }
+/* ── Twemoji renderer — colourful Twitter Emoji (CC-BY 4.0, github.com/jdecked/twemoji).
+   Each checkpoint renders its own `emoji`, with a few thematic overrides below. ── */
+const TW_BASE="https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/";
+const EMOJI_FOR={ "activate":"🔓", "single-gate":"⛩️", "black-belt":"🏆" };
+function emojiToCode(e){ return [...e].map(c=>c.codePointAt(0)).filter(p=>p!==0xFE0F).map(p=>p.toString(16)).join("-"); }
+function twemoji(emoji){ return `<img class="dojo-ico" src="${TW_BASE}${emojiToCode(emoji)}.svg" alt="" aria-hidden="true" loading="lazy" draggable="false">`; }
+let _EMOJI_BY_ID=null;
+function emojiForId(id){
+  if(EMOJI_FOR[id]) return EMOJI_FOR[id];
+  if(!_EMOJI_BY_ID){ _EMOJI_BY_ID={}; for(const c of CHECKPOINTS) _EMOJI_BY_ID[c.id]=c.emoji; }
+  return _EMOJI_BY_ID[id] || "⛩️";
+}
+function iconFor(id){ return twemoji(emojiForId(id)); }
 
 /* ───────────────────────── Belt definitions ───────────────────────── */
 const BELTS = {
