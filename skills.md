@@ -1,6 +1,6 @@
 # Copilot Agents Dojo — Skills Index
 
-A skills & discipline framework for GitHub Copilot agents. 31 production skills across three tiers. Mandatory workflow. Self-improving. Built from field-tested patterns — [Anthropic Claude](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering) prompt engineering, [obra/superpowers](https://github.com/obra/superpowers) orchestration, and the [hermes-agent](https://github.com/andreaswasita/hermes-agent) reference build.
+A skills & discipline framework for GitHub Copilot agents. 32 production skills across three tiers. Mandatory workflow. Self-improving. Built from field-tested patterns — [Anthropic Claude](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering) prompt engineering, [obra/superpowers](https://github.com/obra/superpowers) orchestration, and the [hermes-agent](https://github.com/andreaswasita/hermes-agent) reference build.
 
 > **Auto-generated.** Do not edit by hand — run `bash scripts/regen-skills-index.sh` (or `pwsh scripts/regen-skills-index.ps1` on Windows).
 
@@ -61,6 +61,10 @@ Loaded on-demand. Task-specific skills that teach the agent *how to do* particul
 ### 📋 Requirements
 
 - [`requirements-elicitation`](skills/requirements-elicitation/SKILL.md) — Turns vague intent into testable requirements.
+
+### 🔍 Review
+
+- [`security-audit`](skills/security-audit/SKILL.md) — Detects high-confidence security risks in code.
 
 ### 🔄 Workflow
 
