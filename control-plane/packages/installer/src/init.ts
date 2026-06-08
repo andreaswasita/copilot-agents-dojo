@@ -21,6 +21,7 @@ import { confirm, select } from "@inquirer/prompts";
 import kleur from "kleur";
 
 import { BackupSet } from "./backup.js";
+import { detectStacks, summarizeStacks, type Detection } from "./detect.js";
 import { fetchSubtree } from "./fetch.js";
 import { renderInstructions } from "./generate.js";
 import { buildManifest, writeManifest } from "./manifest.js";
@@ -126,12 +127,31 @@ export async function runInit(opts: InitOptions): Promise<InitResult> {
     );
   }
 
+  // Stack auto-detection (G14): only when the preset wasn't pinned by a flag or
+  // carried over from an existing profile. Advisory — it sets a default, never
+  // overrides an explicit choice, and never fails the install.
   if (!chosen) {
+    let detection: Detection | null = null;
+    try {
+      detection = await detectStacks(targetDir);
+    } catch (err) {
+      console.log(
+        kleur.dim(`Stack detection skipped: ${(err as Error).message}`),
+      );
+    }
+    if (detection) {
+      console.log(kleur.dim(`Detected stack: ${summarizeStacks(detection)}`));
+      console.log(kleur.dim(`Suggested preset: ${detection.recommendedPreset} — ${detection.reason}`));
+    }
+    const recommended = detection?.recommendedPreset ?? "lean";
+
     if (opts.yes || opts.nonInteractive) {
-      chosen = "lean"; // sensible default when --yes is passed without --preset
-      console.log(kleur.dim(`No --preset given; defaulting to "lean" (--yes).`));
+      chosen = recommended;
+      console.log(
+        kleur.dim(`No --preset given; using detected default "${recommended}".`),
+      );
     } else {
-      chosen = await chooseInteractive(existing?.preset as PresetId | undefined);
+      chosen = await chooseInteractive(recommended);
     }
   }
 

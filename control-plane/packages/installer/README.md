@@ -30,7 +30,8 @@ Any file the installer would overwrite is first snapshotted under
 
 ```bash
 # In the project you want to bootstrap
-npx copilot-dojo init                # interactive
+npx copilot-dojo detect              # show detected stack + suggested preset
+npx copilot-dojo init                # interactive (preset pre-selected from detection)
 npx copilot-dojo init --preset lean  # one-shot
 npx copilot-dojo init --preset tdd-focus --ref v1.0.0
 npx copilot-dojo init --dry-run      # show what would happen
@@ -39,10 +40,32 @@ npx copilot-dojo init --dry-run      # show what would happen
 | Flag | Default | Notes |
 |---|---|---|
 | `[target]` | `.` | Target directory; relative paths resolved against `cwd`. |
-| `--preset <id>` | *(prompt)* | One of `full-dojo`, `lean`, `tdd-focus`, `code-review-focus`, `onboarding`, `requirements-first`. `custom` is reserved for v2. |
+| `--preset <id>` | *(detected)* | One of `full-dojo`, `lean`, `tdd-focus`, `code-review-focus`, `onboarding`, `requirements-first`. `custom` is reserved for v2. When omitted, the preset is auto-detected (see below). |
 | `--ref <git-ref>` | `main` | Branch, tag, or commit SHA on `andreaswasita/copilot-agents-dojo`. Pin to a tag for reproducible installs. |
-| `-y, --yes` | off | Skip confirmation prompts; default preset becomes `lean`. |
+| `-y, --yes` | off | Skip confirmation prompts; preset defaults to the detected recommendation. |
 | `--dry-run` | off | Print plan; exit before touching disk. |
+
+### Stack auto-detection
+
+When you don't pass `--preset` (and there's no existing `.dojo-profile.yml`),
+`init` inspects the project and **pre-selects** a preset for you — interactively
+it becomes the highlighted default; with `--yes` it's used directly. Run
+`copilot-dojo detect` to see the result without installing anything.
+
+Detection is best-effort and never blocks an install (a malformed `package.json`
+or unreadable directory just yields a warning). It recognises Node.js,
+TypeScript, frontend SPAs, Python, Go, Rust, Java/JVM, .NET, Ruby, PHP, Docker,
+and Terraform via their marker files (walking up to three directory levels, so
+monorepo sub-packages are seen). The recommendation is deliberately
+conservative:
+
+| Signal | Suggested preset |
+|---|---|
+| A real test signal (test dirs/files, `jest`/`vitest`/`mocha`, `pytest`, a real `test` script) | `tdd-focus` |
+| A populated application stack, no test signal | `onboarding` |
+| Empty or infra-only (Docker/Terraform alone) | `lean` |
+
+An explicit `--preset` flag and an existing profile always win over detection.
 
 ## Lifecycle: doctor & uninstall
 
