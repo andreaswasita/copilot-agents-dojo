@@ -43,7 +43,7 @@ Customize this section for your stack. Examples for common fighting styles:
 
 ## Superpowers Activated
 
-At session start: load all skills from `skills/`. Follow the mandatory workflow. Never improvise.
+At session start: read [SOUL.md](../SOUL.md) first — the identity charter defining **who the agent is, how it reasons, and where its limits are** — then load all skills from `skills/`. Follow the mandatory workflow. Never improvise.
 
 See [skills.md](../skills.md) for the full skills index. Each skill is a self-contained folder under `skills/` with a `SKILL.md` file. Load the relevant skill when its trigger conditions are met.
 

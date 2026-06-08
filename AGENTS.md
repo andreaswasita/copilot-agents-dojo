@@ -14,6 +14,7 @@ File counts shift constantly — don't treat the tree below as exhaustive. The c
 copilot-agents-dojo/
 ├── AGENTS.md                          # this file — contributor reference
 ├── README.md                          # user-facing onboarding
+├── SOUL.md                            # agent identity charter (who / how / limits)
 ├── skills.md                          # GENERATED — skills index grouped by tier
 ├── spec/
 │   └── copilot-skills-spec.md         # the HARDLINE skill spec (v1)
