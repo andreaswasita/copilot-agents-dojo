@@ -4,6 +4,13 @@ All notable changes to the Copilot Agents Dojo are documented here. Format loose
 
 ## [Unreleased]
 
+## [1.2.0] — 2026-06-08 — "Open-Door Dojo"
+
+Lowers the barrier to entry and adds a single front door to the workflow: a
+zero-toolchain `npx` installer with a real lifecycle, stack-aware presets,
+discoverable slash commands, a one-command pipeline orchestrator, and a
+ready-made security-audit skill.
+
 ### Added — one-command bootstrap installer
 
 - **`install.sh` (bash) + `install.ps1` (PowerShell)** at the repo root: drop the
@@ -42,6 +49,41 @@ All notable changes to the Copilot Agents Dojo are documented here. Format loose
   tree; agents and MCP configs are intentionally omitted because the dojo's
   persona briefs are not in the CLI's `.agent.md` format.
 - README "Enter the Dojo" gains an "Install as a Copilot CLI plugin" section.
+
+### Added — `npx` installer lifecycle (G2)
+
+- `npx copilot-dojo` installer gains a full lifecycle: `init`, `doctor`, and
+  `uninstall`, backed by a checksummed install manifest with atomic writes.
+- `doctor` reports drift between the manifest and the working tree; `uninstall`
+  preserves user-modified files and prunes only dojo-owned, empty directories.
+
+### Added — stack-aware presets and auto-detection (G14/G15)
+
+- Installer presets (`lean`, `onboarding`, `full-dojo`) tailor the installed
+  surface to the project.
+- `detect` inspects the repo (languages, frameworks, infra markers, monorepo
+  depth) and recommends a preset; detection never throws and surfaces
+  non-fatal issues as warnings.
+
+### Added — security-audit skill (G6)
+
+- New `security-audit` skill: a stdlib-only heuristic scanner with
+  high-confidence and broad profiles, `--fail-on` gating, deterministic
+  idempotent reports (markdown/JSON), inline suppression, and
+  suggestions-only remediation.
+
+### Added — slash-command surface (G9)
+
+- Generated `.github/prompts/dojo-*.prompt.md` shims expose every skill as a
+  discoverable `/dojo-*` slash command, kept in sync via
+  `scripts/regen-prompts.sh` / `.ps1` and drift-checked in CI.
+
+### Added — one-command pipeline orchestrator (G8)
+
+- `scripts/sprint.sh` / `.ps1` chain the mandatory 8-step pipeline
+  (BRAINSTORM→WORKTREE→PLAN→EXECUTE→TEST→REVIEW→FINISH→LEARN) from a single
+  entry point, with a parallel `swarm` variant and a `gate` that runs
+  `verify.sh`. Surfaced as `/dojo-sprint` and `/dojo-swarm`.
 
 ## [1.1.0] — 2026-05-20 — "Self-Improving Dojo"
 
