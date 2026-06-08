@@ -6,13 +6,13 @@
   },
   "metadata": {
     "description": "The Copilot Agents Dojo marketplace - a disciplined, governed skill library for GitHub Copilot agents.",
-    "version": "1.1.0"
+    "version": "1.2.0"
   },
   "plugins": [
     {
       "name": "dojo",
       "description": "The 25 core Copilot Agents Dojo skills: autonomous bug fix, code review, debugging, planning, security review, and more.",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "source": "."
     }
   ]
