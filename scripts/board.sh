@@ -5,8 +5,9 @@
 #
 # Usage:
 #   bash scripts/board.sh new "Task title here"   # create NNN-slug.md from template
+#   bash scripts/board.sh assign <id> <owner>     # set owner + flip status to in_progress
 #   bash scripts/board.sh list                    # group all tasks by status
-#   bash scripts/board.sh status                  # one-line summary
+#   bash scripts/board.sh status                  # one-line summary (running + assignees)
 #   bash scripts/board.sh roll-up                 # regenerate tasks/todo.md from board/
 
 set -euo pipefail
@@ -33,6 +34,21 @@ fm_get() {
       exit
     }
   ' "$file"
+}
+
+# Set (replace) a front-matter key in place. Only touches the first YAML block.
+fm_set() {
+  local file="$1" key="$2" val="$3"
+  local tmp; tmp=$(mktemp)
+  awk -v key="$key" -v val="$val" '
+    /^---$/ { c++; print; next }
+    c == 1 && $0 ~ "^"key":" && !done {
+      print key ": " val
+      done = 1
+      next
+    }
+    { print }
+  ' "$file" > "$tmp" && mv "$tmp" "$file"
 }
 
 slugify() {
@@ -78,6 +94,22 @@ verb_new() {
   echo "ℹ️  edit it, then run: bash scripts/board.sh roll-up"
 }
 
+# Assign a task to an owner. Resolves <id> by ordinal prefix or substring,
+# sets owner, and flips status to in_progress so a worker can pick it up.
+verb_assign() {
+  local id="${1:-}" owner="${2:-}"
+  [ -z "$id" ] || [ -z "$owner" ] && { echo "❌ usage: board.sh assign <id> <owner>" >&2; exit 2; }
+  local file
+  file=$(find "$BOARD" -maxdepth 1 -name "${id}-*.md" | head -n1)
+  [ -z "$file" ] && file=$(find "$BOARD" -maxdepth 1 -name "*${id}*.md" ! -name '000-template.md' ! -name 'README.md' | head -n1)
+  [ -z "$file" ] && { echo "❌ no board task matching '$id'" >&2; exit 1; }
+  fm_set "$file" owner "$owner"
+  fm_set "$file" status in_progress
+  fm_set "$file" updated "$(date -u +%Y-%m-%d)"
+  echo "✅ assigned $(basename "$file") → $owner (status: in_progress)"
+  echo "ℹ️  a worker can now pick it up; refresh the plan with: bash scripts/board.sh roll-up"
+}
+
 verb_list() {
   echo "📋 Board status"
   echo ""
@@ -104,6 +136,7 @@ verb_list() {
 
 verb_status() {
   local total=0 done=0 progress=0 blocked=0 pending=0
+  local assignees=""
   while IFS= read -r f; do
     [ -z "$f" ] && continue
     [ "$(basename "$f")" = "000-template.md" ] && continue
@@ -111,12 +144,22 @@ verb_status() {
     total=$((total + 1))
     case "$(fm_get "$f" status)" in
       done)        done=$((done + 1)) ;;
-      in_progress) progress=$((progress + 1)) ;;
+      in_progress)
+        progress=$((progress + 1))
+        local o; o=$(fm_get "$f" owner)
+        if [ -n "$o" ] && [ "$o" != "TBD" ]; then
+          case ",$assignees," in
+            *",$o,"*) : ;;                                  # already listed
+            *) assignees="${assignees:+$assignees,}$o" ;;
+          esac
+        fi
+        ;;
       blocked)     blocked=$((blocked + 1)) ;;
       pending)     pending=$((pending + 1)) ;;
     esac
   done < <(find "$BOARD" -maxdepth 1 -name '*.md')
-  echo "board: total=$total done=$done in_progress=$progress blocked=$blocked pending=$pending"
+  local who="none"; [ -n "$assignees" ] && who="$assignees"
+  echo "board: total=$total done=$done running=$progress blocked=$blocked pending=$pending assignees=$who"
 }
 
 verb_rollup() {
@@ -159,9 +202,10 @@ verb_rollup() {
 verb="${1:-status}"; shift || true
 case "$verb" in
   new)     verb_new "${1:-}" ;;
+  assign)  verb_assign "${1:-}" "${2:-}" ;;
   list)    verb_list ;;
   status)  verb_status ;;
   roll-up|rollup) verb_rollup ;;
-  -h|--help) sed -n '1,12p' "$0" ;;
+  -h|--help) sed -n '1,13p' "$0" ;;
   *) echo "unknown verb: $verb (try --help)" >&2; exit 2 ;;
 esac
