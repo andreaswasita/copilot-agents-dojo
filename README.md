@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="./docs/assets/banner.png" alt="Copilot Agents Dojo" width="100%">
+
 # Copilot Agents Dojo 🏯
 
 # A discipline framework for<br/>your GitHub Copilot agents.
