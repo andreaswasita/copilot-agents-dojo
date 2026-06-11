@@ -1,0 +1,287 @@
+# fleet.yaml — declarative ISD-aligned agent org for the AI Delivery practice
+# Source of truth for the Paperclip company. Apply with: python fleet/apply.py --dry-run | --apply
+# managedBy: this manifest. New (apply: now|defer) agents are created PAUSED.
+#
+# ─── SCHEMA REFERENCE ────────────────────────────────────────────────────────
+# schemaVersion: int                    # bump on breaking schema changes
+# company:                              # target Paperclip company (must exist)
+#   id:   <uuid>
+#   name: <string>
+# workstreams: [<string>, ...]          # ISD workstream taxonomy (informational)
+#
+# existing: []                          # agents managed ELSEWHERE — never mutated
+#   - name:       <PascalCase, unique>  # must match live agent name
+#     id:         <uuid>                # must match live agent id (validated in preflight)
+#     isd_role:   <string>              # ISD role label (informational)
+#     persona:    <repo-relative path>  # .dojo/agents/<role>.md
+#     reports_to: <name | "Operator">   # must resolve to another agent or Operator
+#     status:     <paused|idle|...>     # informational; live status is authoritative
+#     protected:  true                  # OPTIONAL — CAO/PRReviewer only; refuses delete/mutate
+#
+# agents: []                            # NEW agents created by apply.py (always PAUSED)
+#   - name, isd_role, persona, reports_to, status, workstream, phases   # as above
+#     id:           <uuid>              # ABSENT initially; apply.py writes it back after create
+#     apply:        <now | defer>       # now=create on --apply; defer=skip (preflight ignores)
+#     model:        <string>            # OPTIONAL — appended to copilot --model
+#     capabilities: |                   # REQUIRED; first line MUST start with:
+#       Persona profile: <persona-path> # …enforced by preflight (durable persona pointer)
+#
+# ─── INVARIANTS (enforced by apply.py) ───────────────────────────────────────
+#  * CAO and PRReviewer are PROTECTED (read-only, never mutated, never deleted).
+#  * existing[] entries are never mutated — only validated against live state.
+#  * apply:now agents are created PAUSED, heartbeat OFF, canCreateAgents=false.
+#  * Every create is re-read and asserted paused; failures abort with --rollback hint.
+#  * Pre-apply snapshot in fleet/.snapshots/<TS>.json; rollback deletes only that batch.
+#  * Preflight blocks on: duplicate names, live duplicates, unresolved/cyclic
+#    reports_to, missing persona files, malformed capabilities first line.
+#
+# To activate a deferred role: set its `apply: now`, commit the persona file,
+# then run `python fleet/apply.py --dry-run` followed by `--apply`.
+# ─────────────────────────────────────────────────────────────────────────────
+schemaVersion: 1
+company:
+  id: "8530e4d1-c4fd-456b-bdc9-64881c35007d"
+  name: "AI Delivery Practice"
+
+# ISD workstreams (from the delivery staffing model)
+workstreams: [Program Governance, Business Strategy & Transformation, Solution Enablement, Data Security & Governance, Org & Operational Enablement]
+
+# ---- EXISTING agents (managed elsewhere; do NOT mutate via apply) ----
+# Validated against live state in preflight (id ⇄ name integrity check). Never created or modified.
+existing:
+  - name: Architect
+    id: "82084a2a-1980-4b60-9221-e826b5bfd885"
+    isd_role: "Solution Architect (technical)"
+    persona: .dojo/agents/architect.md
+    reports_to: CTO
+    status: paused
+  - name: BackendEngineer
+    id: "e8c3c789-8968-45b3-8b62-5fa60764bbb5"
+    isd_role: "Software Engineer (backend)"
+    persona: .dojo/agents/backend-engineer.md
+    reports_to: TechnicalProgramManager
+    status: paused
+  - name: CAO
+    id: "01e1bf9d-dfcb-4969-8584-d31615dc9805"
+    isd_role: "Chief of Staff / Practice Orchestration (apex)"
+    persona: .dojo/agents/cao.md
+    reports_to: Operator
+    status: idle
+    protected: true   # operator standing rule: read-only, never mutate
+  - name: CISO
+    id: "8c679757-bd9e-4479-91e6-068bc6906e15"
+    isd_role: "Security Architect / Security Manager"
+    persona: .dojo/agents/security-engineer.md
+    reports_to: CAO
+    status: paused
+  - name: CMO
+    id: "e8a008a0-c8ef-4812-b0fa-07fec5b75a6c"
+    isd_role: "Practice Marketing & Eminence (non-ISD; retained)"
+    persona: .dojo/agents/cmo.md
+    reports_to: CAO
+    status: paused
+  - name: CTO
+    id: "0ec74f79-211e-44e4-a236-e06dbdb69c22"
+    isd_role: "Practice CTO / Chief Architect"
+    persona: .dojo/agents/cto.md
+    reports_to: CAO
+    status: paused
+  - name: FoundingEngineer
+    id: "d2fec007-0347-4401-af01-abad1e06e3ef"
+    isd_role: "Lead Consultant / Tech Lead"
+    persona: .dojo/agents/founding-engineer.md
+    reports_to: CTO
+    status: paused
+  - name: FrontendEngineer
+    id: "b3ecb046-d9a4-42f0-ba9f-35894bdfea56"
+    isd_role: "Software Engineer (frontend)"
+    persona: .dojo/agents/frontend-engineer.md
+    reports_to: TechnicalProgramManager
+    status: paused
+  - name: HarvestingEngineer
+    id: "427ca4ae-e840-4c6d-972e-9202246b6037"
+    isd_role: "Research & Insights Analyst"
+    persona: .dojo/agents/harvester.md
+    reports_to: CTO
+    status: paused
+  - name: PRReviewer
+    id: "119d9401-00c2-49cd-96e1-0b9941b3a8af"
+    isd_role: "Code Quality Gate (QA)"
+    persona: .dojo/agents/pr-reviewer.md
+    reports_to: CAO
+    status: idle
+    protected: true   # operator standing rule: read-only, never mutate
+  - name: PlatformEngineer
+    id: "dd45f8e9-6995-43e7-b534-601c3da8ff2e"
+    isd_role: "DevOps/MLOps Engineer"
+    persona: .dojo/agents/platform-engineer.md
+    reports_to: CTO
+    status: paused
+  - name: TechnicalProgramManager
+    id: "2bf47314-c03f-4ca0-893f-f56849cfa347"
+    isd_role: "Consulting Project Manager"
+    persona: .dojo/agents/technical-program-manager.md
+    reports_to: CTO
+    status: paused
+  - name: TestEngineer
+    id: "2e596aeb-f8fb-47c9-a897-bd2109b72208"
+    isd_role: "QA/Test Lead"
+    persona: .dojo/agents/test-engineer.md
+    reports_to: TechnicalProgramManager
+    status: paused
+  - name: UXEngineer
+    id: "5b0a0a16-77cf-4d33-8bb3-414f5eb7d281"
+    isd_role: "UX Designer (Human-AI Interaction)"
+    persona: .dojo/agents/ux-engineer.md
+    reports_to: TechnicalProgramManager
+    status: paused
+
+# ---- NEW ISD roles (created by apply; PAUSED) ----
+# apply:now → created on next --apply run (preflight must pass).
+# apply:defer → skipped by preflight; flip to `now` + ensure persona file exists to activate.
+agents:
+  - name: HygieneAgent
+    id: "828742bd-cd64-4480-95bc-dd474fe83a5f"   # provisioned by apply.py
+    isd_role: "Data Hygiene & Privacy Engineer (Data Security & Governance)"
+    persona: .dojo/agents/hygiene-agent.md
+    reports_to: CISO
+    workstream: "Data Security & Governance"
+    phases: "0-8"
+    model: claude-opus-4.8
+    status: paused
+    apply: now
+    capabilities: >-
+      Persona profile: .dojo/agents/hygiene-agent.md | Standing repo-hygiene control | ensures NO customer PII / secrets / internal identifiers in the tracked tree | runs sanitise gate + deterministic detectors + name-hunt | rates findings P0-P3 | remediates via one hygiene/* PR (redact to canonical tokens, git rm binaries, git mv customer-named files) + leaves a recurrence guard | never weakens the gate, never rewrites git history (admin-gated), never pushes to main | escalates P0/P1 to CISO | Runtime: GitHub Copilot CLI on claude-opus-4.8 | Dojo skills: repo-hygiene, pii-detection, secret-scanning, privacy, risk, plan-before-code, verify-before-done, requesting-code-review, pr-workflow, load-memory-on-wake | Spec-Driven Development (MANDATORY — no one-shot, no vibe-code): spec → plan → tasks before building.
+  - name: EngagementManager
+    id: "d749cb39-6cfb-483a-b09b-25af7d85060b"   # provisioned by apply.py
+    isd_role: "Engagement Manager (Delivery Management Executive)"
+    persona: .dojo/agents/engagement-manager.md
+    reports_to: CAO
+    workstream: "Program Governance"
+    phases: "0-8"
+    status: paused
+    apply: defer   # already live; persona file not committed — deferred to unblock preflight
+    capabilities: >-
+      Persona profile: .dojo/agents/engagement-manager.md | Engagement ownership | scope+commercial+margin | governance cadence | RAID+status | Dojo skills: load-memory-on-wake, plan-before-code, verify-before-done, honor-build-environment, requesting-code-review, pr-workflow, demand-elegance | Spec-Driven Development (MANDATORY — no one-shot, no vibe-code): spec → plan → tasks before building.
+  - name: AIMLLead
+    id: "6775eec2-e3b3-425a-8961-e280b5e5ef79"   # provisioned by apply.py
+    isd_role: "AI/ML Lead"
+    persona: .dojo/agents/aiml-lead.md
+    reports_to: CTO
+    workstream: "Solution Enablement"
+    phases: "2-7"
+    status: paused
+    apply: defer   # already live; persona file not committed — deferred to unblock preflight
+    capabilities: >-
+      Persona profile: .dojo/agents/aiml-lead.md | AI/ML strategy | Responsible-AI gates | eval harness standards | leads DS+DE pod | Dojo skills: load-memory-on-wake, plan-before-code, verify-before-done, honor-build-environment, requesting-code-review, pr-workflow, demand-elegance | Spec-Driven Development (MANDATORY — no one-shot, no vibe-code): spec → plan → tasks before building.
+  - name: DataEngineer
+    id: "1cdb8858-8ce6-43b6-9b57-1bd36c2f6c0e"   # provisioned by apply.py
+    isd_role: "Data Engineer"
+    persona: .dojo/agents/data-engineer.md
+    reports_to: AIMLLead
+    workstream: "Solution Enablement"
+    phases: "3-6"
+    status: paused
+    apply: defer   # already live; persona file not committed — deferred to unblock preflight
+    capabilities: >-
+      Persona profile: .dojo/agents/data-engineer.md | Pipelines+ingestion+transforms | feature store | implements data contracts | tested PRs | Dojo skills: load-memory-on-wake, plan-before-code, verify-before-done, honor-build-environment, requesting-code-review, pr-workflow, demand-elegance | Spec-Driven Development (MANDATORY — no one-shot, no vibe-code): spec → plan → tasks before building.
+  - name: DataScientist
+    id: "4d3acccf-3388-4ed1-b638-d8e33f7bc379"   # provisioned by apply.py
+    isd_role: "Data Scientist"
+    persona: .dojo/agents/data-scientist.md
+    reports_to: AIMLLead
+    workstream: "Solution Enablement"
+    phases: "2-6"
+    status: paused
+    apply: defer   # already live; persona file not committed — deferred to unblock preflight
+    capabilities: >-
+      Persona profile: .dojo/agents/data-scientist.md | Model dev+experimentation | evaluation+RAI evidence | reproducible notebooks | Dojo skills: load-memory-on-wake, plan-before-code, verify-before-done, honor-build-environment, requesting-code-review, pr-workflow, demand-elegance | Spec-Driven Development (MANDATORY — no one-shot, no vibe-code): spec → plan → tasks before building.
+  - name: ChangeManager
+    id: "2bda33de-2732-44f6-b12a-9f8491b362c6"   # provisioned by apply.py
+    isd_role: "Change & Adoption Manager (ACSM)"
+    persona: .dojo/agents/change-manager.md
+    reports_to: EngagementManager
+    workstream: "Org & Operational Enablement"
+    phases: "1-8"
+    status: paused
+    apply: defer   # already live; persona file not committed — deferred to unblock preflight
+    capabilities: >-
+      Persona profile: .dojo/agents/change-manager.md | Adoption strategy | comms & training | enablement | MAU/adoption metrics | Dojo skills: load-memory-on-wake, plan-before-code, verify-before-done, honor-build-environment, requesting-code-review, pr-workflow, demand-elegance | Spec-Driven Development (MANDATORY — no one-shot, no vibe-code): spec → plan → tasks before building.
+  - name: ConsultingProductManager
+    id: "96b00e0b-1781-4e65-883a-8c63a6470078"   # provisioned by apply.py
+    isd_role: "Consulting Product Manager (CDP/ACSM)"
+    persona: .dojo/agents/consulting-product-manager.md
+    reports_to: EngagementManager
+    workstream: "Business Strategy & Transformation"
+    phases: "0-4"
+    status: paused
+    apply: now
+    capabilities: >-
+      Persona profile: .dojo/agents/consulting-product-manager.md | Value & capability strategy | use-case portfolio | prioritisation | benefits | Dojo skills: load-memory-on-wake, plan-before-code, verify-before-done, honor-build-environment, requesting-code-review, pr-workflow, demand-elegance | Spec-Driven Development (MANDATORY — no one-shot, no vibe-code): spec → plan → tasks before building.
+  - name: BusinessAnalyst
+    id: "c46f211c-91e4-45f2-862f-5a63ecfd3323"   # provisioned by apply.py
+    isd_role: "Business Analyst"
+    persona: .dojo/agents/business-analyst.md
+    reports_to: ConsultingProductManager
+    workstream: "Business Strategy & Transformation"
+    phases: "0-4"
+    status: paused
+    apply: now
+    capabilities: >-
+      Persona profile: .dojo/agents/business-analyst.md | Requirements elicitation | process modelling | acceptance criteria | traceability | Dojo skills: load-memory-on-wake, plan-before-code, verify-before-done, honor-build-environment, requesting-code-review, pr-workflow, demand-elegance | Spec-Driven Development (MANDATORY — no one-shot, no vibe-code): spec → plan → tasks before building.
+  - name: BusinessIndustryArchitect
+    id: "6db4c7c3-8eeb-4ca7-81fe-99e929e89582"   # provisioned by apply.py
+    isd_role: "Business/Industry Architect (Domain Solution Architect)"
+    persona: .dojo/agents/business-industry-architect.md
+    reports_to: Architect
+    workstream: "Business Strategy & Transformation"
+    phases: "0-4"
+    status: paused
+    apply: now
+    capabilities: >-
+      Persona profile: .dojo/agents/business-industry-architect.md | Business/functional design | industry capability mapping | domain reference arch | Dojo skills: load-memory-on-wake, plan-before-code, verify-before-done, honor-build-environment, requesting-code-review, pr-workflow, demand-elegance | Spec-Driven Development (MANDATORY — no one-shot, no vibe-code): spec → plan → tasks before building.
+  - name: DataArchitect
+    id: "5310aa57-52f9-4e1c-a6af-e2d1eb1d0505"   # provisioned by apply.py
+    isd_role: "Data Architect (Domain Solution Architect)"
+    persona: .dojo/agents/data-architect.md
+    reports_to: Architect
+    workstream: "Data Security & Governance"
+    phases: "2-6"
+    status: paused
+    apply: now
+    capabilities: >-
+      Persona profile: .dojo/agents/data-architect.md | Data platform design | model+lineage | governance & contracts | Fabric landing zone | Dojo skills: load-memory-on-wake, plan-before-code, verify-before-done, honor-build-environment, requesting-code-review, pr-workflow, demand-elegance | Spec-Driven Development (MANDATORY — no one-shot, no vibe-code): spec → plan → tasks before building.
+  - name: DeliveryAssurance
+    id: "07e72546-4557-45c6-a671-ddff7cf11e3f"   # provisioned by apply.py
+    isd_role: "Technical Quality Assurance (TQA / Delivery Assurance)"
+    persona: .dojo/agents/delivery-assurance.md
+    reports_to: CTO
+    workstream: "Program Governance"
+    phases: "0-8"
+    status: paused
+    apply: now
+    capabilities: >-
+      Persona profile: .dojo/agents/delivery-assurance.md | Independent quality oversight | methodology conformance | delivery-risk | gate sign-off | Dojo skills: load-memory-on-wake, plan-before-code, verify-before-done, honor-build-environment, requesting-code-review, pr-workflow, demand-elegance | Spec-Driven Development (MANDATORY — no one-shot, no vibe-code): spec → plan → tasks before building.
+  - name: TechnicalOperations
+    id: "157273c1-1ad4-49c7-ac32-0c12d0171d83"   # provisioned by apply.py
+    isd_role: "Technical Operations (Operate & Care)"
+    persona: .dojo/agents/technical-operations.md
+    reports_to: CTO
+    workstream: "Org & Operational Enablement"
+    phases: "8"
+    status: paused
+    apply: now
+    capabilities: >-
+      Persona profile: .dojo/agents/technical-operations.md | Run/operate | monitoring+SLOs | incident response+runbooks | operational handover | Dojo skills: load-memory-on-wake, plan-before-code, verify-before-done, honor-build-environment, requesting-code-review, pr-workflow, demand-elegance | Spec-Driven Development (MANDATORY — no one-shot, no vibe-code): spec → plan → tasks before building.
+  - name: CybersecurityEngineer
+    # id absent — apply.py writes it back on create (apply: defer until activated)
+    isd_role: "Cybersecurity Engineer (Offensive/Defensive Security)"
+    persona: .dojo/agents/cybersecurity-engineer.md
+    reports_to: CISO
+    workstream: "Data Security & Governance"
+    phases: "0-8"
+    model: claude-opus-4.8
+    status: paused
+    apply: defer
+    capabilities: >-
+      Persona profile: .dojo/agents/cybersecurity-engineer.md | Hands-on security execution | threat modelling | vulnerability + dependency/CVE remediation | secret scanning + supply-chain | secure SDLC gates | incident response | Dojo skills: load-memory-on-wake, plan-before-code, verify-before-done, honor-build-environment, secret-scanning, pii-detection, privacy, risk, repo-hygiene, code-review | Spec-Driven Development (MANDATORY — no one-shot, no vibe-code): spec → plan → tasks before building.
