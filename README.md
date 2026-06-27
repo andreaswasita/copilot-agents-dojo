@@ -156,7 +156,8 @@ Agents are specialized personas bundled in the [`agents/`](agents/) directory. E
 | Agent | Focus Area |
 |-------|-----------|
 | [`architect.md`](agents/architect.md) | System design, technical strategy, and the engineering half of requirements — impact analysis, specification, traceability |
-| [`security-engineer.md`](agents/security-engineer.md) | Security compliance, vulnerability identification, and secure practices |
+| [`security-engineer.md`](agents/security-engineer.md) | Security **architecture, policy & governance** (CISO lane) — sets posture, standards, PR/release gates, compliance, and risk acceptance; signs off threat models |
+| [`cybersecurity-engineer.md`](agents/cybersecurity-engineer.md) | Hands-on security **execution** — threat modelling, vulnerability/CVE & dependency remediation, secret & supply-chain scanning, secure SDLC, incident response (reports to CISO) |
 | [`software-engineer.md`](agents/software-engineer.md) | Feature development, bug fixes, and production-quality code |
 | [`technical-program-manager.md`](agents/technical-program-manager.md) | Project planning, timeline coordination, and the business half of requirements — elicitation, user stories, Definition of Ready gate |
 | [`test-engineer.md`](agents/test-engineer.md) | Test strategy, test implementation, and quality assurance |
