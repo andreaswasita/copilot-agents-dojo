@@ -194,3 +194,30 @@ def test_real_sample_passes(tmp_path):
     )
     assert proc.returncode == 0, proc.stdout + "\n" + proc.stderr
     assert "red thread holds" in proc.stdout
+
+
+def test_real_sample_passes_in_strict_mode(tmp_path):
+    """The committed requirements/sample/ tree is a teaching fixture and must
+    pass even under --strict.
+
+    It carries requirements/sample/.teaching-fixture, so the intentionally
+    unratified TR-001 is reported as a warning (not a failure) in --strict.
+    This is the N2 invariant that keeps the dojo's own `verify.sh --check`
+    gate green. A real engagement (no marker) still fails --strict on an
+    empty ratified_by — see test_unratified_fails_in_strict_mode.
+    """
+    import subprocess
+    from tests.conftest import BASH, REPO_ROOT, SCRIPT
+
+    proc = subprocess.run(
+        [BASH, str(SCRIPT), "--strict", "requirements/sample"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        timeout=30,
+    )
+    assert proc.returncode == 0, proc.stdout + "\n" + proc.stderr
+    assert "teaching fixture, exempt from strict" in proc.stdout
+    assert "ratified_by is empty (strict mode)" not in proc.stdout
