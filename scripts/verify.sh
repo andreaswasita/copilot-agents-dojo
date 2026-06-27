@@ -341,17 +341,42 @@ run_actions_checks() {
 # Tests (skill smoke tests + auto-detected project tests)
 # =========================================================================
 run_tests() {
-  echo "[tests] Running skill smoke tests…"
+  echo "[tests] Running smoke tests…"
+
+  # Discover test suites: the top-level tests/ dir (the dojo's own suite) plus
+  # any skill-local tests/ dirs. Previously only skills/*/tests was globbed, so
+  # the entire top-level tests/ suite silently false-skipped.
+  local test_paths=()
+  [ -d tests ] && test_paths+=("tests")
   local skill_tests
   skill_tests=$(find skills optional-skills -path '*/tests' -type d 2>/dev/null || true)
-  if [ -n "$skill_tests" ] && command -v python >/dev/null 2>&1; then
-    if python -m pytest $skill_tests -q --no-header 2>&1; then
-      pass "skill smoke tests passed"
-    else
-      fail "skill smoke tests failed"
+  while IFS= read -r d; do
+    [ -n "$d" ] && test_paths+=("$d")
+  done <<< "$skill_tests"
+
+  if [ "${#test_paths[@]}" -eq 0 ]; then
+    warn "no tests found — skipping"
+    return
+  fi
+
+  # Resolve a Python interpreter that actually has pytest (prefer python3).
+  local py=""
+  local cand
+  for cand in python3 python; do
+    if command -v "$cand" >/dev/null 2>&1 && "$cand" -c 'import pytest' >/dev/null 2>&1; then
+      py="$cand"
+      break
     fi
+  done
+  if [ -z "$py" ]; then
+    warn "pytest unavailable (need python3 -m pytest) — skipping ${#test_paths[@]} test path(s)"
+    return
+  fi
+
+  if "$py" -m pytest "${test_paths[@]}" -q --no-header; then
+    pass "smoke tests passed (${test_paths[*]})"
   else
-    warn "no skill tests found (or python unavailable) — skipping"
+    fail "smoke tests failed"
   fi
 }
 
