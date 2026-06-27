@@ -12,6 +12,8 @@
 #   bash scripts/verify-traceability.sh requirements/<engagement>       # one engagement
 #   bash scripts/verify-traceability.sh --strict requirements/<engagement>
 #       # --strict: unratified artifacts (ratified_by empty) are failures, not warnings.
+#       # Exception: an engagement carrying a `.teaching-fixture` marker file keeps
+#       # empty ratified_by as a WARNING even under --strict (demo/teaching trees).
 #
 # Exit codes:
 #   0 — gate passed (zero failures; warnings allowed unless --strict)
@@ -50,6 +52,10 @@ PASSED=0; FAILED=0; WARNED=0
 pass() { echo "  ✅ $1"; PASSED=$((PASSED + 1)); }
 fail() { echo "  ❌ $1"; FAILED=$((FAILED + 1)); }
 warn() { echo "  ⚠️  $1"; WARNED=$((WARNED + 1)); }
+# note(): informational only — NOT counted as a warning, so it never trips
+# verify.sh --check (where warnings are fatal). Used for intentional, documented
+# exemptions such as teaching fixtures.
+note() { echo "  ℹ️  $1"; }
 
 # Layer cascade — must mirror spec/artifact-schema.md §1.
 valid_parents_for() {
@@ -110,6 +116,13 @@ walk_engagement() {
     fail "$eng: directory not found"
     return
   fi
+
+  # Teaching-fixture engagements (marked by a .teaching-fixture file) are demo
+  # trees, not real engagements: in --strict mode an empty ratified_by is a
+  # warning, not a failure, so the dojo can keep an intentionally-unratified
+  # artifact in-tree while its own verify.sh --check gate stays green.
+  local teaching_fixture=false
+  [ -f "$eng/.teaching-fixture" ] && teaching_fixture=true
 
   # In-memory tables (parallel arrays keyed by ID).
   declare -A LAYER_OF FILE_OF PARENTS_OF MEASURABLE_OF RATIFIED_OF
@@ -181,10 +194,12 @@ walk_engagement() {
         ;;
     esac
 
-    # ratified_by — warn locally, fail in --strict
+    # ratified_by — warn locally, fail in --strict (unless teaching fixture)
     if [ -z "$ratified" ] || [ "$ratified" = '""' ]; then
-      if [ "$STRICT" = true ]; then
+      if [ "$STRICT" = true ] && [ "$teaching_fixture" != true ]; then
         fail "$rel: ratified_by is empty (strict mode)"
+      elif [ "$STRICT" = true ]; then
+        note "$rel: ratified_by is empty — teaching fixture, exempt from strict"
       else
         warn "$rel: ratified_by is empty — artifact is unratified"
       fi
