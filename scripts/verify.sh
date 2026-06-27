@@ -393,9 +393,13 @@ run_traceability_checks() {
   [ "$CHECK_MODE" = true ] && trace_args+=("--strict")
   if bash "$DOJO_ROOT/scripts/verify-traceability.sh" "${trace_args[@]}" >/tmp/dojo-trace.log 2>&1; then
     pass "traceability gate passed"
-    grep -E '^  ⚠️' /tmp/dojo-trace.log | while IFS= read -r w; do
-      warn "${w#  ⚠️  }"
-    done
+    # Re-emit any traceability warnings. Guard with `grep -q` so that a clean
+    # run (zero ⚠️ lines) doesn't make grep exit non-zero and trip `set -e`.
+    if grep -qE '^  ⚠️' /tmp/dojo-trace.log; then
+      grep -E '^  ⚠️' /tmp/dojo-trace.log | while IFS= read -r w; do
+        warn "${w#  ⚠️  }"
+      done
+    fi
   else
     fail "traceability gate failed — see output below"
     sed 's/^/    /' /tmp/dojo-trace.log

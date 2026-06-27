@@ -1,0 +1,13 @@
+# Teaching-fixture marker.
+#
+# Presence of this file tells scripts/verify-traceability.sh that this
+# engagement is a deliberate teaching/demo fixture, not a real engagement.
+#
+# Effect: in --strict mode, an empty `ratified_by` is reported as a WARNING
+# (and stays visible) instead of a hard FAILURE. This lets the dojo keep an
+# intentionally-unratified artifact (requirements/sample/TR/TR-001.md) in the
+# tree to teach the "proposed / not yet ratified" state, while still allowing
+# the repo's own `verify.sh --check` gate to stay green.
+#
+# Real engagements MUST NOT carry this marker — they are held to the full
+# strict bar (empty ratified_by => failure).
