@@ -58,8 +58,6 @@ Ground truth from the filesystem on `main`:
 | Initiative | Theme | Deliverable | Depends on | Effort |
 |---|---|---|---|---|
 | **N1. Cut first npm registry release** | T1 | `copilot-dojo` published; `npx copilot-dojo init` works without `github:` ref | `NPM_TOKEN` secret or trusted publishing; tag `copilot-dojo-v0.1.0` | S |
-| **N2. Resolve traceability gate strict-mode FAIL** | T5 | `verify.sh --check` green; exempt `requirements/sample/` teaching fixture from strict `ratified_by` assertion | none | S |
-| **N3. Restore skill smoke-test coverage in gate** | T5 | `verify.sh` runs top-level `tests/` (currently only globs `skills/*/tests`, so 27 passing tests false-skip) | none | S |
 | **N4. Triage dependabot PR #21** | T5 | Decide pytest `8.3.3 → 9.0.3`; merge or pin with rationale | CI green | S |
 | **N5. Doc & badge hygiene** | T1 | README skill/persona badges match reality; fix stale cross-links; reference generated index instead of hardcoded counts | none | S |
 
@@ -93,10 +91,10 @@ Ground truth from the filesystem on `main`:
 ## 4. Sequencing & Dependencies
 
 ```
-NOW    N2 ─┐
-       N3 ─┼─► verify.sh --check GREEN ──► (unblocks confident releases)
-       N1 ─┘            │
-       N4 ──────────────┘
+NOW    N2 ✅┐
+       N3 ✅┼─► verify.sh --check GREEN ✅ ──► (unblocks confident releases)
+       N1 ──┘            │
+       N4 ───────────────┘
        N5 (parallel, no deps)
 
 NEXT   X1 ─► X4 (catalog needs slash/frontmatter)
@@ -108,7 +106,7 @@ LATER  L1 ─ L2 ─ L3  (knowledge-graph cluster, sequence after T4 schema land
        L5, L6 demand-gated
 ```
 
-**Critical path to a credible public launch:** N1 → N2/N3 (green gate) → X1 (discoverability) → X3 (verify loop). Everything else is parallelizable or demand-gated.
+**Critical path to a credible public launch:** N1 → ~~N2/N3 (green gate)~~ ✅ → X1 (discoverability) → X3 (verify loop). Everything else is parallelizable or demand-gated.
 
 ---
 

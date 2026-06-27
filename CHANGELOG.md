@@ -4,6 +4,28 @@ All notable changes to the Copilot Agents Dojo are documented here. Format loose
 
 ## [Unreleased]
 
+### Added — first npm registry release (`copilot-dojo` 0.1.0)
+
+- **`copilot-dojo` published to npm** with sigstore provenance: `npx copilot-dojo init`
+  now works directly from the registry — no `github:` tarball ref required. Closes
+  roadmap **N1**.
+- Release is tag-driven (`copilot-dojo-v*.*.*` → `release-copilot-dojo.yml`); the
+  workflow asserts the tag suffix matches `package.json`'s version before publishing.
+
+### Fixed
+
+- **Installer `bin` path (#67, N1):** dropped the `./` prefix from `bin.copilot-dojo`
+  (`./dist/cli.js` → `dist/cli.js`). npm@11's publish normalization silently strips
+  `./`-prefixed bin values from the registry manifest, which would have left
+  `npx copilot-dojo` unable to resolve its binary despite a valid tarball.
+- **Traceability gate strict-mode (#65, N2):** `verify.sh --check` is green again —
+  the `requirements/sample/` teaching fixture is exempted from the strict
+  `ratified_by` assertion via a `.teaching-fixture` marker (emitted as an info note,
+  not a counted warning).
+- **Skill smoke-test coverage in the gate (#66, N3):** `verify.sh` now discovers and
+  runs the top-level `tests/` suite (previously only globbed `skills/*/tests`, so the
+  passing tests false-skipped), with a `python3` interpreter fallback.
+
 ## [1.2.0] — 2026-06-08 — "Open-Door Dojo"
 
 Lowers the barrier to entry and adds a single front door to the workflow: a
