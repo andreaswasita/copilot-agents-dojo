@@ -4,7 +4,7 @@
   "type": "module",
   "description": "Zero-install bootstrap for the Copilot Agents Dojo — npx copilot-dojo init",
   "bin": {
-    "copilot-dojo": "./dist/cli.js"
+    "copilot-dojo": "dist/cli.js"
   },
   "main": "./dist/index.js",
   "scripts": {
