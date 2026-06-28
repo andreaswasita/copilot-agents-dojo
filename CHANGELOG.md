@@ -4,6 +4,15 @@ All notable changes to the Copilot Agents Dojo are documented here. Format loose
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [1.3.0] — 2026-06-28 — "Green-Belt Dojo"
+
+The first release published to the **npm registry**, with the verify gate fully green
+end-to-end. Ships `copilot-dojo` 0.1.0 (sigstore provenance), closes the strict-mode
+gate gaps (N2/N3), triages the pytest major bump (N4), and reconciles the docs/badges
+to the generated skill index (N5). Completes the roadmap **NOW** cycle (N1–N5).
+
 ### Added — first npm registry release (`copilot-dojo` 0.1.0)
 
 - **`copilot-dojo` published to npm** with sigstore provenance: `npx copilot-dojo init`
@@ -25,6 +34,18 @@ All notable changes to the Copilot Agents Dojo are documented here. Format loose
 - **Skill smoke-test coverage in the gate (#66, N3):** `verify.sh` now discovers and
   runs the top-level `tests/` suite (previously only globbed `skills/*/tests`, so the
   passing tests false-skipped), with a `python3` interpreter fallback.
+
+### Changed — deps, docs & hygiene
+
+- **Dependabot triage — pytest `8.3.3 → 9.0.3` (#21, #70, N4):** adopted the major
+  pytest bump; `tests/requirements-dev.txt` pins `9.0.3` with rationale and the full
+  107-test suite passes on it.
+- **Doc & badge hygiene (#70, N5):** README and CLI-plugin metadata reconciled to the
+  generated `skills.md` (32 skills = 28 core + 4 optional); version/skills badges
+  refreshed; broken `--ref v1.1` install examples corrected to the real `v1.0.0` tag.
+- **Repo hygiene (#71):** added a repo-root `.gitignore` for Python caches
+  (`__pycache__/`, `*.py[cod]`, `.pytest_cache/`, `.DS_Store`) and removed a stray
+  committed `.pyc`.
 
 ## [1.2.0] — 2026-06-08 — "Open-Door Dojo"
 

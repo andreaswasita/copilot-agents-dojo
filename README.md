@@ -17,7 +17,7 @@
 [**📖 Wiki**](../../wiki) · [**Start Here**](#enter-the-dojo) · [**🥋 Belt Quest**](https://andreaswasita.github.io/copilot-agents-dojo/quests/) · [**Skills**](./skills.md) · [**Agents**](./agents) · [**Spec**](./spec/copilot-skills-spec.md) · [**Contributor Guide**](./AGENTS.md)
 
 ![license](https://img.shields.io/badge/license-MIT-1f6feb?style=flat-square)
-![version](https://img.shields.io/badge/version-1.2-3fb950?style=flat-square)
+![version](https://img.shields.io/badge/version-1.3-3fb950?style=flat-square)
 ![spec](https://img.shields.io/badge/spec-v1-1f6feb?style=flat-square)
 ![skills](https://img.shields.io/badge/skills-32-1f6feb?style=flat-square)
 ![tiers](https://img.shields.io/badge/tiers-core%20%2F%20practical%20%2F%20optional-8b5cf6?style=flat-square)
