@@ -43,7 +43,7 @@ Ground truth from the filesystem on `main`:
 
 | # | Theme | Why it matters | Primary horizon |
 |---|-------|----------------|-----------------|
-| T1 | **Distribution & frictionless adoption** | A framework only compounds if it spreads. The installer + publish pipeline exist; we have not shipped a registry release. | Now |
+| T1 | **Distribution & frictionless adoption** | A framework only compounds if it spreads. The installer + publish pipeline exist; the first registry release (`copilot-dojo` 0.1.0) shipped — `npx copilot-dojo init` now works without a `github:` ref. | Now |
 | T2 | **Discoverability of skills** | Auto-activation is elegant but invisible; users can't list/invoke skills. Hurts trust and adoption. | Next |
 | T3 | **Closing the verify loop** | `verify-before-done` stops at unit tests; real verification needs browser/E2E/production smoke. | Next |
 | T4 | **Compounding knowledge cross-repo** | In-repo memory loop is closed; lessons don't yet travel between repos. | Later |
@@ -57,11 +57,10 @@ Ground truth from the filesystem on `main`:
 
 | Initiative | Theme | Deliverable | Depends on | Effort |
 |---|---|---|---|---|
-| **N1. Cut first npm registry release** | T1 | `copilot-dojo` published; `npx copilot-dojo init` works without `github:` ref | `NPM_TOKEN` secret or trusted publishing; tag `copilot-dojo-v0.1.0` | S |
 | **N4. Triage dependabot PR #21** | T5 | Decide pytest `8.3.3 → 9.0.3`; merge or pin with rationale | CI green | S |
 | **N5. Doc & badge hygiene** | T1 | README skill/persona badges match reality; fix stale cross-links; reference generated index instead of hardcoded counts | none | S |
 
-**Now exit criteria:** registry release live; `verify.sh --check` fully green; dependabot triaged; docs accurate.
+**Now exit criteria:** ~~registry release live~~ ✅; ~~`verify.sh --check` fully green~~ ✅; dependabot triaged; docs accurate.
 
 ### 🟡 NEXT — following cycle (1–2 sprints out)
 
@@ -93,7 +92,7 @@ Ground truth from the filesystem on `main`:
 ```
 NOW    N2 ✅┐
        N3 ✅┼─► verify.sh --check GREEN ✅ ──► (unblocks confident releases)
-       N1 ──┘            │
+       N1 ✅┘            │
        N4 ───────────────┘
        N5 (parallel, no deps)
 
@@ -106,7 +105,7 @@ LATER  L1 ─ L2 ─ L3  (knowledge-graph cluster, sequence after T4 schema land
        L5, L6 demand-gated
 ```
 
-**Critical path to a credible public launch:** N1 → ~~N2/N3 (green gate)~~ ✅ → X1 (discoverability) → X3 (verify loop). Everything else is parallelizable or demand-gated.
+**Critical path to a credible public launch:** ~~N1 (npm release)~~ ✅ → ~~N2/N3 (green gate)~~ ✅ → X1 (discoverability) → X3 (verify loop). Everything else is parallelizable or demand-gated.
 
 ---
 
@@ -138,7 +137,7 @@ LATER  L1 ─ L2 ─ L3  (knowledge-graph cluster, sequence after T4 schema land
 
 - **Canonical scaffold guard** — `tasks/todo.md` must stay in scaffold form; the `Plan sanity` required check blocks PRs that replace it with a real plan. Roadmap work plans live in PR descriptions / issues, never in `tasks/todo.md`.
 - **Cache-aware mutations** — changes to skills, `skills.md`, or `copilot-instructions.md` invalidate Copilot's prompt cache; default to deferred invalidation (`--now` only when correctness requires it).
-- **Distribution gating (N1)** — first npm release needs `NPM_TOKEN` or trusted publishing; this is an org/secret action outside code.
+- **Distribution gating (N1)** — ~~first npm release needs `NPM_TOKEN` or trusted publishing~~ ✅ shipped: `copilot-dojo` 0.1.0 published to npm with sigstore provenance (tag `copilot-dojo-v0.1.0`).
 - **Scope creep on personas/stacks (L6)** — keep `agents/registry.yaml` lean; add personas on demonstrated demand, not speculatively.
 - **Verify-loop overlap (X3 ↔ L4)** — sequence E2E/smoke after `browser-verify` to avoid duplicate Playwright surfaces.
 
