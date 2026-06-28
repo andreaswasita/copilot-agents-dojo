@@ -11,11 +11,11 @@
   Because `irm | iex` cannot forward parameters, the piped form is driven by
   environment variables:
 
-      $env:DOJO_REF='v1.1'; $env:DOJO_DIR='C:\proj'; irm .../install.ps1 | iex
+      $env:DOJO_REF='v1.0.0'; $env:DOJO_DIR='C:\proj'; irm .../install.ps1 | iex
 
   When saved to disk it also accepts named parameters:
 
-      ./install.ps1 -Ref v1.1 -Dir C:\proj -Source C:\checkout -Force -NoVerify
+      ./install.ps1 -Ref v1.0.0 -Dir C:\proj -Source C:\checkout -Force -NoVerify
 
   Like the bash installer, it never relies on its own on-disk location; it
   operates only on the downloaded source and the target repo.

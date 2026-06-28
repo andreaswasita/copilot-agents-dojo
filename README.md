@@ -17,9 +17,9 @@
 [**📖 Wiki**](../../wiki) · [**Start Here**](#enter-the-dojo) · [**🥋 Belt Quest**](https://andreaswasita.github.io/copilot-agents-dojo/quests/) · [**Skills**](./skills.md) · [**Agents**](./agents) · [**Spec**](./spec/copilot-skills-spec.md) · [**Contributor Guide**](./AGENTS.md)
 
 ![license](https://img.shields.io/badge/license-MIT-1f6feb?style=flat-square)
-![version](https://img.shields.io/badge/version-1.1-3fb950?style=flat-square)
+![version](https://img.shields.io/badge/version-1.2-3fb950?style=flat-square)
 ![spec](https://img.shields.io/badge/spec-v1-1f6feb?style=flat-square)
-![skills](https://img.shields.io/badge/skills-29-1f6feb?style=flat-square)
+![skills](https://img.shields.io/badge/skills-32-1f6feb?style=flat-square)
 ![tiers](https://img.shields.io/badge/tiers-core%20%2F%20practical%20%2F%20optional-8b5cf6?style=flat-square)
 ![agents](https://img.shields.io/badge/personas-8-14b8a6?style=flat-square)
 ![curator](https://img.shields.io/badge/curator-self--improving-f59e0b?style=flat-square)
@@ -39,7 +39,7 @@ Drop `skills/` + `optional-skills/` + `.github/copilot-instructions.md` into any
 
 **What's inside:**
 
-- **29 production skills** across `core / practical / optional` tiers (25 always-discoverable + 4 optional)
+- **32 production skills** across `core / practical / optional` tiers (28 always-discoverable + 4 optional) — see the auto-generated [`skills.md`](./skills.md) index for the canonical list
 - **8 specialized agent personas** — generalist `architect`, three TOGAF specialists (business / solution / platform), plus `security-engineer`, `software-engineer`, `technical-program-manager`, `test-engineer`
 - Mandatory **BRAINSTORM → PLAN → TDD → REVIEW → FINISH** pipeline
 - **Self-improving curator** — state machine, backups, idle-based trigger, per-run audit trail
@@ -433,19 +433,19 @@ Pin a release for reproducible installs, and pass options as needed:
 
 ```bash
 # bash: --ref <branch|tag>  --dir <path>  --force  --no-verify
-curl -fsSL https://raw.githubusercontent.com/andreaswasita/copilot-agents-dojo/main/install.sh | bash -s -- --ref v1.1
+curl -fsSL https://raw.githubusercontent.com/andreaswasita/copilot-agents-dojo/main/install.sh | bash -s -- --ref v1.0.0
 ```
 
 ```powershell
 # PowerShell flags: -Ref <branch|tag>  -Dir <path>  -Force  -NoVerify
-# When piping (irm | iex) set env vars instead: $env:DOJO_REF='v1.1'; irm .../install.ps1 | iex
+# When piping (irm | iex) set env vars instead: $env:DOJO_REF='v1.0.0'; irm .../install.ps1 | iex
 ```
 
 ### Install as a Copilot CLI plugin
 
 If you live in the [GitHub Copilot CLI](https://docs.github.com/copilot/how-tos/use-copilot-agents/use-copilot-cli),
 the dojo ships as a plugin you can install from its built-in marketplace — the
-25 core skills land in your Copilot CLI, no repo files required:
+28 core skills land in your Copilot CLI, no repo files required:
 
 ```shell
 copilot plugin marketplace add andreaswasita/copilot-agents-dojo

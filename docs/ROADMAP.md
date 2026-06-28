@@ -55,12 +55,9 @@ Ground truth from the filesystem on `main`:
 
 ### 🟢 NOW — current cycle (commit-ready, low risk)
 
-| Initiative | Theme | Deliverable | Depends on | Effort |
-|---|---|---|---|---|
-| **N4. Triage dependabot PR #21** | T5 | Decide pytest `8.3.3 → 9.0.3`; merge or pin with rationale | CI green | S |
-| **N5. Doc & badge hygiene** | T1 | README skill/persona badges match reality; fix stale cross-links; reference generated index instead of hardcoded counts | none | S |
+**✅ Cycle complete — all NOW items (N1–N5) shipped** and graduated to the wiki [Roadmap & Gaps](https://github.com/andreaswasita/copilot-agents-dojo/wiki/Roadmap-and-Gaps) "Recently Closed" table. Pull the NEXT cycle forward when ready.
 
-**Now exit criteria:** ~~registry release live~~ ✅; ~~`verify.sh --check` fully green~~ ✅; dependabot triaged; docs accurate.
+**Now exit criteria (all met):** ~~registry release live~~ ✅; ~~`verify.sh --check` fully green~~ ✅; ~~dependabot triaged~~ ✅; ~~docs accurate~~ ✅.
 
 ### 🟡 NEXT — following cycle (1–2 sprints out)
 
@@ -93,8 +90,8 @@ Ground truth from the filesystem on `main`:
 NOW    N2 ✅┐
        N3 ✅┼─► verify.sh --check GREEN ✅ ──► (unblocks confident releases)
        N1 ✅┘            │
-       N4 ───────────────┘
-       N5 (parallel, no deps)
+       N4 ✅─────────────┘
+       N5 ✅ (parallel, no deps)   ── NOW cycle complete
 
 NEXT   X1 ─► X4 (catalog needs slash/frontmatter)
        X2 (parallel)
