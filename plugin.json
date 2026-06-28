@@ -1,6 +1,6 @@
 {
   "name": "dojo",
-  "description": "Copilot Agents Dojo: the disciplined, governed core skill library for GitHub Copilot agents - autonomous bug fix, code review, debugging, planning, security review, and more. Installs the 25 core dojo skills; optional tiers stay opt-in via the dojo installer.",
+  "description": "Copilot Agents Dojo: the disciplined, governed core skill library for GitHub Copilot agents - autonomous bug fix, code review, debugging, planning, security review, and more. Installs the 28 core dojo skills; optional tiers stay opt-in via the dojo installer.",
   "version": "1.2.0",
   "author": {
     "name": "Andreas Wasita",

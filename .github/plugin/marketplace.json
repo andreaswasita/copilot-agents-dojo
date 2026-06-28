@@ -11,7 +11,7 @@
   "plugins": [
     {
       "name": "dojo",
-      "description": "The 25 core Copilot Agents Dojo skills: autonomous bug fix, code review, debugging, planning, security review, and more.",
+      "description": "The 28 core Copilot Agents Dojo skills: autonomous bug fix, code review, debugging, planning, security review, and more.",
       "version": "1.2.0",
       "source": "."
     }

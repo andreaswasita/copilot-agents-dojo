@@ -8,7 +8,7 @@
 #
 # ...or with options (note the `-s --` to pass args through a pipe):
 #
-#   curl -fsSL .../install.sh | bash -s -- --ref v1.1 --dir ./my-project
+#   curl -fsSL .../install.sh | bash -s -- --ref v1.0.0 --dir ./my-project
 #
 # Because it may run from stdin, this script NEVER relies on its own on-disk
 # location. It operates only on the downloaded source ($SRC) and the target
