@@ -1,17 +1,17 @@
 ---
 name: self-improvement
-description: >-
-  Drives the agent's continuous learning loop — capturing lessons from corrections,
-  tracking patterns, and proposing skill amendments. Use this skill at the start of
-  every session (to review past lessons), after any correction from the user, when a
-  mistake pattern recurs, or when proposing updates to skills.md. This is the dojo's
-  memory system — without it, agents repeat the same mistakes forever.
-  Integrates with the memory vault (memory/) for persistent, linked knowledge.
+description: Captures lessons and promotes recurring patterns.
+tier: core
+category: workflow
+created_by: human
+platforms: [windows, macos, linux]
+tags: [memory, lessons, patterns, continuous-learning]
+author: Andreas Wasita (@andreaswasita)
 ---
 
-# Self-Improvement Loop
+# Self-Improvement Skill
 
-After every correction, agents capture the lesson with tags and metrics. Patterns feed back into skills. The dojo is not static — it evolves.
+Logs every correction and failed approach to `tasks/lessons.md` with structured metadata, escalates recurring patterns into skill amendments via `scripts/lesson-updater.sh`, and respects the cache-aware mutation rule so amendments don't trash Copilot's prompt cache mid-session. Does NOT delete or rewrite past lessons — history is evidence, not noise.
 
 The memory vault (`memory/`) extends this with structured, linked knowledge:
 - **Lessons** live in `tasks/lessons.md` (short-term capture)
@@ -30,9 +30,11 @@ The memory vault (`memory/`) extends this with structured, linked knowledge:
 - **After any architectural decision**: Record it in `memory/decisions/`
 - **Session end**: Write a session summary in `memory/sessions/`
 
-## How to Use
+## Prerequisites
 
-### Session Start Ritual
+- `tasks/lessons.md` exists (created by `scripts/init.sh`).
+- `scripts/lesson-updater.sh` available for the pattern-scan + amendment proposal.
+- Familiarity with the cache-aware mutation rule (see `AGENTS.md` → Cache-Aware Mutations).
 
 Before any work begins:
 1. Read `memory/INDEX.md` — understand what knowledge exists
@@ -42,31 +44,55 @@ Before any work begins:
 5. Internalize active rules — these are your guardrails for this session
 6. Note any lessons with high occurrence counts — these are your blind spots
 
-### Capturing a Lesson
+## How to Run
 
-After ANY correction from the user, immediately log a structured entry:
-
-```yaml
-- date: 2024-01-15
-  error_type: type-error          # category: type-error, logic-bug, test-gap, over-engineering, etc.
-  trigger: "Used string where number was expected in API response handler"
-  root_cause: "Didn't check the API schema before assuming response types"
-  fix: "Added type validation at the API boundary"
-  rule: "Always verify API response types against the schema before using them"
-  occurrences: 1
-  status: active                  # active | resolved | amended-to-skill
+```text
+1. At session start: `view tasks/lessons.md` and internalize active rules.
+2. On correction: append a structured YAML entry (template in Procedure §2).
+3. Periodically: `scripts/lesson-updater.sh` to scan for 3+ recurrences.
+4. On amendment: edit the relevant skill; default to deferred invalidation.
 ```
 
-### Tracking Metrics
+## Quick Reference
 
-For each lesson, track:
-- **Occurrences**: How many times this pattern has appeared
-- **Pre/post-fix results**: Did the rule actually prevent recurrence?
-- **Amendment success rate**: When lessons became skill rules, did they stick?
+| Trigger | Action | Tool |
+|---|---|---|
+| Session start | Read lessons | `view tasks/lessons.md` |
+| Correction logged | Append entry | `edit tasks/lessons.md` |
+| Pattern scan | Run updater (deferred) | `powershell` → `bash scripts/lesson-updater.sh` |
+| Pattern scan (urgent) | Run updater (immediate) | `powershell` → `bash scripts/lesson-updater.sh --now` |
+| Amend a skill | Edit the SKILL.md | `edit skills/<name>/SKILL.md` |
+| Archive a stale skill | Curator handles it | `powershell` → `bash scripts/curator.sh archive <name>` |
 
-### The Amendment Cycle
+## Procedure
 
-When a pattern hits 3+ occurrences:
+### Step 1: Session-Start Ritual
+
+Before any work begins, `view tasks/lessons.md`. Filter mentally for entries relevant to the current project, language, or task type. High `occurrences` counts are your active blind spots — treat them as guardrails for this session.
+
+### Step 2: Capture a Lesson
+
+After any correction or failed approach, append a structured entry to `tasks/lessons.md`:
+
+```yaml
+- date: 2026-05-19
+  error_type: type-error          # type-error | logic-bug | test-gap | over-engineering | scope-creep | …
+  trigger: "Used string where number was expected in API response handler"
+  root_cause: "Did not check the API schema before assuming response types"
+  fix: "Added type validation at the API boundary"
+  rule: "Verify API response types against the schema before using them"
+  occurrences: 1
+  status: active                  # active | resolved | amended-to-skill
+  related_skill: code-review      # optional — which skill should absorb the rule?
+```
+
+Be ruthlessly honest. The only person you're fooling is yourself.
+
+### Step 3: Watch for Patterns
+
+When the same `rule` appears across 2+ entries, increment `occurrences` on the canonical entry instead of duplicating. At `occurrences: 3`, escalate.
+
+### Step 4: Amend the Relevant Skill
 
 1. **Identify the pattern** — What's the common thread across occurrences?
 2. **Draft a rule** — Write a concrete, actionable rule
@@ -106,36 +132,40 @@ At the end of every non-trivial session:
 3. Run `scripts/link-index.sh` to rebuild the graph
 4. Update `tasks/lessons.md` metrics
 
-## Examples
+Pass `--now` only when correctness requires immediate effect. The script prints a warning about cache-invalidation cost.
 
-**Lesson Entry:**
-See [examples/lesson-entry.md](examples/lesson-entry.md) for a complete worked example.
+After the amendment lands, set the lesson's `status: amended-to-skill`.
 
-**Pattern → Amendment:**
+### Step 5: Let the Curator Handle Stale Skills
+
+Skills with `created_by: agent` and no recent use are auto-archived by `scripts/curator.sh` to `skills/.archive/`. Human-authored skills are never touched. Pin a skill to exempt it: `bash scripts/curator.sh pin <name>`.
+
+## Pitfalls
+
+- **DO NOT** "remember next time." If a lesson isn't in `tasks/lessons.md`, it doesn't exist.
+- **DO NOT** log without a `rule:` field. A symptom without a prevention rule is a diary entry.
+- **DO NOT** write hyper-specific rules. "Don't use `parseInt` on line 47 of auth.js" won't generalize. Extract the principle.
+- **DO NOT** delete old lessons. Set `status: resolved` instead — history is evidence.
+- **DO NOT** pass `--now` to `lesson-updater.sh` casually. It invalidates Copilot's prompt cache and dramatically raises cost.
+- **DO NOT** edit `created_by: human` skills via the curator. The curator only manages `created_by: agent` skills.
+
+## Verification
+
+Concrete checks that prove the skill is producing intended outcomes. Run at session end (or after any correction) via the `powershell` tool:
+
+```text
+bash scripts/self-improvement-verify.sh
 ```
-Lesson #1: Forgot to run tests before marking task complete (2024-01-10)
-Lesson #2: Submitted code that broke existing tests (2024-01-12)
-Lesson #3: Missed a regression in the auth module (2024-01-14)
 
-Pattern: Verification gaps before completion
-Amendment: Added "Run full test suite" as mandatory step in verify-before-done skill
-```
+The script (source: `scripts/self-improvement-verify.sh`) asserts:
 
-## Guidelines
+1. **`tasks/lessons.md` exists** — required artifact.
+2. **Every lesson has a `rule:` field** — a lesson without a prevention rule is a diary entry and fails the check.
+3. **No duplicated active rules** — the same `rule:` across multiple entries means someone cloned instead of incrementing `occurrences:`.
+4. **Threshold promotion happened** — any entry with `occurrences: 3+` must either carry `status: amended-to-skill` or have a corresponding file under `memory/patterns/`.
+5. **Memory graph has zero orphans** — runs `scripts/link-index.sh` and inspects `memory/INDEX.md`.
+6. **Today's session summary (if any) links out** — at least one link to `memory/decisions/`, `memory/patterns/`, or `memory/preferences/`.
 
-- Be ruthlessly honest in lessons — the only person you're fooling is yourself
-- Tag lessons with metadata (error type, file, discipline) for queryability
-- Don't just log the symptom — dig to root cause
-- Review lessons at session start, not just when things go wrong
-- Celebrate resolved lessons — they prove the system works
+The script exits non-zero on hard failures and prints `Summary: pass=… fail=… warn=…`. Treat warnings as signal, not noise — investigate before closing the session.
 
-## Anti-Patterns
-
-- **Not logging lessons** — "I'll remember next time" is a lie
-- **Logging without rules** — A lesson without a prevention rule is just a diary entry
-- **Never reviewing** — Lessons you don't review can't help you
-- **Overly specific rules** — "Don't use `parseInt` on line 47 of auth.js" won't generalize. Extract the principle.
-- **Keeping dead rules** — If a rule hasn't been relevant in months, archive it
-- **Skipping promotion** — A lesson that hits 3+ occurrences but stays in lessons.md is wasted knowledge. Promote it to `memory/patterns/`
-- **Orphaned memory files** — Files in `memory/` with no links to or from anything. Run `scripts/link-index.sh` and check for orphans
-- **Duplicating skill rules as preferences** — `memory/preferences/` is for *learned* behaviors, not hardcoded rules that already exist in skills
+Beyond the script: **active rules should reduce repeat errors**. If the same `error_type` + `trigger` recurs within 5 subsequent sessions after a rule lands, the rule is wrong — rewrite or remove it per Step 4 §8.

@@ -1,10 +1,12 @@
 # Copilot Agents Dojo — Skills Index
 
-A skills & discipline framework for GitHub Copilot agents. 22 production skills. Mandatory workflow. Self-improving. Built from battle-tested patterns — field experience, [Anthropic Claude](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering) best practices, and [obra/superpowers](https://github.com/obra/superpowers) orchestration.
+A skills & discipline framework for GitHub Copilot agents. 32 production skills across three tiers. Mandatory workflow. Self-improving. Built from field-tested patterns — [Anthropic Claude](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering) prompt engineering, [obra/superpowers](https://github.com/obra/superpowers) orchestration, and the [hermes-agent](https://github.com/andreaswasita/hermes-agent) reference build.
 
-Skills are self-contained folders of instructions, examples, and resources that Copilot agents load to improve performance on specialized tasks. Each skill has a `SKILL.md` with YAML frontmatter and markdown instructions.
+> **Auto-generated.** Do not edit by hand — run `bash scripts/regen-skills-index.sh` (or `pwsh scripts/regen-skills-index.ps1` on Windows).
 
-For the full specification, see [`spec/copilot-skills-spec.md`](spec/copilot-skills-spec.md). To create new skills, see [`skills/skill-creator`](skills/skill-creator/SKILL.md) or start from [`template/SKILL.md`](template/SKILL.md).
+Skills are self-contained folders of instructions, examples, and resources that Copilot agents load to improve performance on specialized tasks. Each skill has a `SKILL.md` with YAML frontmatter and the canonical body sections defined in [`spec/copilot-skills-spec.md`](spec/copilot-skills-spec.md).
+
+To create a new skill, start from [`template/SKILL.md`](template/SKILL.md) or read [`optional-skills/writing-skills`](optional-skills/writing-skills/SKILL.md).
 
 ---
 
@@ -16,103 +18,101 @@ Every non-trivial task follows this pipeline:
 BRAINSTORM → WORKTREE → PLAN → EXECUTE → TEST → REVIEW → FINISH → LEARN
 ```
 
+Each arrow is enforced by a flow skill in the *Core* or *Practical* tiers.
+
 ---
 
 ## Core Kata — 基本型
 
-Behavioral skills that govern *how* the agent thinks and operates. Style-agnostic — they work regardless of language or framework.
+Always loaded. Behavioral skills that govern *how* the agent thinks and operates — style-agnostic, language-agnostic.
 
-### [`skills/plan-before-code`](skills/plan-before-code/SKILL.md) — Plan Before Code
-🥋 No wild swings. Agents plan multi-step work before touching code. Write the plan to `tasks/todo.md` with checkable items before writing any code.
+### 🥋 Activation
 
-### [`skills/subagent-strategy`](skills/subagent-strategy/SKILL.md) — Subagent Strategy
-🥋 A master delegates. Subagents handle research, analysis, testing, and review. One task per subagent, keep the main context clean.
+- [`using-superpowers`](skills/using-superpowers/SKILL.md) — Activates the dojo framework at the start of a session.
 
-### [`skills/self-improvement`](skills/self-improvement/SKILL.md) — Self-Improvement Loop
-🥋 After every correction, agents capture the lesson with tags and metrics. Patterns feed back into skills. Review `tasks/lessons.md` at session start. Promote proven patterns (3+ occurrences) to `memory/patterns/`. Record decisions in `memory/decisions/`. Write session summaries to `memory/sessions/`. Run `scripts/link-index.sh` to rebuild the knowledge graph.
+### 🤝 Delegation
 
-### [`skills/verify-before-done`](skills/verify-before-done/SKILL.md) — Verify Before Done
-🥋 No kata is complete without demonstration. Tests, logs, diffs — show your work or it didn't happen. Use `scripts/verify.sh` for automation.
+- [`durable-work`](skills/durable-work/SKILL.md) — Picks the board over sub-agents for cross-turn work.
+- [`subagent-strategy`](skills/subagent-strategy/SKILL.md) — Delegates research and parallel work to sub-agents.
 
-### [`skills/demand-elegance`](skills/demand-elegance/SKILL.md) — Demand Elegance
-🥋 Brute force is for beginners. Challenge hacky solutions. But skip the kata for simple fixes — don't over-engineer.
+### 🥋 Discipline
 
-### [`skills/autonomous-bug-fix`](skills/autonomous-bug-fix/SKILL.md) — Autonomous Bug Fixing
-🥋 Reproduce, diagnose, fix, verify. Full cycle, zero questions. Zero hand-holding. Zero context switching from the user.
+- [`autonomous-bug-fix`](skills/autonomous-bug-fix/SKILL.md) — Reproduces, diagnoses, fixes, and verifies bugs unaided.
+- [`behavioral-foundation`](skills/behavioral-foundation/SKILL.md) — Surfaces the dojo's non-negotiable prime directives.
+- [`demand-elegance`](skills/demand-elegance/SKILL.md) — Challenges hacky fixes on non-trivial changes.
+- [`plan-before-code`](skills/plan-before-code/SKILL.md) — Plans multi-step work before writing code.
+- [`safety-guardrails`](skills/safety-guardrails/SKILL.md) — Flags risky shell commands and unsafe tree ops.
+- [`traceability-gate`](skills/traceability-gate/SKILL.md) — Enforces parent-link lineage across requirement layers.
+- [`verify-before-done`](skills/verify-before-done/SKILL.md) — Proves work with tests, diffs, and logs before sign-off.
 
----
+### 🔄 Workflow
 
-## Flow Waza — 流れ技
+- [`self-improvement`](skills/self-improvement/SKILL.md) — Captures lessons and promotes recurring patterns.
 
-Skills that orchestrate the mandatory development pipeline. Adapted from [superpowers](https://github.com/obra/superpowers) for GitHub Copilot agents.
-
-### [`skills/brainstorming`](skills/brainstorming/SKILL.md) — Brainstorming
-🔄 Activates before writing code. Refines rough ideas through Socratic questioning, explores alternatives, presents design in chunks for validation. Saves approved design document.
-
-### [`skills/using-git-worktrees`](skills/using-git-worktrees/SKILL.md) — Using Git Worktrees
-🔄 Activates after design approval. Creates isolated workspace on a dedicated feature branch, runs project setup, verifies clean test baseline.
-
-### [`skills/executing-plans`](skills/executing-plans/SKILL.md) — Executing Plans
-🔄 Activates with an approved plan. Takes one task from `tasks/todo.md`, executes it, verifies completion, moves to the next. Never skips. Never freelances.
-
-### [`skills/requesting-code-review`](skills/requesting-code-review/SKILL.md) — Requesting Code Review
-🔄 Activates between tasks. Reviews the agent's own work against the original plan. Flags issues by severity — critical issues block progress.
-
-### [`skills/receiving-code-review`](skills/receiving-code-review/SKILL.md) — Receiving Code Review
-🔄 Activates when feedback arrives. Processes every comment, fixes issues, re-verifies, and requests re-review. Nothing gets ignored.
-
-### [`skills/finishing-a-development-branch`](skills/finishing-a-development-branch/SKILL.md) — Finishing a Development Branch
-🔄 Activates when all tasks are complete. Runs full verification, presents merge options (merge/PR/keep/discard), cleans up worktree, logs lessons.
-
-### [`skills/dispatching-parallel-agents`](skills/dispatching-parallel-agents/SKILL.md) — Dispatching Parallel Agents
-🔄 Activates when independent subtasks can run concurrently. One sub-agent per task with clear specs, non-overlapping boundaries, integration verification after.
-
----
 
 ## Practical Kumite — 実践組手
 
-Task-specific skills that teach the agent *how to do* particular kinds of work.
+Loaded on-demand. Task-specific skills that teach the agent *how to do* particular kinds of work.
 
-### [`skills/code-review`](skills/code-review/SKILL.md) — Code Review
-Structured code review — reading diffs, identifying issues, and providing actionable feedback organized by severity.
+### 🤝 Delegation
 
-### [`skills/refactoring`](skills/refactoring/SKILL.md) — Refactoring
-Safe, systematic refactoring — improving structure without changing behavior. Small steps, tests first, one transformation per commit.
+- [`dispatching-parallel-agents`](skills/dispatching-parallel-agents/SKILL.md) — Runs independent subtasks concurrently via sub-agents.
 
-### [`skills/test-writing`](skills/test-writing/SKILL.md) — Test Writing
-Writing effective, meaningful tests that catch bugs — not just tests that exist. Covers the testing pyramid, naming, and framework-specific guidance.
+### 📋 Requirements
 
-### [`skills/pr-workflow`](skills/pr-workflow/SKILL.md) — PR Workflow
-Complete pull request workflow — from clean commits to merge-ready state. Descriptions, self-review, and feedback handling.
+- [`requirements-elicitation`](skills/requirements-elicitation/SKILL.md) — Turns vague intent into testable requirements.
 
-### [`skills/debugging`](skills/debugging/SKILL.md) — Debugging
-Systematic debugging for complex issues — evidence gathering, hypothesis testing, divide-and-conquer, and specialized techniques for race conditions, memory leaks, and intermittent failures.
+### 🔍 Review
 
-### [`skills/codebase-onboarding`](skills/codebase-onboarding/SKILL.md) — Codebase Onboarding
-Rapidly understanding an unfamiliar codebase — structure, conventions, dependencies, and key patterns. Read before you write.
+- [`security-audit`](skills/security-audit/SKILL.md) — Detects high-confidence security risks in code.
 
-### [`skills/requirements-elicitation`](skills/requirements-elicitation/SKILL.md) — Requirements Elicitation
-Structured requirements elicitation — Socratic questioning, user stories, Given/When/Then acceptance criteria, ambiguity elimination, and Definition of Ready gate. Role-neutral technique invoked by both TPM (business elicitation) and Architect (system specification).
+### 🔄 Workflow
 
----
+- [`brainstorming`](skills/brainstorming/SKILL.md) — Refines rough ideas into approved designs before code.
+- [`codebase-onboarding`](skills/codebase-onboarding/SKILL.md) — Maps an unfamiliar repo before touching its code.
+- [`code-review`](skills/code-review/SKILL.md) — Reviews diffs by severity to produce actionable feedback.
+- [`debugging`](skills/debugging/SKILL.md) — Systematic root-cause investigation for hard bugs.
+- [`derive-nfr-from-driver`](skills/derive-nfr-from-driver/SKILL.md) — Derives measurable NFRs from a parent business driver.
+- [`derive-security-from-risk`](skills/derive-security-from-risk/SKILL.md) — Derives security requirements from a named threat.
+- [`executing-plans`](skills/executing-plans/SKILL.md) — Executes approved plans one task at a time, verified.
+- [`finishing-a-development-branch`](skills/finishing-a-development-branch/SKILL.md) — Verifies, summarises, and closes a development branch.
+- [`pr-workflow`](skills/pr-workflow/SKILL.md) — Prepares branches and PRs for clean, reviewable merges.
+- [`receiving-code-review`](skills/receiving-code-review/SKILL.md) — Processes review feedback until the change is approved.
+- [`refactoring`](skills/refactoring/SKILL.md) — Safe, test-backed code restructuring in small steps.
+- [`requesting-code-review`](skills/requesting-code-review/SKILL.md) — Self-reviews work against the plan before sign-off.
+- [`test-writing`](skills/test-writing/SKILL.md) — Writes meaningful tests that actually catch bugs.
+- [`using-git-worktrees`](skills/using-git-worktrees/SKILL.md) — Isolates each task in its own git worktree off main.
 
-## Meta Dō — 道
 
-### [`skills/skill-creator`](skills/skill-creator/SKILL.md) — Skill Creator
-A meta-skill for creating new dojo skills. Captures intent, writes SKILL.md files, and tests skill effectiveness.
+## Optional Dō — 拡張道
 
-### [`skills/writing-skills`](skills/writing-skills/SKILL.md) — Writing Skills
-SKILL.md template and spec compliance. Use exact YAML frontmatter + triggers + steps + enforcement. Test in a branch before committing.
+Loaded only when invoked. Heavyweight or integration-specific skills. Not part of the default skill bundle.
 
-### [`skills/using-superpowers`](skills/using-superpowers/SKILL.md) — Using Superpowers
-The framework activator. Loads all skills, enforces the mandatory workflow, reads `memory/INDEX.md` and reviews lessons at session start. Writes session summaries at session end.
+### 🔌 Integration
+
+- [`building-mcp-servers`](optional-skills/building-mcp-servers/SKILL.md) — Authors an MCP server with the official SDK and gates.
+- [`calling-mcp-tools-via-subprocess`](optional-skills/calling-mcp-tools-via-subprocess/SKILL.md) — Bypasses a flaky MCP broker by spawning the server directly.
+- [`using-mcp`](optional-skills/using-mcp/SKILL.md) — Wires MCP servers into a Copilot client and verifies them.
+
+### 📐 Meta
+
+- [`writing-skills`](optional-skills/writing-skills/SKILL.md) — Authors new SKILL.md files that conform to the dojo spec.
 
 ---
 
 ## Core Principles
 
-- **Simplicity First**: Make every change as simple as possible. Impact minimal code. Fewer lines > more lines.
-- **No Laziness**: Find root causes. No temporary fixes. Senior developer standards. Every shortcut is technical debt.
-- **Zero Hand-Holding**: The user provides intent; the agent handles execution. No asking "which file?", "what command?", or "how do I run tests?" — figure it out.
-- **Continuous Evolution**: The dojo is not static. Lessons feed back into skills. Skills get sharper over time. Measure improvement or it didn't happen.
-- **Mandatory Workflow**: The pipeline is not optional. Brainstorm → Plan → Execute → Review → Finish. Every time.
+- **Simplicity First** — Make every change as small as possible. Fewer lines beats more lines.
+- **No Laziness** — Find root causes. No temporary fixes. Every shortcut is technical debt.
+- **Zero Hand-Holding** — The user provides intent; the agent handles execution. No asking "which file?" or "what command?" — figure it out.
+- **Continuous Evolution** — Lessons feed back into skills. Skills get sharper over time.
+- **Mandatory Workflow** — The pipeline is not optional. Brainstorm → Plan → Execute → Review → Finish. Every time.
+
+---
+
+## See Also
+
+- [`spec/copilot-skills-spec.md`](spec/copilot-skills-spec.md) — Authoritative SKILL.md spec
+- [`AGENTS.md`](AGENTS.md) — Contributor development guide
+- [`.github/known-pitfalls.md`](.github/known-pitfalls.md) — Pitfalls register
+- [`scripts/verify.sh`](scripts/verify.sh) — Single verification gate

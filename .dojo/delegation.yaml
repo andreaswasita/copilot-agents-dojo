@@ -1,0 +1,49 @@
+# Delegation knobs — limits and defaults for the subagent-strategy skill.
+#
+# Read at session start. Values here are the authoritative defaults referenced
+# by skills/subagent-strategy/SKILL.md and skills/dispatching-parallel-agents.
+#
+# Override per-project by editing this file. Override per-call by passing the
+# corresponding argument to the `task` tool.
+#
+# This file is loaded by curator/lesson-updater for diagnostic context only —
+# it does NOT auto-enforce. Enforcement is the agent's responsibility.
+
+version: 1
+
+# Maximum nesting depth for sub-agent spawning.
+# Depth 0 = the user. Depth 1 = the main agent. Depth 2 = first-class sub-agents.
+# Past depth 2, context windows shred and citations become unverifiable.
+max_spawn_depth: 2
+
+# Maximum number of sub-agents the parent may have in flight at once.
+# Past 3, the parent can no longer reason about which result belongs to which
+# mission and integration errors spike.
+max_concurrent_children: 3
+
+# Default `mode` for the `task` tool. Sub-agents launched without an explicit
+# mode use this. "background" lets the parent keep working while results land
+# via completion notifications; "sync" blocks until the child returns.
+default_mode: background
+
+# When sub-agents conflict, the parent must either resolve or escalate.
+# Escalation = log to tasks/lessons.md with error_type=delegation-conflict
+# and proceed with the higher-citation answer.
+conflict_resolution: escalate    # escalate | majority | first-back
+
+# Maximum prompt tokens per sub-agent mission. Missions longer than this are
+# almost always under-scoped — break them up.
+max_mission_tokens: 1500
+
+# How long (seconds) the parent waits on a sync-mode child before treating it
+# as stuck and switching to background polling.
+sync_timeout_seconds: 180
+
+# When a sub-agent's task would persist beyond this turn (deploy, long-running
+# build, multi-day rollout), redirect it to the durable board instead.
+# See skills/durable-work/SKILL.md.
+escalate_to_board_if:
+  - "work must survive parent cancellation"
+  - "estimated duration > 1 turn"
+  - "multiple agents (human + AI) will iterate on the artefact"
+  - "state must be visible across sessions"

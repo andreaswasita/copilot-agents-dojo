@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Copilot Agents Dojo 🏯 — Belt Quest</title>
+<meta name="description" content="Train your GitHub Copilot agents. Earn your belt — 白帯 White to 黒帯 Black — through the Dojo's mandatory workflow.">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --ink:#0d1117;--ink2:#161b22;--panel:#161b22;--panel2:#1c2230;
+    --blue:#1f6feb;--green:#3fb950;--amber:#f59e0b;--violet:#8b5cf6;--teal:#14b8a6;
+    --text:#e6edf3;--text-muted:#9aa7b4;--border:#2b3340;
+    --white-belt:#e6edf3;--blue-belt:#1f6feb;--brown-belt:#a16838;--black-belt:#0b0e14;
+    --panel-w:480px;--top-bar:54px;
+  }
+  html,body{height:100%;overflow:hidden;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:var(--text);
+    background:
+      radial-gradient(1200px 600px at 80% -10%,rgba(31,111,235,.10),transparent 60%),
+      radial-gradient(900px 500px at 10% 110%,rgba(245,158,11,.08),transparent 60%),
+      var(--ink);
+  }
+  /* faint shoji-grid texture */
+  body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.5;
+    background-image:linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);
+    background-size:44px 44px}
+
+  .top-bar{position:fixed;top:0;left:0;right:0;height:var(--top-bar);background:rgba(13,17,23,.85);backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px;padding:0 22px;z-index:100}
+  .top-bar .title{font-size:15px;font-weight:700;white-space:nowrap;letter-spacing:.3px}
+  .top-bar .title .mark{font-weight:400}
+  .top-bar .title span{color:var(--blue)}
+  .belt-pill{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;padding:4px 11px;border-radius:999px;
+    border:1px solid var(--border);background:var(--ink2);white-space:nowrap}
+  .belt-pill .swatch{width:13px;height:13px;border-radius:3px;border:1px solid rgba(255,255,255,.25)}
+  .progress-wrap{flex:1;max-width:440px;margin:0 auto;display:flex;align-items:center;gap:10px}
+  .progress-track{flex:1;height:9px;background:var(--ink2);border:1px solid var(--border);border-radius:6px;overflow:hidden}
+  .progress-fill{height:100%;width:0;border-radius:6px;transition:width .6s cubic-bezier(.4,0,.2,1),background .6s}
+  .progress-label{font-size:12.5px;color:var(--text-muted);min-width:84px;text-align:right}
+  .btn-reset{background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:6px 12px;border-radius:7px;
+    cursor:pointer;font-size:12px;white-space:nowrap;transition:all .2s}
+  .btn-reset:hover{border-color:var(--amber);color:var(--amber)}
+
+  .phase-label{position:absolute;font-weight:800;text-transform:uppercase;letter-spacing:3px;color:var(--text-muted);opacity:.6;pointer-events:none;z-index:3}
+  .phase-label .kanji{display:block;font-size:22px;letter-spacing:6px;opacity:.9;margin-bottom:2px}
+  .phase-label .en{font-size:12px}
+  .phase-label .swatch{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:middle;border:1px solid rgba(255,255,255,.3)}
+  .phase-label.p1{top:74px;left:1.6%}.phase-label.p2{top:74px;left:27%}.phase-label.p3{top:74px;left:52%}.phase-label.p4{top:74px;left:77.5%}
+  .phase-divider{position:absolute;top:var(--top-bar);bottom:0;width:1px;
+    background:linear-gradient(to bottom,transparent,var(--border) 14%,var(--border) 86%,transparent);opacity:.7;pointer-events:none}
+  .phase-divider.d1{left:25.5%}.phase-divider.d2{left:50.5%}.phase-divider.d3{left:75.5%}
+
+  .quest-map{position:fixed;top:var(--top-bar);left:0;right:0;bottom:0;overflow:hidden;z-index:1}
+  .quest-map svg.path-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+
+  .torii{position:absolute;right:2.2%;top:50%;transform:translateY(-50%);opacity:.16;pointer-events:none;z-index:1;color:var(--amber);filter:drop-shadow(0 0 14px rgba(245,158,11,.4))}
+  .torii .dojo-ico{width:172px;height:172px;stroke-width:.85}
+  /* hand-drawn icon sizing (torii watermark + belt banner) */
+  .dojo-ico{width:28px;height:28px;display:block;color:var(--text);object-fit:contain;user-select:none;-webkit-user-drag:none}
+  .dojo-ico.tw{filter:drop-shadow(0 1px 2px rgba(0,0,0,.45))}
+  .node .inner{color:var(--text)}
+  .node.active .inner .dojo-ico{color:#bcd4ff}
+  .node.complete.belt1 .inner .dojo-ico,.node.complete.belt2 .inner .dojo-ico,.node.complete.belt3 .inner .dojo-ico,.node.complete.belt4 .inner .dojo-ico{color:var(--green)}
+  .emoji-big .dojo-ico{width:34px;height:34px}
+  .m-node .dojo-ico{width:26px;height:26px}
+  .m-item.active .m-node .dojo-ico{color:#bcd4ff}
+  .m-check-done{color:var(--green);font-size:22px;font-weight:700}
+  .belt-emoji .dojo-ico{width:56px;height:56px;display:inline-block;stroke-width:1.5}
+
+  .node{position:absolute;width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    cursor:pointer;transition:all .35s cubic-bezier(.4,0,.2,1);z-index:10;transform:translate(-50%,-50%)}
+  .node .ring{position:absolute;inset:-5px;border-radius:50%;border:2px solid var(--border);transition:all .35s}
+  .node .inner{width:100%;height:100%;border-radius:50%;background:var(--panel2);display:flex;align-items:center;justify-content:center;
+    font-size:23px;position:relative;z-index:1;transition:all .35s;border:2px solid var(--border)}
+  .node .lock{position:absolute;font-size:14px;opacity:.8}
+  .node.active .ring{border-color:var(--blue);box-shadow:0 0 22px rgba(31,111,235,.45);animation:pulse-ring 2s infinite}
+  .node.active .inner{border-color:var(--blue);background:rgba(31,111,235,.16);transform:scale(1.1)}
+  .node.active .lock{display:none}
+  .node.complete .ring{border-color:var(--green);box-shadow:0 0 14px rgba(63,185,80,.3)}
+  .node.complete .inner{border-color:var(--green);background:rgba(63,185,80,.18)}
+  .node.complete .lock{display:none}
+  .node.locked{cursor:not-allowed}
+  .node.locked .inner{opacity:.45;filter:grayscale(.4)}
+  .node:not(.locked):hover{transform:translate(-50%,-50%) scale(1.12)}
+  .node .label{position:absolute;top:calc(100% + 11px);white-space:nowrap;font-size:11px;font-weight:600;color:var(--text-muted);
+    text-align:center;pointer-events:none;transition:color .3s;max-width:130px;left:50%;transform:translateX(-50%);line-height:1.25}
+  .node.active .label{color:var(--blue)}.node.complete .label{color:var(--green)}
+  .check-icon{display:none;color:var(--green)}.node.complete .check-icon{display:block}.node.complete .emoji{display:none}
+  @keyframes pulse-ring{0%,100%{box-shadow:0 0 20px rgba(31,111,235,.3)}50%{box-shadow:0 0 34px rgba(31,111,235,.6)}}
+
+  /* belt-tinted node rings per phase when complete */
+  .node.complete.belt1 .inner{border-color:var(--white-belt)}
+  .node.complete.belt2 .inner{border-color:var(--blue-belt)}
+  .node.complete.belt3 .inner{border-color:var(--brown-belt)}
+  .node.complete.belt4 .inner{border-color:var(--amber)}
+
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;opacity:0;pointer-events:none;transition:opacity .3s}
+  .overlay.open{opacity:1;pointer-events:auto}
+  .panel{position:fixed;top:0;right:0;bottom:0;width:var(--panel-w);max-width:94vw;background:var(--panel);
+    border-left:1px solid var(--border);z-index:210;transform:translateX(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);
+    display:flex;flex-direction:column;overflow-y:auto;box-shadow:-8px 0 40px rgba(0,0,0,.5)}
+  .panel.open{transform:translateX(0)}
+  .panel-belt-bar{height:5px;width:100%;background:var(--border)}
+  .panel-header{padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:13px}
+  .panel-header .emoji-big{font-size:34px;line-height:1}
+  .panel-header .meta{flex:1}
+  .panel-header .meta .kicker{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);margin-bottom:5px}
+  .panel-header .meta h2{font-size:19px;font-weight:800;margin-bottom:4px}
+  .panel-header .meta .time{font-size:12px;color:var(--text-muted)}
+  .panel-close{background:none;border:none;color:var(--text-muted);font-size:23px;cursor:pointer;padding:2px 4px;line-height:1}
+  .panel-close:hover{color:var(--text)}
+  .panel-body{flex:1;padding:20px 24px 30px;display:flex;flex-direction:column;gap:16px}
+  .panel-body .desc{font-size:14px;line-height:1.6;color:var(--text)}
+  .panel-body .desc code{background:var(--ink2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;font-size:12.5px;font-family:'Cascadia Code','Fira Code',monospace}
+  .panel-body .desc strong{color:#fff}
+  .panel-body a{color:var(--blue)}
+
+  .copy-group{display:flex;flex-direction:column;gap:10px}
+  .copy-label{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-muted);margin-bottom:5px}
+  .copy-block{position:relative;background:var(--ink2);border:1px solid var(--border);border-radius:9px;padding:12px 46px 12px 14px;
+    font-family:'Cascadia Code','Fira Code',monospace;font-size:12.5px;line-height:1.5;color:var(--text);white-space:pre-wrap;word-break:break-word}
+  .copy-btn{position:absolute;top:8px;right:8px;background:var(--panel2);border:1px solid var(--border);color:var(--text-muted);
+    width:30px;height:30px;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
+  .copy-btn:hover{background:var(--blue);color:#fff;border-color:var(--blue)}
+  .copy-btn.copied{background:var(--green);color:#fff;border-color:var(--green)}
+
+  .substeps{list-style:none;padding:0;display:flex;flex-direction:column;gap:7px;margin-top:2px}
+  .substeps li{font-size:13px;color:var(--text-muted);padding-left:20px;position:relative;line-height:1.5}
+  .substeps li::before{content:'';position:absolute;left:2px;top:7px;width:8px;height:8px;border-radius:50%;border:2px solid var(--teal)}
+
+  .toggle-done{display:flex;align-items:center;gap:11px;padding:13px 16px;border-radius:10px;border:2px solid var(--border);
+    background:transparent;cursor:pointer;font-size:14px;font-weight:700;color:var(--text);transition:all .25s;width:100%;text-align:left}
+  .toggle-done .dot{width:23px;height:23px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;
+    transition:all .25s;flex-shrink:0;font-size:13px}
+  .toggle-done:hover{border-color:var(--green)}
+  .toggle-done.checked{border-color:var(--green);background:rgba(63,185,80,.1)}
+  .toggle-done.checked .dot{background:var(--green);border-color:var(--green);color:#fff}
+
+  .stuck-toggle{background:none;border:none;color:var(--amber);font-size:13px;cursor:pointer;padding:2px 0;display:flex;align-items:center;gap:6px;font-weight:600}
+  .stuck-toggle:hover{text-decoration:underline}
+  .stuck-content{max-height:0;overflow:hidden;transition:max-height .35s;font-size:13px;color:var(--text-muted);line-height:1.65}
+  .stuck-content.open{max-height:600px}
+  .stuck-content p{margin-top:9px}
+
+  .skill-card{display:flex;align-items:center;gap:12px;padding:11px 15px;border-radius:11px;text-decoration:none;
+    background:linear-gradient(135deg,rgba(139,92,246,.13),rgba(31,111,235,.13));border:1px solid rgba(139,92,246,.32);transition:all .2s}
+  .skill-card:hover{border-color:rgba(139,92,246,.6);transform:translateY(-1px);box-shadow:0 6px 18px rgba(139,92,246,.18)}
+  .skill-card .ico{width:38px;height:38px;border-radius:9px;background:linear-gradient(135deg,var(--violet),var(--blue));display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+  .skill-card .info{display:flex;flex-direction:column;gap:1px;min-width:0}
+  .skill-card .info .l{font-size:10.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px}
+  .skill-card .info .n{font-size:14px;color:#fff;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .skill-card .arrow{margin-left:auto;color:var(--text-muted);font-size:17px}
+
+  /* celebration */
+  .confetti{position:fixed;width:10px;height:16px;pointer-events:none;z-index:999;border-radius:2px}
+  .banner{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);background:rgba(22,27,34,.98);
+    border:2px solid var(--amber);border-radius:18px;padding:34px 56px;text-align:center;z-index:1000;
+    transition:transform .55s cubic-bezier(.175,.885,.32,1.275);box-shadow:0 20px 70px rgba(0,0,0,.6);max-width:90vw}
+  .banner.show{transform:translate(-50%,-50%) scale(1)}
+  .banner .belt-emoji{font-size:46px;margin-bottom:8px}
+  .banner h1{font-size:26px;margin-bottom:6px}
+  .banner .jp{font-size:15px;color:var(--amber);letter-spacing:4px;margin-bottom:10px}
+  .banner p{color:var(--text-muted);font-size:14.5px;line-height:1.5}
+  .banner .cert-actions{display:flex;gap:10px;justify-content:center;margin-top:18px;flex-wrap:wrap}
+  .banner button.cta{background:var(--amber);border:none;color:#1b1300;font-weight:700;padding:10px 18px;border-radius:9px;cursor:pointer;font-size:13.5px}
+  .banner button.cta.ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
+  .banner canvas{max-width:340px;width:100%;border-radius:10px;border:1px solid var(--border);margin-top:6px}
+
+  .credit{position:fixed;bottom:9px;left:50%;transform:translateX(-50%);font-size:11px;color:var(--text-muted);opacity:.6;pointer-events:none;letter-spacing:.3px;z-index:5;text-align:center}
+  .credit a{color:var(--text-muted);pointer-events:auto}
+
+  .panel::-webkit-scrollbar{width:7px}.panel::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+
+  #mobileList{display:none}
+  @media(max-width:820px){
+    html,body{overflow:auto;height:auto}
+    :root{--top-bar:50px}
+    body::before{display:none}
+    .top-bar{padding:0 12px;gap:8px}
+    .top-bar .title{font-size:12.5px}
+    .belt-pill{display:none}
+    .progress-wrap{max-width:none;gap:7px}
+    .progress-label{min-width:62px;font-size:11.5px}
+    .btn-reset{padding:5px 9px;font-size:11px}
+    .quest-map,.phase-label,.phase-divider,.path-svg,.torii{display:none!important}
+    #mobileList{display:flex;flex-direction:column;padding:62px 16px 90px;gap:0}
+    .m-phase-header{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted);padding:22px 0 12px}
+    .m-phase-header:first-child{padding-top:4px}
+    .m-phase-header .kanji{font-size:18px;letter-spacing:3px;color:var(--text)}
+    .m-phase-header .sw{width:12px;height:12px;border-radius:3px;border:1px solid rgba(255,255,255,.3)}
+    .m-item{display:flex;align-items:center;gap:14px;padding:13px 0;position:relative;cursor:pointer}
+    .m-item::before{content:'';position:absolute;left:25px;top:0;bottom:0;width:2px;background:var(--border);z-index:0}
+    .m-item:last-child::before{bottom:50%}
+    .m-node{width:50px;height:50px;border-radius:50%;background:var(--panel2);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:21px;flex-shrink:0;position:relative;z-index:1;transition:all .3s}
+    .m-item.complete .m-node{border-color:var(--green);background:rgba(63,185,80,.18)}
+    .m-item.active .m-node{border-color:var(--blue);background:rgba(31,111,235,.16);box-shadow:0 0 12px rgba(31,111,235,.35)}
+    .m-item.locked .m-node{opacity:.45}
+    .m-text{flex:1;min-width:0}
+    .m-text .m-title{font-size:15px;font-weight:700;color:var(--text)}
+    .m-item.complete .m-title{color:var(--green)}
+    .m-item.active .m-title{color:var(--blue)}
+    .m-item.locked .m-title{color:var(--text-muted)}
+    .m-text .m-time{font-size:12px;color:var(--text-muted)}
+    .m-check{color:var(--green);font-size:18px;flex-shrink:0;opacity:0;transition:opacity .3s}
+    .m-item.complete .m-check{opacity:1}
+    .panel{width:100%;max-width:100%;border-left:none;border-radius:18px 18px 0 0;top:auto;bottom:0;max-height:88vh;transform:translateY(100%)}
+    .panel.open{transform:translateY(0)}
+    .banner{padding:24px 26px}.banner h1{font-size:21px}
+    .credit{position:relative;transform:none;left:0;padding:20px 0}
+  }
+</style>
+</head>
+<body>
+<div class="top-bar">
+  <div class="title"><span>Copilot Agents Dojo</span> <span class="mark">🏯</span> — Belt Quest</div>
+  <div class="belt-pill" id="beltPill"><span class="swatch" id="beltSwatch"></span><span id="beltName">白帯 White Belt</span></div>
+  <div class="progress-wrap">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-label" id="progressLabel">0 / 0</div>
+  </div>
+  <button class="btn-reset" onclick="resetProgress()">Reset</button>
+</div>
+
+<div class="quest-map" id="questMap">
+  <svg class="path-svg" id="pathSvg" preserveAspectRatio="none"></svg>
+  <div class="torii" id="toriiBg"></div>
+</div>
+<div id="mobileList"></div>
+
+<div class="overlay" id="overlay" onclick="closePanel()"></div>
+<div class="panel" id="panel">
+  <div class="panel-belt-bar" id="panelBeltBar"></div>
+  <div class="panel-header">
+    <div class="emoji-big" id="panelEmoji"></div>
+    <div class="meta"><div class="kicker" id="panelKicker"></div><h2 id="panelTitle"></h2><div class="time" id="panelTime"></div></div>
+    <button class="panel-close" onclick="closePanel()">✕</button>
+  </div>
+  <div class="panel-body" id="panelBody"></div>
+</div>
+
+<div class="banner" id="banner"></div>
+
+<div class="credit">
+  Copilot Agents Dojo — Belt Quest ·
+  <a href="https://github.com/andreaswasita/copilot-agents-dojo" target="_blank" rel="noopener">github.com/andreaswasita/copilot-agents-dojo</a>
+  · emoji by <a href="https://github.com/jdecked/twemoji" target="_blank" rel="noopener">Twemoji</a> (CC-BY 4.0, inlined)
+</div>
+
+<script>
+/* ───────────────── Hand-drawn Japanese icon set (inline SVG) ─────────────────
+   Original line-art, 24×24, stroke=currentColor — license-free & self-contained. */
+function svgIco(inner){
+  return `<svg class="dojo-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inner}</svg>`;
+}
+const ICONS = {
+  dojo:    svgIco(`<path d="M3 10.2c2.6-1.4 5.6-2.1 9-2.1s6.4.7 9 2.1"/><path d="M12 5 4.5 9.6h15L12 5Z"/><path d="M6 10.5V19M18 10.5V19"/><path d="M9.5 19v-3.5a2.5 2.5 0 0 1 5 0V19"/><path d="M4 19.2h16"/>`),
+  clipboard:svgIco(`<rect x="5.5" y="4.5" width="13" height="16" rx="2"/><path d="M9 4.5V3.8a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v.7"/><path d="M8.5 11.5l2 2 4-4"/><path d="M8.5 16.5h7"/>`),
+  sprout:  svgIco(`<path d="M12 21v-7.5"/><path d="M12 13.5c0-3.3 2.2-5.5 6.5-5.5 0 3.3-2.2 5.5-6.5 5.5Z"/><path d="M12 15c0-2.7-2-4.8-5.5-4.8 0 2.7 2 4.8 5.5 4.8Z"/><path d="M7 21h10"/>`),
+  belt:    svgIco(`<path d="M2.5 10.5h7.5"/><path d="M14 10.5h7.5"/><rect x="9.5" y="8.7" width="5" height="3.6" rx="0.6"/><path d="M10.8 12.3 9 17.5"/><path d="M13.2 12.3 15 17.5"/>`),
+  map:     svgIco(`<path d="M9 4.2 4 6.2v13.6l5-2 6 2 5-2V4.2l-5 2-6-2Z"/><path d="M9 4.2v13.6"/><path d="M15 6.2v13.6"/>`),
+  enso:    svgIco(`<path d="M16.8 6A8 8 0 1 0 19.3 11.6"/><path d="M19.3 11.6 21 9.4M19.3 11.6l-2.2.3"/>`),
+  brush:   svgIco(`<path d="M20.5 4.5 12.5 12.5"/><path d="M12.8 12.2c-1.7-1.7-4.3-1.2-5.4 1-1 2.2-3.4 2.3-3.4 2.3s.1-2.5 1.2-4.7c1.1-2.2 4.4-2.4 6.1-.7Z"/>`),
+  stamp:   svgIco(`<circle cx="12" cy="8.5" r="4.5"/><path d="M9.8 8.5l1.6 1.6 3-3.2"/><path d="M6 20h12"/><path d="M9 20v-2.2a3 3 0 0 1 6 0V20"/>`),
+  bonsai:  svgIco(`<path d="M12 16.5v-3.8"/><path d="M12 12.7c-2 0-4-1-4-3 2 0 4 1 4 3Z"/><path d="M12 11.8c.2-2.4 2-4 4.2-4 0 2.3-1.8 4-4.2 4Z"/><path d="M7 16.5c0 1.7 2.2 2.3 5 2.3s5-.6 5-2.3"/><path d="M9.5 18.8h5"/>`),
+  katana:  svgIco(`<path d="M3.5 20.5 14.5 9.5"/><path d="M12.8 7.8l3.4 3.4"/><path d="M14.5 9.5 19 5"/><path d="M18 4l2 2"/>`),
+  shuriken:svgIco(`<path d="M12 3.5 14 8.3l4.8 2.2-4.8 2.2-2 4.8-2-4.8-4.8-2.2L10 8.3Z"/><circle cx="12" cy="10.8" r="1.2"/>`),
+  lantern: svgIco(`<ellipse cx="12" cy="11.5" rx="4.3" ry="5.8"/><path d="M8.1 9h7.8M7.7 11.5h8.6M8.1 14h7.8"/><path d="M12 3v2.7M9.5 5.7h5M12 17.3V20"/>`),
+  bamboo:  svgIco(`<path d="M9.5 21V4"/><path d="M7.8 7.5h3.4M7.8 12h3.4M7.8 16.5h3.4"/><path d="M14 21V8.5"/><path d="M12.6 12.5h2.8M12.6 16.5h2.8"/><path d="M9.5 9.5c2.2 0 4.2-1 4.5-3"/>`),
+  scroll:  svgIco(`<path d="M8.5 5h8.5a1.2 1.2 0 0 1 1.2 1.2v11.6a1.2 1.2 0 0 1-1.2 1.2H8.5"/><path d="M6 6.2a2 2 0 0 1 4 0v11.6a2 2 0 0 1-4 0Z"/><path d="M11.5 9.5h4M11.5 12.5h4"/>`),
+  gear:    svgIco(`<circle cx="12" cy="12" r="3"/><path d="M12 3.5v2.2M12 18.3v2.2M3.5 12h2.2M18.3 12h2.2M6 6l1.6 1.6M16.4 16.4 18 18M18 6l-1.6 1.6M7.6 16.4 6 18"/>`),
+  target:  svgIco(`<circle cx="11" cy="13" r="6.8"/><circle cx="11" cy="13" r="2.8"/><path d="M11 13 20.5 3.5"/><path d="M16.5 3.5h4v4"/>`),
+  magnifier:svgIco(`<circle cx="10.8" cy="10.8" r="6"/><path d="M19.5 19.5 15 15"/>`),
+  nobori:  svgIco(`<path d="M6 3.2v17.6"/><path d="M6 4.5h11.5v12.5H6"/><path d="M10.5 7.5v6.5M14 9v3.5"/>`),
+  torii:   svgIco(`<path d="M4.5 20.5V9"/><path d="M19.5 20.5V9"/><path d="M3 6.4c5.5-2 13-2 18 0"/><path d="M3.2 9.3h17.6"/><path d="M7.5 12.4h9"/>`),
+  scrolls: svgIco(`<rect x="4" y="5" width="16" height="4.6" rx="2.3"/><rect x="4" y="11" width="16" height="4.6" rx="2.3"/><path d="M7.6 5v4.6M7.6 11v4.6"/><path d="M5 18.2h14"/>`),
+  fuji:    svgIco(`<path d="M3 19.2h18"/><path d="M3.8 19 10 9.5l3.6 4.6 2-2.6 4.6 7.5Z"/><path d="M8.2 13.6l1.6 1.1 1.5-1.2"/><circle cx="18" cy="6.6" r="2.2"/>`),
+  link:    svgIco(`<path d="M10 8.5H8.5a3.5 3.5 0 0 0 0 7H10"/><path d="M14 15.5h1.5a3.5 3.5 0 0 0 0-7H14"/><path d="M8.8 12h6.4"/>`),
+  daruma:  svgIco(`<path d="M12 3.8c-3.6 0-6 3.2-6 7.2s2.4 8.2 6 8.2 6-4.2 6-8.2-2.4-7.2-6-7.2Z"/><path d="M9 10.2c.6-.7 1.7-.7 2.3 0M12.7 10.2c.6-.7 1.7-.7 2.3 0"/><path d="M9.3 14c1.6 1.1 4 1.1 5.4 0"/>`),
+};
+/* ── Twemoji icons — colourful Twitter Emoji (CC-BY 4.0, github.com/jdecked/twemoji),
+   inlined below as SVG so the page is fully self-contained / offline. Each checkpoint
+   renders its own `emoji`, with a few thematic overrides. ── */
+const TW_SVG={"1f3ef":`<svg class="dojo-ico tw" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36"><path fill="#D1D3D4" d="M5 23h26v7H5z"/><path fill="#D99E82" d="M0 36h36l-4-7H4z"/><path fill="#66757F" d="M30 20H6l-5 4h34z"/><path fill="#D1D3D4" d="M18 9.882L9.764 14h16.472z"/><path fill="#66757F" d="M30 14l-1-5H7l-1 5-4 3h32l-4-3zM18 9.882L26.236 14H9.764L18 9.882z"/><path fill="#D1D3D4" d="M6 17h24v3H6zm18-8V5H12v4h-2v2h16V9z"/><path fill="#66757F" d="M12 2h12v2l2 2H10l2-2z"/><path fill="#99AAB5" d="M23 0v1H13V0h-1v2h12V0z"/><path fill="#66757F" d="M30 14.764l-5.105-2.553-6-3L18 8.764l-.895.447-6 3L6 14.764V16h24v-1.236zM12 14l6-3 6 3H12z"/><path fill="#6D6E71" d="M5 27h26v2H5z"/></svg>`,
+"1f4cb":`<svg class="dojo-ico tw" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36"><path fill="#C1694F" d="M32 34c0 1.104-.896 2-2 2H6c-1.104 0-2-.896-2-2V7c0-1.104.896-2 2-2h24c1.104 0 2 .896 2 2v27z"/><path fill="#FFF" d="M29 32c0 .553-.447 1-1 1H8c-.552 0-1-.447-1-1V9c0-.552.448-1 1-1h20c.553 0 1 .448 1 1v23z"/><path fill="#CCD6DD" d="M25 3h-4c0-1.657-1.343-3-3-3s-3 1.343-3 3h-4c-1.104 0-2 .896-2 2v5h18V5c0-1.104-.896-2-2-2z"/><circle fill="#292F33" cx="18" cy="3" r="2"/><path fill="#99AAB5" d="M20 14c0 .552-.447 1-1 1h-9c-.552 0-1-.448-1-1s.448-1 1-1h9c.553 0 1 .448 1 1zm7 4c0 .552-.447 1-1 1H10c-.552 0-1-.448-1-1s.448-1 1-1h16c.553 0 1 .448 1 1zm0 4c0 .553-.447 1-1 1H10c-.552 0-1-.447-1-1 0-.553.448-1 1-1h16c.553 0 1 .447 1 1zm0 4c0 .553-.447 1-1 1H10c-.552 0-1-.447-1-1 0-.553.448-1 1-1h16c.553 0 1 .447 1 1zm0 4c0 .553-.447 1-1 1h-9c-.552 0-1-.447-1-1 0-.553.448-1 1-1h9c.553 0 1 .447 1 1z"/></svg>`,
+"26a1":`<svg class="dojo-ico tw" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36"><path fill="#FFAC33" d="M32.938 15.651C32.792 15.26 32.418 15 32 15H19.925L26.89 1.458c.219-.426.106-.947-.271-1.243C26.437.071 26.218 0 26 0c-.233 0-.466.082-.653.243L18 6.588 3.347 19.243c-.316.273-.43.714-.284 1.105S3.582 21 4 21h12.075L9.11 34.542c-.219.426-.106.947.271 1.243.182.144.401.215.619.215.233 0 .466-.082.653-.243L18 29.412l14.653-12.655c.317-.273.43-.714.285-1.106z"/></svg>`,
+"1f94b":`<svg class="dojo-ico tw" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36"><path fill="#E1E8ED" d="M34 6c-2-3-9-4-16-4S3 3 2 5C.093 8.814 1 25 1 26s5 1 5 1V14l1-2v23s3 1 11 1 11-1 11-1V12l1 2v13s5 0 5-1 1.365-16.452-1-20z"/><path fill="#99AAB5" d="M7 27H6V14c0-1 1-2 1-2v15zm23 0h-1V12s1 1 1 2v13z"/><path fill="#66757F" d="M11.781 2l6.281 11.344L24 2 17.891.75z"/><path fill="#CCD6DD" d="M12 .625s2.25-.547 6-.547 6 .547 6 .547V3s-1.625-1-6-1-6 1-6 1V.625z"/><path fill="#99AAB5" d="M7 35S24.748 3.341 24.748 2.362c0-1-.748-1.737-.748-1.737L7 32v3z"/><path fill="#99AAB5" d="M17.818 14.722s-6.692-11.381-6.692-12.36c0-1 .874-1.737.874-1.737l6.761 12.573-.943 1.524z"/><path fill="#292F33" d="M7 22s5 2 11 2 11-2 11-2v3s-4 2-11 2-11-2-11-2v-3z"/><path fill="#292F33" d="M21 24s-2-1-3-1-3 1-3 1-1 0-1 1 1 2 1 2 2 1 3 1 3-1 3-1 1-1 1-2-1-1-1-1z"/><path fill="#292F33" d="M12 33l3 1s1-5 3-7l-2-3s-3 4-4 9zm12 0l-3 1s-1-5-3-7l2-3s3 4 4 9z"/></svg>`,
+"1f4c2":`<svg class="dojo-ico tw" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36"><path fill="#269" d="M0 29c0 2.209 1.791 4 4 4h24c2.209 0 4-1.791 4-4V12c0-2.209-1.791-4-4-4h-9c-3.562 0-3-5-8.438-5H4C1.791 3 0 4.791 0 7v22z"/><path fill="#55ACEE" d="M32.336 12h-6.562c-5.438 0-5.383 5-8.945 5h-9c-2.209 0-4.182 1.791-4.406 4l-.493 3.874L2.406 29l-.02-.002c-.116.607-.672.999-1.3.999-.643 0-1.106-.507-1.074-1.144C.01 28.903 0 28.95 0 29c0 2.004 1.478 3.648 3.4 3.939.177.038.371.061.6.061h26c2.209 0 4.182-1.791 4.406-4l1.523-13c.225-2.209-1.384-4-3.593-4z"/></svg>`,
+"1f513":`<svg class="dojo-ico tw" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36"><path fill="#AAB8C2" d="M18 0c-4.612 0-8.483 3.126-9.639 7.371l3.855 1.052A5.999 5.999 0 0 1 18 4a6 6 0 0 1 6 6v10h4V10c0-5.522-4.477-10-10-10Z"/><path fill="#FFAC33" d="M32 32a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V18a4 4 0 0 1 4-4h20a4 4 0 0 1 4 4v14Z"/></svg>`,
+"1f4dd":`<svg class="dojo-ico tw" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36"><path fill="#CCD6DD" d="M31 32c0 2.209-1.791 4-4 4H5c-2.209 0-4-1.791-4-4V4c0-2.209 1.791-4 4-4h22c2.209 0 4 1.791 4 4v28z"/><path fill="#99AAB5" d="M27 24c0 .553-.447 1-1 1H6c-.552 0-1-.447-1-1 0-.553.448-1 1-1h20c.553 0 1 .447 1 1zm-16 4c0 .553-.448 1-1 1H6c-.552 0-1-.447-1-1 0-.553.448-1 1-1h4c.552 0 1 .447 1 1zM27 8c0 .552-.447 1-1 1H6c-.552 0-1-.448-1-1s.448-1 1-1h20c.553 0 1 .448 1 1zm0 4c0 .553-.447 1-1 1H6c-.552 0-1-.447-1-1 0-.553.448-1 1-1h20c.553 0 1 .447 1 1zm0 4c0 .553-.447 1-1 1H6c-.552 0-1-.447-1-1 0-.553.448-1 1-1h20c.553 0 1 .447 1 1zm0 4c0 .553-.447 1-1 1H6c-.552 0-1-.447-1-1 0-.553.448-1 1-1h20c.553 0 1 .447 1 1z"/><path fill="#66757F" d="M31 6.272c-.827-.535-1.837-.579-2.521-.023l-.792.646-1.484 1.211-.1.08-2.376 1.938-11.878 9.686c-.437.357-.793 1.219-1.173 2.074-.378.85-.969 2.852-1.443 4.391-.148.25-1.065 1.846-.551 2.453.52.615 2.326.01 2.568-.076 1.626-.174 3.731-.373 4.648-.58.924-.211 1.854-.395 2.291-.752.008-.006.01-.018.017-.023l11.858-9.666.792-.646.144-.118V6.272z"/><path fill="#D99E82" d="M18.145 22.526s-1.274-1.881-2.117-2.553c-.672-.843-2.549-2.116-2.549-2.116-.448-.446-1.191-.48-1.629-.043-.437.438-.793 1.366-1.173 2.291-.472 1.146-1.276 4.154-1.768 5.752-.083.272.517-.45.503-.21-.01.187.027.394.074.581l-.146.159.208.067c.025.082.05.154.068.21l.159-.146c.187.047.394.084.58.074.24-.014-.483.587-.21.503 1.598-.493 4.607-1.296 5.752-1.768.924-.381 1.854-.736 2.291-1.174.439-.435.406-1.178-.043-1.627z"/><path fill="#EA596E" d="M25.312 4.351c-.876.875-.876 2.293 0 3.168l3.167 3.168c.876.874 2.294.874 3.168 0l3.169-3.168c.874-.875.874-2.293 0-3.168l-3.169-3.168c-.874-.875-2.292-.875-3.168 0l-3.167 3.168z"/><path fill="#FFCC4D" d="M11.849 17.815l3.17 3.17 3.165 3.166 11.881-11.879-6.337-6.336-11.879 11.879z"/><path fill="#292F33" d="M11.298 26.742s-2.06 1.133-2.616.576c-.557-.558.581-2.611.581-2.611s1.951.036 2.035 2.035z"/><path fill="#CCD6DD" d="M23.728 5.935l3.96-3.96 6.336 6.337-3.96 3.96z"/><path fill="#99AAB5" d="M26.103 3.558l.792-.792 6.336 6.335-.792.792zM24.52 5.142l.791-.791 6.336 6.335-.792.792z"/></svg>`,
+"2705":`<svg class="dojo-ico tw" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36"><path fill="#77B255" d="M36 32c0 2.209-1.791 4-4 4H4c-2.209 0-4-1.791-4-4V4c0-2.209 1.791-4 4-4h28c2.209 0 4 1.791 4 4v28z"/><path fill="#FFF" d="M29.28 6.362c-1.156-.751-2.704-.422-3.458.736L14.936 23.877l-5.029-4.65c-1.014-.938-2.596-.875-3.533.138-.937 1.014-.875 2.596.139 3.533l7.209 6.666c.48.445 1.09.665 1.696.665.673 0 1.534-.282 2.099-1.139.332-.506 12.5-19.27 12.5-19.27.751-1.159.421-2.707-.737-3.458z"/></svg>`,
+"1f48e":`<svg class="dojo-ico tw" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36"><path fill="#BDDDF4" d="M13 3H7l-7 9h10z"/><path fill="#5DADEC" d="M36 12l-7-9h-6l3 9z"/><path fill="#4289C1" d="M26 12h10L18 33z"/><path fill="#8CCAF7" d="M10 12H0l18 21zm3-9l-3 9h16l-3-9z"/><path fill="#5DADEC" d="M18 33l-8-21h16z"/></svg>`,
+"1f41b":`<svg class="dojo-ico tw" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36"><path fill="#AA8DD8" d="M7.415 4c1-1 .25-4-1.438-4s-1.562 2-.562 2 1 2 1 3 1-1 1-1zM3.232 5.72c1-1 .25-4-1.438-4s-1.562 2-.562 2 1 2 1 3 1-1 1-1z"/><path fill="#744EAA" d="M29.607 32.856c.189.808 1.227 2.28 2.032 2.091.806-.19 1.077-1.971.888-2.777-.189-.808-.998-1.307-1.804-1.117-.805.19-1.306.997-1.116 1.803zm-5.434.649c.003.83.681 2.498 1.509 2.495.828-.004 1.494-1.677 1.491-2.506-.003-.829-.677-1.497-1.505-1.495-.828.004-1.498.677-1.495 1.506zm-5.271-2.446c-.326.764-.365 2.563.396 2.89.763.324 2.037-.947 2.363-1.71.325-.762-.028-1.643-.789-1.97-.762-.325-1.643.027-1.97.79zm-5.031-11.04c-.812.172-2.308 1.173-2.139 1.983.173.81 1.945 1.124 2.757.953.811-.171 1.329-.967 1.16-1.777-.172-.81-.965-1.33-1.778-1.159zm-2.037-5c-.812.172-2.308 1.173-2.139 1.983.173.81 1.945 1.124 2.757.953.811-.171 1.329-.967 1.16-1.777-.172-.81-.966-1.33-1.778-1.159z"/><path fill="#9266CC" d="M27.244 34c2.831 0 4.926-.877 5.266-1.027 2.271-1.01 3.293-3.669 2.284-5.939-.999-2.25-3.616-3.275-5.872-2.314-.133.05-1.793.649-3.343-.072-1.851-.861-2.995-3.309-3.628-5.209-.144-.43-.385-1.274-.686-2.316-1.866-6.471-2.832-8.285-3.983-9.82C13.571 2.352 7.69 2.007 4.799 2.587c-2.437.487-4.018 2.858-3.53 5.295.488 2.438 2.86 4.02 5.296 3.53.162-.026 2.204-.306 3.424 1.169.643 1.287 2.08 5.128 2.63 7.034.346 1.199.629 2.171.794 2.667 1.773 5.317 4.666 8.893 8.603 10.629C23.868 33.729 25.67 34 27.244 34z"/><circle fill="#FFF" cx="6.682" cy="5" r="1"/><path d="M30.923 32.964c-.089 0-.18-.012-.269-.036-.532-.148-.844-.699-.696-1.231.757-2.722-.77-4.542-.785-4.56-.359-.419-.312-1.051.107-1.41.418-.359 1.051-.312 1.41.107.092.107 2.234 2.66 1.195 6.397-.122.443-.525.733-.962.733zm-7.199-.563c-.245 0-.49-.089-.684-.27-.403-.378-.424-1.011-.047-1.414 1.485-1.587 1.453-4.193 1.452-4.22-.016-.552.419-1.012.972-1.028.542-.005 1.013.419 1.028.972.004.139.073 3.437-1.991 5.644-.197.21-.464.316-.73.316zm-8.542-8.696c-.48 0-.904-.347-.985-.837-.09-.544.278-1.06.823-1.149 3.074-.51 4.774-2.377 4.791-2.396.365-.41.998-.449 1.409-.084.412.365.453.993.091 1.406-.087.099-2.156 2.415-5.964 3.046-.056.01-.111.014-.165.014zm2.921 4.857c-.425 0-.819-.272-.954-.698-.166-.526.126-1.089.652-1.255 2.693-.853 3.88-2.83 3.892-2.85.28-.477.892-.637 1.368-.357.477.279.636.893.357 1.368-.063.108-1.595 2.663-5.013 3.744-.101.033-.203.048-.302.048zm-4.619-10.67c-.496 0-.927-.369-.991-.875-.069-.548.319-1.048.867-1.118 2.689-.34 4.657-1.971 4.676-1.988.422-.354 1.053-.303 1.408.119.356.421.305 1.05-.115 1.407-.097.083-2.42 2.029-5.718 2.446-.043.006-.085.009-.127.009zm-1.821-4.767c-.425 0-.819-.273-.954-.701-.165-.527.127-1.088.654-1.254 3.13-.983 4.253-2.692 4.299-2.764.295-.462.911-.605 1.375-.312.465.292.611.899.324 1.366-.06.097-1.506 2.396-5.399 3.619-.099.031-.2.046-.299.046z" fill="#744EAA"/></svg>`,
+"1f91d":`<svg class="dojo-ico tw" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" xml:space="preserve"><path fill="#EF9645" d="M16.428 30.331a2.31 2.31 0 0 0 3.217-.568.798.798 0 0 0-.197-1.114l-1.85-1.949 4.222 2.955a1.497 1.497 0 0 0 2.089-.369 1.5 1.5 0 0 0-.369-2.089l-3.596-3.305 5.375 3.763a1.497 1.497 0 0 0 2.089-.369 1.5 1.5 0 0 0-.369-2.089l-4.766-4.073 5.864 4.105a1.497 1.497 0 0 0 2.089-.369 1.5 1.5 0 0 0-.369-2.089L4.733 11.194l-3.467 5.521c-.389.6-.283 1.413.276 1.891l7.786 6.671c.355.304.724.591 1.107.859l5.993 4.195z"/><path fill="#FFDC5D" d="M29.802 21.752 18.5 13.601l-.059-.08.053-.08.053-.053.854.469c.958.62 3.147 1.536 4.806 1.536 1.135 0 1.815-.425 2.018-1.257a1.409 1.409 0 0 0-1.152-1.622 6.788 6.788 0 0 1-2.801-1.091l-.555-.373c-.624-.421-1.331-.898-1.853-1.206-.65-.394-1.357-.585-2.163-.585-1.196 0-2.411.422-3.585.83l-1.266.436a5.18 5.18 0 0 1-1.696.271c-1.544 0-3.055-.586-4.516-1.152l-.147-.058a1.389 1.389 0 0 0-1.674.56L1.35 15.669a1.357 1.357 0 0 0 .257 1.761l7.785 6.672c.352.301.722.588 1.1.852l6.165 4.316a2 2 0 0 0 2.786-.491.803.803 0 0 0-.196-1.115l-1.833-1.283a.424.424 0 0 1-.082-.618.422.422 0 0 1 .567-.075l3.979 2.785a1.4 1.4 0 0 0 1.606-2.294l-3.724-2.606a.424.424 0 0 1-.082-.618.423.423 0 0 1 .567-.075l5.132 3.593a1.4 1.4 0 0 0 1.606-2.294l-4.868-3.407a.42.42 0 0 1-.081-.618.377.377 0 0 1 .506-.066l5.656 3.959a1.4 1.4 0 0 0 1.606-2.295z"/><path d="M16.536 27.929c-.07.267-.207.498-.389.681l-1.004.996a1.494 1.494 0 0 1-1.437.396 1.5 1.5 0 0 1-.683-2.512l1.004-.996a1.494 1.494 0 0 1 1.437-.396 1.502 1.502 0 0 1 1.072 1.831zM5.992 23.008l1.503-1.497a1.5 1.5 0 0 0-.444-2.429 1.495 1.495 0 0 0-1.674.31l-1.503 1.497a1.5 1.5 0 0 0 .445 2.429 1.496 1.496 0 0 0 1.673-.31zm5.204.052a1.5 1.5 0 1 0-2.122-2.118L6.072 23.94a1.5 1.5 0 1 0 2.122 2.118l3.002-2.998zm2.25 3a1.5 1.5 0 0 0-.945-2.555 1.489 1.489 0 0 0-1.173.44L9.323 25.94a1.5 1.5 0 0 0 .945 2.556c.455.036.874-.141 1.173-.44l2.005-1.996zm16.555-4.137.627-.542-6.913-10.85-12.27 1.985a1.507 1.507 0 0 0-1.235 1.737c.658 2.695 6.003.693 8.355-.601l11.436 8.271z" fill="#EF9645"/><path d="M16.536 26.929c-.07.267-.207.498-.389.681l-1.004.996a1.494 1.494 0 0 1-1.437.396 1.5 1.5 0 0 1-.683-2.512l1.004-.996a1.494 1.494 0 0 1 1.437-.396 1.502 1.502 0 0 1 1.072 1.831zM5.992 22.008l1.503-1.497a1.5 1.5 0 0 0-.444-2.429 1.497 1.497 0 0 0-1.674.31l-1.503 1.497a1.5 1.5 0 0 0 .445 2.429 1.496 1.496 0 0 0 1.673-.31zm5.204.052a1.5 1.5 0 1 0-2.122-2.118L6.072 22.94a1.5 1.5 0 1 0 2.122 2.118l3.002-2.998zm2.25 3a1.5 1.5 0 0 0-.945-2.555 1.489 1.489 0 0 0-1.173.44L9.323 24.94a1.5 1.5 0 0 0 .945 2.556c.455.036.874-.141 1.173-.44l2.005-1.996zm21.557-7.456a1.45 1.45 0 0 0 .269-1.885l-.003-.005-3.467-6.521a1.488 1.488 0 0 0-1.794-.6c-1.992.771-4.174 1.657-6.292.937l-1.098-.377c-1.948-.675-4.066-1.466-6-.294-.695.409-1.738 1.133-2.411 1.58a6.873 6.873 0 0 1-2.762 1.076 1.502 1.502 0 0 0-1.235 1.737c.613 2.512 5.3.908 7.838-.369a.968.968 0 0 1 1.002.081l11.584 8.416 4.369-3.776z" fill="#FFCC4D"/></svg>`,
+"1f4a1":`<svg class="dojo-ico tw" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36"><path fill="#FFD983" d="M29 11.06c0 6.439-5 7.439-5 13.44 0 3.098-3.123 3.359-5.5 3.359-2.053 0-6.586-.779-6.586-3.361C11.914 18.5 7 17.5 7 11.06 7 5.029 12.285.14 18.083.14 23.883.14 29 5.029 29 11.06z"/><path fill="#CCD6DD" d="M22.167 32.5c0 .828-2.234 2.5-4.167 2.5-1.933 0-4.167-1.672-4.167-2.5 0-.828 2.233-.5 4.167-.5 1.933 0 4.167-.328 4.167.5z"/><path fill="#FFCC4D" d="M22.707 10.293c-.391-.391-1.023-.391-1.414 0L18 13.586l-3.293-3.293c-.391-.391-1.023-.391-1.414 0s-.391 1.023 0 1.414L17 15.414V26c0 .553.448 1 1 1s1-.447 1-1V15.414l3.707-3.707c.391-.391.391-1.023 0-1.414z"/><path fill="#99AAB5" d="M24 31c0 1.104-.896 2-2 2h-8c-1.104 0-2-.896-2-2v-6h12v6z"/><path fill="#CCD6DD" d="M11.999 32c-.48 0-.904-.347-.985-.836-.091-.544.277-1.06.822-1.15l12-2c.544-.098 1.06.277 1.15.822.091.544-.277 1.06-.822 1.15l-12 2c-.055.01-.111.014-.165.014zm0-4c-.48 0-.904-.347-.985-.836-.091-.544.277-1.06.822-1.15l12-2c.544-.097 1.06.277 1.15.822.091.544-.277 1.06-.822 1.15l-12 2c-.055.01-.111.014-.165.014z"/></svg>`,
+"1f33f":`<svg class="dojo-ico tw" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36"><path fill="#77B255" d="M20.917 22.502c-2.706-.331-3.895-1.852-6.273-4.889 3.039-2.376 4.559-3.565 7.266-3.235 2.71.332 5.25 2.016 6.273 4.889-1.683 2.543-4.557 3.563-7.266 3.235zm-5.959 8.814c-2.549-.187-3.733-1.553-6.098-4.288 2.735-2.364 4.102-3.547 6.652-3.364 2.551.185 5.009 1.644 6.098 4.287-1.459 2.458-4.1 3.548-6.652 3.365zm-6.22-15.707c1.338 1.631 1.191 3.117.898 6.088-2.97-.294-4.456-.44-5.795-2.071-1.339-1.634-1.861-3.935-.898-6.088 2.301-.524 4.456.439 5.795 2.071zm21.116-5.448c-2.435 1.02-4.16.314-7.613-1.097 1.411-3.453 2.118-5.18 4.549-6.203 2.434-1.021 5.378-.826 7.612 1.096-.194 2.944-2.117 5.181-4.548 6.204zM17.103 6.608c.874 2.869-.124 4.742-2.119 8.488-3.745-1.996-5.619-2.994-6.494-5.864-.876-2.872-.315-6.18 2.118-8.49 3.308.561 5.619 2.993 6.495 5.866z"/><path fill="#A6D388" d="M8.49 9.232c.862 2.828 2.702 3.843 6.338 5.781v-.005c-.07-2.521-2.733-10.876-4.267-14.214C8.172 3.102 7.62 6.381 8.49 9.232zm-5.592 4.429c-.89 2.118-.371 4.362.943 5.965 1.34 1.632 2.826 1.777 5.795 2.071-.997-1.937-4.911-6.388-6.738-8.036z"/><path fill="#5C913B" d="M21.91 14.378c-2.563-.312-4.077.75-6.808 2.879 1.746.105 8.786.745 13.06 2.037.006-.01.015-.017.021-.027-1.023-2.873-3.563-4.557-6.273-4.889zm-.304 13.565c-1.091-2.637-3.545-4.094-6.094-4.279-2.5-.179-3.87.961-6.498 3.232 2.767-.305 7.905-.87 12.592 1.047z"/><path fill="#A6D388" d="M22.421 9.137c3.327 1.359 5.043 2.024 7.432 1.024 2.419-1.018 4.332-3.239 4.542-6.16-3.922.761-10.391 4.15-11.974 5.136z"/><path fill="#A06253" d="M4.751 35.061c-.584-.091-1.363-.831-1.273-1.416.546-3.562 2.858-12.168 18.298-24.755.458-.375.976-.659 1.364-.212.391.447-.052.95-.498 1.339C9.354 21.587 7.128 30.751 6.619 34.082c-.091.585-1.283 1.067-1.868.979z"/></svg>`,
+"1f5fa":`<svg class="dojo-ico tw" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36"><path fill="#CCD6DD" d="M12 7.607L3 5.196c-1.657-.444-3 .539-3 2.197v20c0 1.656 1.343 3.359 3 3.804l9 2.411V7.607zm12 22.786l9 2.411c1.656.443 3-.54 3-2.196v-20c0-1.657-1.344-3.36-3-3.804l-9-2.411v26z"/><path fill="#E1E8ED" d="M24 30.392l-12 3.215v-26l12-3.215z"/><path fill="#55ACEE" d="M12 9.607L4 7.463c-1.104-.296-2 .36-2 1.464v18c0 1.104.896 2.24 2 2.535l8 2.145v-22zm20-1.072l-8-2.144v22l8 2.144c1.104.296 2-.359 2-1.465v-18c0-1.103-.896-2.239-2-2.535z"/><path fill="#88C9F9" d="M24 28.392l-12 3.215v-22l12-3.215z"/><path fill="#5C913B" d="M12 21.506c-.268.006-.595.104-.845.145-.436.073-.329.517-.463.443-.135-.074-.475-.265-.812-.658-.337-.394.25-.477.418-.622.168-.145-.316-.172-.485-.332-.169-.159-.471.104-.739-.276-.27-.376-.101-.79-.133-1.18-.034-.39.436-.341.739-.334.303.003.538.144.538.602 0 .456.37.708.269.146-.101-.561.101-.657.235-.89.134-.23.37-.55.672-1.04.221-.358.389-.283.606-.164v-3.345c-.055-.044-.11-.09-.165-.113-.303-.132.096.753-.139 1.109-.237.356-.598.193-.97.094-.369-.099-.713-.545-.443-1.007.268-.462.782-.268 1.051-.653.269-.385-.957-.672-1.394-.941-.438-.271-.963-.409-1.4-.146-.437.264-1.373.133-1.743.186-.37.054-.436-.369-.503-.693-.067-.322-.653-.329-1.257-.338-.606-.01-1.741.281-1.547 1.759.068.514.605.124.707.036.101-.088.605.2.671.637.068.439.035.887-.099 1.232-.137.345.336 1.006.604 1.612.269.605.573.686.707.723.135.036.908.587.875.996-.033.411.706.991 1.009 1.34.303.35.494.662.887.846.393.183.852 1.035 1.054 1.165.155.1.418.451.576.58-.208.242-.612.748-.612 1.029 0 .383.44 1.103.608 1.3.167.196.65.442.751.85.101.407-.07 1.646-.372 1.907-.304.262-.414 1.043-.414 1.043s.107.293.465.124c.309-.144.776-.566 1.094-.801v-6.371z"/><path fill="#77B255" d="M12.268 17.413c-.1.016-.187.012-.268.011v-3.345c.254.065.512.317.707.736.234.509.604.066.739.374.134.308.875.758.505.742-.371-.015-.741.008-.841.454-.102.448.168.794-.102.828-.27.033-.37.142-.74.2zm2.59 5.558c-.436-.074-.359-.023-.628-.599-.268-.577-.431-.743-1.036-.656-.605.087-.583.136-.751-.163-.072-.128-.241-.082-.443.031v6.37c.09-.114.17-.211.228-.267.505-.477.996-1.026 1.466-1.646.47-.621.3-.924.535-1.481.236-.558.541-.617.944-1.145.405-.53.122-.368-.315-.444zM24 15.731V9.417c-.04.004-.068.012-.11.015-.209.011-.482.135-.779.32-.024-.005-.046-.016-.07-.021-.896-.175-1.312 1.205-2.039 1.152-.729-.053-1.7-.344-2.332.514-.631.857-.777 1.53 0 1.294s1.312-1.425 1.7-1.089c.388.336.29.721-.632 1.105-.922.385-1.918.817-2.452.96-.534.143-.655.534-.292.822.364.288-.219.471-.826 1.02-.607.547.146.512.656.705.51.193.898-.323 1.117-.932.217-.608 1.158-1.521 1.55-1.544.392-.023.392.197.318.602-.013.071.001.103.011.138-.17.54-.31 1.03-.365 1.306-.026.135-.031.351-.027.595-.086.004-.183.021-.248.001-.438-.129-1.434-.22-1.701.043-.267.265-.412.502-.728.723-.317.219-1.603 1.224-1.627 2.084-.025.859-.049 1.83.461 1.721.51-.109 1.749-.826 2.137-1.288.387-.463.921-.522 1.092-.156.17.369.048.649-.12 1.354-.171.708.11.963.381 1.468.273.504.491.775.491 1.189 0 .412.389.723.97-.123.188-.27.367-.606.536-.957.409-.469.768-.923.758-1.096-.016-.281-.021-.434-.024-.624l.091-.22c.127-.293.241-.746.362-1.155.007-.01.013-.017.02-.024.237-.337.185-.353.58-.756.264-.27.254-.512.214-.678.105-.175.134-.28-.033-.235l-.016.004c-.002 0-.005.019-.006.014-.023-.149-.206.003-.501.148-.284.008-.566-.066-.668-.368-.133-.396-.602-.996-.639-1.336.003-.041.005-.077.01-.124.014-.036.033-.066.069-.088.038-.022.075-.03.112-.035.041.111.075.279.086.464.026.477.394.196.394.498 0 .303.53.492.661.548.037.016.094-.027.159-.098.031.011.06.033.093.037.292.031.922-.984 1.117-1.164.102-.095.104-.269.033-.394l.056-.025z"/><path fill="#5C913B" d="M27.634 20.221c-.053.44.184.201.606.705.423.508-.104.394-.289.316-.185-.08-.37-.131-.579-.518-.213-.391 0-.695 0-1.027 0 0 .316.084.262.524zm.362-.901c.389.166.114-.482.244-.841.132-.356.316-.368.555-.363.236.002.422-.191.581-.389.157-.199.448-.454.422-.733-.026-.279-.104-.482-.212-.843-.105-.36.316-.368.502-.711.184-.343 0 0 .421-.008.422-.008.238-.058.316-.218.08-.159.133-.327.054-.68-.078-.353-.37-.1-.66-.177-.289-.077.106-.425.132-.78.026-.356.397-.165.661-.125.263.039.342.484.421.597.081.112.895-.365 1.108-.641.211-.275-.186-.291-.079-.403.106-.111-.632-.337-.925-.469-.289-.133-1.028-.367-1.318-.649-.289-.283-1.396-.426-1.688-.337-.291.086-.476-.143-.606-.406-.131-.262-.686-.297-.844-.467-.158-.17-.316.127-.529.16-.21.035-.289.043-.554-.209-.263-.252.08-.371-.288-.621-.355-.238-.813-.182-1.71-.591v6.314c.157.014.309.036.364.051.131.035.448.573.448.784 0 .211.158.828.291 1.195.131.366.42.506.686.818.264.312.394.137.394.137s-.105-.544-.105-.965c0-.424.316-.701.316-.701s.5.558.528.685c.026.128.421.656.449.876.026.219.237.546.625.71zm2.092-2.068c.184.08.976.171.554-.334-.423-.506-.106-.299-.053-.738.053-.44-.264-.524-.264-.524 0 .332-.211.638 0 1.026.21.39-.423.49-.237.57zm2.004 5.371c-.131-.217-.421-.385-.738-.461-.315-.076-.29-.48-.606-.533-.316-.055-.544-.389-.686-.512-.312-.266-.106.209 0 .699.106.488.501.246.869.586.369.34.397.016.74.229.342.211.475.52.804.578.329.059-.25-.369-.383-.586zm-3.088-1.432c.262.402.159.043.504-.016.343-.059-.291-.561-.502-.799-.211-.238-.42-.301-.605.049-.21.399.342.364.603.766zm2.403 2.579c-.133-.338-.518-.713-.675-.91-.159-.193-.407-.312-.618-.279-.212.031-.343-.092-.448-.361-.106-.266-.29-.233-.449-.244-.157-.012-.791.119-1.161.23-.368.113-.537.252-.778.457-.382.32-.17.105 0 .424.168.318-.187 1.066-.213 1.543-.027.477.676.031.939.039.264.012.186-.189.396-.314.212-.125.349-.129.579.172.233.305.537.611.537.883 0 .27.834.947 1.151.852.316-.098.501-.408.791-.635.291-.225.186-.824.264-1.168.081-.344-.185-.354-.315-.689z"/></svg>`,
+"2699":`<svg class="dojo-ico tw" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36"><path fill="#66757F" d="M34 15h-3.362c-.324-1.369-.864-2.651-1.582-3.814l2.379-2.379c.781-.781.781-2.048 0-2.829l-1.414-1.414c-.781-.781-2.047-.781-2.828 0l-2.379 2.379C23.65 6.225 22.369 5.686 21 5.362V2c0-1.104-.896-2-2-2h-2c-1.104 0-2 .896-2 2v3.362c-1.369.324-2.651.864-3.814 1.582L8.808 4.565c-.781-.781-2.048-.781-2.828 0L4.565 5.979c-.781.781-.781 2.048-.001 2.829l2.379 2.379C6.225 12.35 5.686 13.632 5.362 15H2c-1.104 0-2 .896-2 2v2c0 1.104.896 2 2 2h3.362c.324 1.368.864 2.65 1.582 3.813l-2.379 2.379c-.78.78-.78 2.048.001 2.829l1.414 1.414c.78.78 2.047.78 2.828 0l2.379-2.379c1.163.719 2.445 1.258 3.814 1.582V34c0 1.104.896 2 2 2h2c1.104 0 2-.896 2-2v-3.362c1.368-.324 2.65-.864 3.813-1.582l2.379 2.379c.781.781 2.047.781 2.828 0l1.414-1.414c.781-.781.781-2.048 0-2.829l-2.379-2.379c.719-1.163 1.258-2.445 1.582-3.814H34c1.104 0 2-.896 2-2v-2C36 15.896 35.104 15 34 15zM18 26c-4.418 0-8-3.582-8-8s3.582-8 8-8 8 3.582 8 8-3.582 8-8 8z"/></svg>`,
+"1f9ea":`<svg class="dojo-ico tw" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36"><path fill="#CCD6DD" d="M14.563 14.414L25.47 3.505l6.961 6.962-10.908 10.908z"/><path fill="#68E090" d="M8.103 34.399C2.5 34 1.5 30.062 1.635 27.932c.322-5.07 15.601-16.551 15.601-16.551l12.517 1.93c.001 0-17.389 21.392-21.65 21.088z"/><path fill="#8899A6" d="M32.326 3.708C29.405.787 26.104-.649 24.954.502c-.013.013-.022.031-.034.044-.006.006-.015.008-.021.014L2.295 23.164c-1.412 1.412-2.19 3.29-2.19 5.288 0 1.997.778 3.875 2.19 5.287 1.413 1.413 3.291 2.19 5.288 2.19 1.998 0 3.875-.777 5.287-2.189l22.604-22.604c.007-.007.009-.016.015-.023.013-.012.03-.02.043-.033 1.151-1.15-.285-4.451-3.206-7.372zM10.75 31.619c-.846.846-1.97 1.311-3.166 1.311s-2.321-.466-3.167-1.312c-.846-.846-1.312-1.97-1.312-3.167 0-1.196.466-2.32 1.311-3.166L25.412 4.29c.622 1.144 1.56 2.394 2.749 3.584 1.189 1.189 2.44 2.127 3.584 2.749L10.75 31.619z"/><path fill="#17BF63" d="M29.196 13.144c-.058.379-2.627.751-5.691.343-3.063-.408-5.482-1.223-5.403-1.82.08-.597 2.627-.751 5.691-.343s5.495 1.224 5.403 1.82zM10.84 23.247c-.31.31-.813.31-1.123 0-.31-.31-.31-.813 0-1.123.31-.31.813-.31 1.123 0 .31.31.31.813 0 1.123zm3.317 2.615c-.507.507-1.328.506-1.835 0-.506-.506-.506-1.328 0-1.834.507-.507 1.328-.506 1.834 0 .507.506.508 1.327.001 1.834zm1.677-5.324c-.476.476-1.25.476-1.726 0s-.476-1.249 0-1.726c.476-.476 1.249-.477 1.725 0 .478.477.478 1.25.001 1.726zm-6.868 8.858c-.581.581-1.524.581-2.105 0-.582-.582-.581-1.524 0-2.105s1.523-.581 2.105 0c.581.581.582 1.523 0 2.105zm11.396-9.158c-.413.413-1.083.413-1.496 0-.413-.413-.412-1.083.001-1.496.414-.414 1.083-.414 1.496-.001.413.414.413 1.083-.001 1.497zm-1.207-4.288c-.27.27-.708.27-.979 0-.27-.27-.27-.708 0-.979.27-.27.708-.271.979 0 .27.271.27.709 0 .979z"/><ellipse transform="rotate(-45.001 30.817 5.223)" fill="#CCD6DD" cx="30.817" cy="5.223" rx="1.184" ry="4.847"/></svg>`,
+"1f50d":`<svg class="dojo-ico tw" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36"><path fill="#9AAAB4" d="M27.388 24.642L24.56 27.47l-4.95-4.95 2.828-2.828z"/><path fill="#66757F" d="M34.683 29.11l-5.879-5.879c-.781-.781-2.047-.781-2.828 0l-2.828 2.828c-.781.781-.781 2.047 0 2.828l5.879 5.879c1.562 1.563 4.096 1.563 5.658 0 1.56-1.561 1.559-4.094-.002-5.656z"/><circle fill="#8899A6" cx="13.586" cy="13.669" r="13.5"/><circle fill="#BBDDF5" cx="13.586" cy="13.669" r="9.5"/></svg>`,
+"1f3c1":`<svg class="dojo-ico tw" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36"><path fill="#8899A6" d="M5 36c-1.104 0-2-.896-2-2V3c0-1.104.896-2 2-2s2 .896 2 2v31c0 1.104-.896 2-2 2z"/><path fill="#AAB8C2" d="M5 1c-1.105 0-2 .895-2 2v31c0 .276.224.5.5.5s.5-.224.5-.5V4.414C4 3.633 4.633 3 5.414 3H7c0-1.105-.895-2-2-2z"/><path fill="#8899A6" d="M5 36c-1.104 0-2-.896-2-2V3c0-1.104.896-2 2-2s2 .896 2 2v31c0 1.104-.896 2-2 2z"/><path fill="#AAB8C2" d="M5 1c-1.105 0-2 .895-2 2v31c0 .276.224.5.5.5s.5-.224.5-.5V4.414C4 3.633 4.633 3 5.414 3H7c0-1.105-.895-2-2-2z"/><path fill="#31373D" d="M32.396 3.082C30.732 2.363 28.959 2.006 27 1.974l-1.375.38L21 3l-1-.128c-.237.051-.476.099-.711.15-2.169.469-4.23.894-6.289.982L12 5 6 4v19h6l1 2h.077c2.244-.096 4.472-.556 6.633-1.022l.29-.061.646-.645 5.438-.708.916.41c1.68.032 3.193.335 4.604.944.309.133.665.103.945-.082.282-.186.451-.499.451-.836V4c0-.399-.237-.76-.604-.918z"/><path fill="#E1E8ED" d="M13 4.004c-.239.01-.478.035-.717.035-1.797 0-3.396-.313-4.887-.957-.308-.135-.665-.103-.945.083C6.169 3.349 6 3.664 6 4v6s3.292 1 7 1V4.004zM20 10s-3.75 1-7 1v7c3 0 7-1 7-1v-7zm7-1V1.974c-.096-.002-.186-.013-.283-.013-2.267 0-4.521.442-6.717.911V10s2.167-1 7-1zM6.604 23.918c1.5.648 3.09.993 4.82 1.082H13v-7c-4.167 0-7-1-7-1v6c0 .399.237.76.604.918zM20 17v6.916c2.313-.499 4.511-.955 6.717-.955.097 0 .187.011.283.013V16c-4.5 0-7 1-7 1zm7-1c2.676 0 4.82.56 6 .954V9.908C31.853 9.527 29.769 9 27 9v7z"/></svg>`,
+"26e9":`<svg class="dojo-ico tw" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36"><path fill="#DD2E44" d="M9 9c0-1.104-.896-2-2-2s-2 .896-2 2v24c0 1.104.896 2 2 2s2-.896 2-2V9zm22 0c0-1.104-.896-2-2-2s-2 .896-2 2v24c0 1.104.896 2 2 2s2-.896 2-2V9z"/><path fill="#DD2E44" d="M36 16c0 1.104-.896 2-2 2H2c-1.104 0-2-.896-2-2s.896-2 2-2h32c1.104 0 2 .896 2 2zm-1-9c0 1.104-.781 1.719-2 2 0 0-3 1-15 1S3 9 3 9c-1.266-.266-2-.896-2-2s.896-2 2-2h30c1.104 0 2 .896 2 2z"/><path fill="#292F33" d="M35.906 4c0 1.104-.659 1.797-1.908 2 0 0-4 1-15.999 1C6.001 7 2.002 6 2.002 6 .831 5.812.109 5.114.109 4.01.109 2.905-.102 1 1.002 1c0 0 3.999 2 16.997 2s16.998-2 16.998-2c1.105 0 .909 1.895.909 3z"/><path fill="#DD2E44" d="M20 15c0 1.104-.896 2-2 2s-2-.896-2-2V9c0-1.104.896-2 2-2s2 .896 2 2v6z"/><path fill="#292F33" d="M11 34c0 1.104-.896 2-2 2H5c-1.104 0-2-.896-2-2s.896-2 2-2h4c1.104 0 2 .896 2 2zm22 0c0 1.104-.896 2-2 2h-4c-1.104 0-2-.896-2-2s.896-2 2-2h4c1.104 0 2 .896 2 2z"/></svg>`,
+"1f9e0":`<svg class="dojo-ico tw" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36"><path fill="#EA596E" d="M29.896 26.667c.003.283-.07.653-.146.958-.531 2.145-2.889 4.552-6.208 4.333-3.008-.198-5.458-1.642-5.458-3.667s2.444-3.667 5.458-3.667 6.335.018 6.354 2.043z"/><path fill="#DD2E44" d="M23.542 24.964c-1.619 0-5.314.448-6.162.448-1.498 0-2.713.94-2.713 2.1 0 .558.286 1.062.744 1.438 0 0 1.006 1.009 2.818.525.793-.212 2.083-1.786 4.354-2.036 1.131-.125 3.25.75 6.974.771.16-.344.193-.583.193-.583 0-2.027-3.194-2.663-6.208-2.663z"/><path fill="#F4ABBA" d="M29.75 27.625s2.184-.443 3.542-2.229c1.583-2.083 1.375-4.312 1.375-4.312 1.604-3-.5-5.813-.5-5.813C33.958 12.104 32 10.792 32 10.792c-1.271-3.021-4.083-3.833-4.083-3.833-2.208-2.583-6.125-2.5-6.125-2.5s-3.67-1.345-8.708.167c-.833.25-3.625.833-5.667 2.083C.981 10.649.494 16.793.584 17.792 1.083 23.375 5 24.375 7.5 24.958c.583 1.583 2.729 4.5 6.583 3.417 4.75-.833 6.75-2.25 7.917-2.25s4.417 1.25 7.75 1.5z"/><g fill="#EA596E"><path d="M17.737 18.648c2.328-1.255 3.59-1.138 4.704-1.037.354.032.689.057 1.028.055 1.984-.045 3.591-.881 4.302-1.69.182-.208.161-.523-.046-.706-.206-.182-.521-.163-.706.045-.548.624-1.899 1.313-3.573 1.351-.3.009-.601-.021-.913-.05-1.195-.111-2.679-.247-5.271 1.152-.665.359-1.577.492-2.565.592-2.197-3.171-.875-5.933-.497-6.591.037.002.073.014.111.014.4 0 .802-.098 1.166-.304.24-.136.325-.441.189-.681s-.441-.325-.681-.189c-.64.362-1.482.153-1.88-.467-.149-.233-.458-.301-.69-.151-.232.149-.3.458-.151.69.237.371.571.65.948.837-.521 1.058-1.51 3.84.372 6.951-1.324.13-2.65.317-3.688.986-.67.432-1.355 1.064-1.878 1.791-.629-.108-2.932-.675-3.334-3.231.25-.194.452-.45.577-.766.102-.257-.024-.547-.281-.649s-.547.024-.649.281c-.089.225-.25.389-.454.461-.202.072-.431.048-.643-.07-.243-.135-.546-.046-.68.194-.134.241-.047.546.194.68.284.158.588.238.89.238.037 0 .072-.017.109-.019.476 2.413 2.383 3.473 3.732 3.794-.176.388-.295.788-.331 1.192-.024.274.179.518.454.542l.045.002c.256 0 .475-.195.498-.456.108-1.213 1.265-2.48 2.293-3.145.964-.621 2.375-.752 3.741-.879 1.325-.121 2.577-.237 3.558-.767zm12.866-1.504c-.131.242-.041.546.2.677.076.042.159.062.24.062.176 0 .347-.093.438-.259.019-.034 1.842-3.449-1.571-5.744-.228-.152-.539-.093-.694.136-.154.229-.093.54.136.694 2.644 1.778 1.309 4.326 1.251 4.434zM9.876 9.07c.156 0 .309-.072.406-.208 1.45-2.017 3.458-1.327 3.543-1.295.259.094.544-.038.64-.296.096-.259-.036-.546-.295-.642-.96-.356-3.177-.468-4.7 1.65-.161.223-.11.536.114.697.089.064.191.094.292.094zm13.072-1.888c2.225-.181 3.237 1.432 3.283 1.508.094.158.26.246.431.246.086 0 .174-.022.253-.069.238-.14.318-.446.179-.684-.054-.091-1.34-2.218-4.224-1.998-.275.021-.48.262-.459.538.022.275.271.484.537.459zm9.15 14.611c-.246-.014-.517.181-.539.457-.002.018-.161 1.719-1.91 2.294-.262.086-.405.368-.318.631.068.21.265.344.475.344.052 0 .104-.008.156-.025 2.372-.778 2.586-3.064 2.594-3.161.021-.276-.183-.518-.458-.54z"/><path d="M7.347 16.934c-.072.267.086.541.353.613.043.012.087.017.13.017.221 0 .422-.147.482-.37.19-.711.927-1.167 1.652-1.014.271.055.535-.116.592-.387.057-.27-.116-.535-.387-.592-.426-.09-.854-.048-1.248.086-1.166-1.994-.939-3.96-.936-3.981.036-.273-.156-.524-.429-.562-.272-.033-.524.154-.562.427-.013.097-.28 2.316 1.063 4.614-.334.301-.588.694-.71 1.149zm11.179-2.47c.407-.377 1.06-.37 1.455.015.098.094.223.141.349.141.131 0 .261-.051.358-.152.192-.198.188-.515-.01-.707-.23-.223-.505-.372-.797-.465.296-1.016.179-1.467-.096-2.312-.048-.147-.101-.311-.157-.498l-.03-.1c-.364-1.208-.605-2.005.087-3.13.145-.235.071-.543-.164-.688-.231-.144-.542-.073-.688.164-.928 1.508-.587 2.637-.192 3.944l.03.1c.059.194.113.364.163.517.247.761.322 1.016.02 1.936-.369.069-.722.236-1.01.504-.202.188-.213.505-.025.707.189.202.506.212.707.024zm6.365-2.985c.291 0 .585-.061.859-.191.25-.118.357-.416.239-.666-.117-.25-.419-.354-.665-.239-.502.236-1.121.031-1.384-.457-.131-.244-.436-.333-.677-.205-.243.13-.335.434-.204.677.18.336.448.601.76.785-.537 1.305-.232 2.691.017 3.426.07.209.265.34.474.34.053 0 .106-.008.16-.026.262-.088.402-.372.313-.633-.168-.498-.494-1.756-.002-2.826.038.002.073.015.11.015zm4.797 9.429c-.019-.275-.257-.492-.531-.467-1.014.072-1.878-.697-1.947-1.703-.02-.275-.265-.48-.533-.465-.275.019-.483.258-.465.533.041.59.266 1.122.608 1.555-.804.946-1.857 1.215-2.444 1.284-.519.062-.973.009-1.498-.053-.481-.055-1.025-.118-1.698-.098l-.005.001c-.02-.286-.088-.703-.305-1.05-.146-.233-.455-.304-.689-.158-.233.146-.305.455-.158.689.134.215.159.558.159.725-.504.181-.94.447-1.334.704-.704.458-1.259.82-2.094.632-.756-.173-1.513-.208-2.155-.118-.1-.251-.258-.551-.502-.782-.201-.19-.517-.182-.707.02-.189.2-.181.517.02.707.086.081.154.199.209.317-1.103.454-1.656 1.213-1.682 1.25-.16.224-.107.533.115.694.088.063.19.094.292.094.155 0 .308-.071.406-.205.005-.008.554-.743 1.637-1.04.56-.154 1.363-.141 2.146.037.219.05.422.067.619.07.093.218.129.477.134.573.016.266.236.472.499.472l.027-.001c.275-.015.486-.248.473-.523-.003-.05-.023-.346-.13-.686.461-.167.862-.428 1.239-.673.572-.373 1.113-.726 1.82-.749.592-.021 1.08.036 1.551.091.474.055.94.091 1.454.061.091.253.084.591.07.704-.033.273.16.523.434.559.021.003.042.004.063.004.247 0 .462-.183.495-.435.008-.062.059-.512-.059-.981.718-.193 1.608-.612 2.345-1.471.431.264.934.419 1.469.419.062 0 .125-.002.187-.006.275-.018.483-.255.465-.531z"/></g></svg>`,
+"1f4c8":`<svg class="dojo-ico tw" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36"><path fill="#CCD6DD" d="M31 2H5C3.343 2 2 3.343 2 5v26c0 1.657 1.343 3 3 3h26c1.657 0 3-1.343 3-3V5c0-1.657-1.343-3-3-3z"/><path fill="#E1E8ED" d="M31 1H5C2.791 1 1 2.791 1 5v26c0 2.209 1.791 4 4 4h26c2.209 0 4-1.791 4-4V5c0-2.209-1.791-4-4-4zm0 2c1.103 0 2 .897 2 2v4h-6V3h4zm-4 16h6v6h-6v-6zm0-2v-6h6v6h-6zM25 3v6h-6V3h6zm-6 8h6v6h-6v-6zm0 8h6v6h-6v-6zM17 3v6h-6V3h6zm-6 8h6v6h-6v-6zm0 8h6v6h-6v-6zM3 5c0-1.103.897-2 2-2h4v6H3V5zm0 6h6v6H3v-6zm0 8h6v6H3v-6zm2 14c-1.103 0-2-.897-2-2v-4h6v6H5zm6 0v-6h6v6h-6zm8 0v-6h6v6h-6zm12 0h-4v-6h6v4c0 1.103-.897 2-2 2z"/><path fill="#DD2E44" d="M4.998 33c-.32 0-.645-.076-.946-.239-.973-.523-1.336-1.736-.813-2.709l7-13c.299-.557.845-.939 1.47-1.031.626-.092 1.258.118 1.705.565l6.076 6.076 9.738-18.59c.512-.978 1.721-1.357 2.699-.843.979.512 1.356 1.721.844 2.7l-11 21c-.295.564-.841.953-1.47 1.05-.627.091-1.266-.113-1.716-.563l-6.1-6.099-5.724 10.631C6.4 32.619 5.71 33 4.998 33z"/></svg>`,
+"1f50c":`<svg class="dojo-ico tw" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36"><path fill="#9AAAB4" d="M11.858 16.264c.389.389.389 1.025 0 1.414s-1.025.389-1.414 0L1.959 9.192c-.389-.389-.389-1.025 0-1.414s1.025-.389 1.414 0l8.485 8.486zm7.072-7.071c.389.389.389 1.025 0 1.414s-1.025.389-1.414 0L9.029 2.121c-.389-.389-.389-1.025 0-1.414s1.025-.389 1.414 0l8.487 8.486z"/><path fill="#31373D" d="M34 36c0-4.966-2.56-8.581-4.562-10.65.898-1.532.704-3.529-.61-4.844l-1.099-1.099c.352-1.332.021-2.806-1.022-3.851l-4.949-4.95c.78-.781.78-2.047 0-2.828-.781-.781-2.049-.781-2.829-.001l-2.826 2.826-.003.002-4.242 4.243-2.828 2.828c-.781.781-.781 2.047 0 2.828.781.781 2.047.781 2.828 0l4.95 4.95c1.044 1.044 2.519 1.373 3.85 1.021l1.101 1.101c1.318 1.318 3.323 1.51 4.857.602C28.099 29.726 30 32.404 30 36h4z"/></svg>`,
+"1f3c6":`<svg class="dojo-ico tw" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36"><path fill="#FFAC33" d="M5.123 5h6C12.227 5 13 4.896 13 6V4c0-1.104-.773-2-1.877-2h-8c-2 0-3.583 2.125-3 5 0 0 1.791 9.375 1.917 9.958C2.373 18.5 4.164 20 6.081 20h6.958c1.105 0-.039-1.896-.039-3v-2c0 1.104-.773 2-1.877 2h-4c-1.104 0-1.833-1.042-2-2S3.539 7.667 3.539 7.667C3.206 5.75 4.018 5 5.123 5zm25.812 0h-6C23.831 5 22 4.896 22 6V4c0-1.104 1.831-2 2.935-2h8c2 0 3.584 2.125 3 5 0 0-1.633 9.419-1.771 10-.354 1.5-2.042 3-4 3h-7.146C21.914 20 22 18.104 22 17v-2c0 1.104 1.831 2 2.935 2h4c1.104 0 1.834-1.042 2-2s1.584-7.333 1.584-7.333C32.851 5.75 32.04 5 30.935 5zM20.832 22c0-6.958-2.709 0-2.709 0s-3-6.958-3 0-3.291 10-3.291 10h12.292c-.001 0-3.292-3.042-3.292-10z"/><path fill="#FFCC4D" d="M29.123 6.577c0 6.775-6.77 18.192-11 18.192-4.231 0-11-11.417-11-18.192 0-5.195 1-6.319 3-6.319 1.374 0 6.025-.027 8-.027l7-.001c2.917-.001 4 .684 4 6.347z"/><path fill="#C1694F" d="M27 33c0 1.104.227 2-.877 2h-16C9.018 35 9 34.104 9 33v-1c0-1.104 1.164-2 2.206-2h13.917c1.042 0 1.877.896 1.877 2v1z"/><path fill="#C1694F" d="M29 34.625c0 .76.165 1.375-1.252 1.375H8.498C7.206 36 7 35.385 7 34.625v-.25C7 33.615 7.738 33 8.498 33h19.25c.759 0 1.252.615 1.252 1.375v.25z"/></svg>`};
+const EMOJI_FOR={ "activate":"🔓", "single-gate":"⛩️", "black-belt":"🏆" };
+function emojiToCode(e){ return [...e].map(c=>c.codePointAt(0)).filter(p=>p!==0xFE0F).map(p=>p.toString(16)).join("-"); }
+function twemoji(emoji){ return TW_SVG[emojiToCode(emoji)] || svgIco(`<circle cx="12" cy="12" r="9"/>`); }
+let _EMOJI_BY_ID=null;
+function emojiForId(id){
+  if(EMOJI_FOR[id]) return EMOJI_FOR[id];
+  if(!_EMOJI_BY_ID){ _EMOJI_BY_ID={}; for(const c of CHECKPOINTS) _EMOJI_BY_ID[c.id]=c.emoji; }
+  return _EMOJI_BY_ID[id] || "⛩️";
+}
+function iconFor(id){ return twemoji(emojiForId(id)); }
+
+/* ───────────────────────── Belt definitions ───────────────────────── */
+const BELTS = {
+  1:{kanji:"白帯",en:"White Belt",color:"#e6edf3",emoji:"⚪",label:"Enter the Dojo"},
+  2:{kanji:"青帯",en:"Blue Belt", color:"#1f6feb",emoji:"🔵",label:"Drill the Kata"},
+  3:{kanji:"茶帯",en:"Brown Belt",color:"#a16838",emoji:"🟤",label:"The Belt Test"},
+  4:{kanji:"黒帯",en:"Black Belt",color:"#f59e0b",emoji:"⚫",label:"Make It Yours"},
+};
+
+const REPO="https://github.com/andreaswasita/copilot-agents-dojo";
+const RAW="https://raw.githubusercontent.com/andreaswasita/copilot-agents-dojo/main";
+
+/* ───────────────────────── Quest checkpoints ──────────────────────── */
+const CHECKPOINTS = [
+  /* ── Phase 1 · 白帯 White Belt — Enter the Dojo ── */
+  {
+    id:"what-is", phase:1, emoji:"🏯", title:"What is the Dojo?", time:"3 min",
+    desc:"The <strong>Copilot Agents Dojo</strong> is a discipline framework for your GitHub Copilot agents. Drop <code>skills/</code> + <code>.github/copilot-instructions.md</code> into any repo and agents auto-discover the index and follow a mandatory workflow. Inside: <strong>29 production skills</strong> across three tiers, <strong>8 specialized personas</strong>, a self-improving curator, and a single CI gate — <code>scripts/verify.sh</code>.",
+    toggle:"Got it — the Dojo trains agents to build with discipline ✓",
+    skill:{label:"Read the README",name:"copilot-agents-dojo",href:REPO},
+    stuck:"Where ATV scaffolds an environment, the Dojo enforces a <em>discipline</em>: every non-trivial task runs BRAINSTORM → WORKTREE → PLAN → EXECUTE → TEST → REVIEW → FINISH → LEARN. No skipping, no improvising.",
+    learn:"The Dojo = 29 skills + 8 personas + 1 mandatory workflow + 1 verify gate."
+  },
+  {
+    id:"prereqs", phase:1, emoji:"📋", title:"Check your prerequisites", time:"3 min",
+    desc:"Before you install, confirm the basics are on your <code>PATH</code>: <strong>git</strong>, <strong>bash</strong> (git-bash on Windows), and <strong>jq</strong> (used by the curator and lesson-updater). A GitHub Copilot subscription in your IDE or the Copilot CLI is what actually runs the skills.",
+    toggle:"Prerequisites verified ✓",
+    copies:[
+      {label:"Check git",text:"git --version"},
+      {label:"Check bash",text:"bash --version"},
+      {label:"Install jq (Windows)",text:"winget install jqlang.jq"},
+    ],
+    stuck:"<code>jq</code> is the only non-obvious dependency. macOS: <code>brew install jq</code> · Linux: <code>sudo apt install jq</code> · Windows: <code>winget install jqlang.jq</code> (or <code>scoop install jq</code>). Everything else is text-based and works without extra tooling.",
+    learn:"Required: git + bash + jq. The skills run inside your Copilot session."
+  },
+  {
+    id:"install", phase:1, emoji:"⚡", title:"Install the Dojo", time:"4 min",
+    desc:"One command, no clone, no Python. The bootstrap installer drops the framework into your current repo, seeds <code>tasks/</code> and the <code>memory/</code> vault, and is <strong>idempotent</strong> — re-running refreshes bundled files and backs up any collisions.",
+    toggle:"Dojo installed into my repo ✓",
+    copies:[
+      {label:"macOS / Linux (bash)",text:"curl -fsSL "+RAW+"/install.sh | bash"},
+      {label:"Windows (PowerShell)",text:"irm "+RAW+"/install.ps1 | iex"},
+    ],
+    stuck:"Run it from your project root. It writes <code>skills/</code>, <code>optional-skills/</code>, <code>agents/</code>, <code>scripts/</code>, <code>skills.md</code>, and <code>.github/copilot-instructions.md</code>. Your existing <code>copilot-instructions.md</code> is never clobbered — a new version lands as <code>.dojo.md</code> for you to merge.",
+    learn:"One curl/irm one-liner installs the whole framework. Idempotent and backup-safe."
+  },
+  {
+    id:"verify-install", phase:1, emoji:"🥋", title:"Verify the install", time:"3 min",
+    desc:"The installer runs <code>scripts/verify.sh spec</code> automatically, but run it yourself to learn the gate. <strong>spec</strong> mode validates the wiring — skill frontmatter, <code>skills.md</code> freshness, persona registry, path audit, curator manifest — without auditing your own repo's plan or tests.",
+    toggle:"verify.sh spec passes green ✓",
+    copies:[
+      {label:"Run the gate (spec mode)",text:"bash scripts/verify.sh spec"},
+      {label:"Windows parity wrapper",text:"pwsh scripts/run-checks.ps1"},
+    ],
+    skill:{label:"verify.sh — the single gate",name:"scripts/verify.sh",href:REPO+"/blob/main/scripts/verify.sh"},
+    stuck:"Four modes: <code>spec</code> (default), <code>plan</code>, <code>tests</code>, <code>all</code>. A healthy install passes <code>spec</code> even if your host repo isn't fully dojo-compliant yet — spec checks the framework, not your workflow.",
+    learn:"verify.sh has 4 modes. spec validates the framework wiring; it's your pre-PR gate."
+  },
+  {
+    id:"explore", phase:1, emoji:"📂", title:"Explore what got installed", time:"5 min",
+    desc:"Tour the scaffold. <code>skills/*/SKILL.md</code> are the kata agents auto-discover. <code>agents/*.md</code> are persona briefs (with <code>registry.yaml</code> as the source of truth). <code>.github/copilot-instructions.md</code> is the runtime prompt loaded every session. <code>skills.md</code> is the generated master index.",
+    toggle:"Explored the scaffold ✓",
+    copies:[
+      {label:"List the skills",text:"ls skills/"},
+      {label:"List the personas",text:"ls agents/"},
+      {label:"Read the skills index",text:"cat skills.md"},
+    ],
+    stuck:"Key files: <code>skills.md</code> = the index Copilot reads · <code>.github/copilot-instructions.md</code> = your customizable system prompt (set your stack here) · <code>memory/INDEX.md</code> = the knowledge vault map · <code>tasks/todo.md</code> = where plans live.",
+    learn:"skills/ = kata · agents/ = personas · skills.md = index · copilot-instructions.md = runtime prompt."
+  },
+
+  /* ── Phase 2 · 青帯 Blue Belt — Core Kata 基本型 ── */
+  {
+    id:"activate", phase:2, emoji:"🥋", title:"Activate your superpowers", time:"4 min",
+    desc:"Open a Copilot session in the repo. The <strong>using-superpowers</strong> skill activates the framework at session start: load all skills, read <code>memory/INDEX.md</code>, review <code>tasks/lessons.md</code>, check git status. From here, the agent follows the mandatory workflow — never improvises.",
+    toggle:"Superpowers activated — the agent loaded the kata ✓",
+    skill:{label:"using-superpowers",name:"skills/using-superpowers",href:REPO+"/blob/main/skills/using-superpowers/SKILL.md"},
+    stuck:"Just start chatting with Copilot in the repo. Because <code>.github/copilot-instructions.md</code> is loaded automatically, the agent already knows the rules. Ask it: \"What's your mandatory workflow?\" to confirm the kata loaded.",
+    learn:"using-superpowers is the activator — it loads every skill at session start."
+  },
+  {
+    id:"plan-before-code", phase:2, emoji:"📝", title:"Drill: make it plan first", time:"5 min",
+    desc:"Time to <strong>drive</strong>. Give your agent a real multi-step task and watch the kata fire: it stops, writes a plan to <code>tasks/todo.md</code>, and waits for your approval before writing a line. Your move — read the plan, tweak it, then say go.",
+    toggle:"I made my agent plan first — and approved it before any code ✓",
+    skill:{label:"plan-before-code",name:"skills/plan-before-code",href:REPO+"/blob/main/skills/plan-before-code/SKILL.md"},
+    copies:[{label:"💬 Paste into Copilot",text:"Add input validation to the signup form. Plan it in tasks/todo.md and wait for my approval before you write any code."}],
+    stuck:"What good looks like: a plan of 3–6 bite-sized, checkable steps you can approve or amend <em>before</em> code exists. If the agent dives straight into editing, stop it — \"plan it first.\"",
+    learn:"You set intent; the agent plans. Approve the plan, then it builds. No silent refactors."
+  },
+  {
+    id:"verify-before-done", phase:2, emoji:"✅", title:"Drill: demand proof", time:"4 min",
+    desc:"Never take \"done\" on faith. When the agent says it's finished, make it <strong>show evidence</strong>: tests passing, a clean <code>git status</code>, and the diff. The kata is simple — no proof, not done.",
+    toggle:"I refused \"done\" until the agent showed evidence ✓",
+    skill:{label:"verify-before-done",name:"skills/verify-before-done",href:REPO+"/blob/main/skills/verify-before-done/SKILL.md"},
+    copies:[
+      {label:"💬 Paste into Copilot",text:"Before you call that done, run the tests and show me the output and the full diff."},
+      {label:"The proof command",text:"bash scripts/verify.sh"},
+    ],
+    stuck:"What good looks like: green tests, a clean tree, and a diff you've actually read. \"Looks right\" is not proof. If it can't show evidence, it isn't finished.",
+    learn:"Done = tests pass + diff reviewed + tree clean. Make the agent prove it every time."
+  },
+  {
+    id:"demand-elegance", phase:2, emoji:"💎", title:"Drill: reject the hack", time:"4 min",
+    desc:"First attempts are often clumsy. When you smell a shortcut, copy-paste sprawl, or needless complexity, <strong>send it back</strong> — ask for the simplest version that still works. Like a bonsai, it's shaped by pruning, not piling on.",
+    toggle:"I pushed back on a hacky solution and got a cleaner one ✓",
+    skill:{label:"demand-elegance",name:"skills/demand-elegance",href:REPO+"/blob/main/skills/demand-elegance/SKILL.md"},
+    copies:[{label:"💬 Paste into Copilot",text:"This works but feels hacky. What's the simplest version? Refactor for clarity — don't add complexity."}],
+    stuck:"What good looks like: fewer lines that read clearly. But don't gold-plate a trivial fix either — the kata cuts <em>both</em> hacks and over-engineering.",
+    learn:"Simplicity first. Prune accidental complexity; don't manufacture it. Clarity wins."
+  },
+  {
+    id:"autonomous-bug-fix", phase:2, emoji:"🐛", title:"Drill: hand it a bug", time:"5 min",
+    desc:"Give the agent a real bug and <strong>step back</strong>. A trained agent reproduces it first, finds the root cause, fixes it, and verifies the fix — without asking you which file or what command. You just confirm it's truly gone.",
+    toggle:"My agent reproduced, root-caused, fixed, and verified a bug solo ✓",
+    skill:{label:"autonomous-bug-fix",name:"skills/autonomous-bug-fix",href:REPO+"/blob/main/skills/autonomous-bug-fix/SKILL.md"},
+    copies:[{label:"💬 Paste into Copilot",text:"There's a bug: <describe it>. Reproduce it first, find the root cause, fix it, then prove it's fixed."}],
+    stuck:"What good looks like: a <em>reproduction before a fix</em>. A change with no repro is a guess. The katana cuts the root cause, not the symptom.",
+    learn:"Reproduce → diagnose → fix → verify. Hand off the bug, not the babysitting."
+  },
+  {
+    id:"delegation", phase:2, emoji:"🤝", title:"Drill: delegate the grunt work", time:"4 min",
+    desc:"On anything big, make the agent <strong>parallelize</strong>: dispatch sub-agents to research and read across the codebase while the main thread stays clean. You orchestrate; it fans out and reports back.",
+    toggle:"I had my agent delegate research while I stayed in control ✓",
+    skill:{label:"subagent-strategy",name:"skills/subagent-strategy",href:REPO+"/blob/main/skills/subagent-strategy/SKILL.md"},
+    copies:[{label:"💬 Paste into Copilot",text:"Before changing anything, dispatch sub-agents to map how authentication flows through this codebase, then summarize what you found."}],
+    stuck:"What good looks like: fast, parallel reconnaissance that doesn't clog your main conversation. Sub-agents = in-session research; the board (<code>tasks/board/</code>) = work you'll resume later.",
+    learn:"Delegate research to sub-agents; keep durable work on the board. Stay the orchestrator."
+  },
+
+  /* ── Phase 3 · 茶帯 Brown Belt — Your first belt test: one real change, end to end ── */
+  {
+    id:"brainstorm", phase:3, emoji:"💡", title:"Belt test ①: brainstorm a real change", time:"5 min",
+    desc:"Your brown-belt test is one <strong>real</strong> change taken through the entire pipeline. Pick something small in your own repo, then start the kata: let the agent ask a few sharp questions and shape it into an agreed design — before any code. This is the task you'll carry through the next six steps.",
+    toggle:"I turned a real idea into an approved design ✓",
+    skill:{label:"brainstorming",name:"skills/brainstorming",href:REPO+"/blob/main/skills/brainstorming/SKILL.md"},
+    copies:[{label:"💬 Paste into Copilot",text:"I want to add <your small feature>. Brainstorm it with me first — ask whatever you need, then propose a design before coding."}],
+    stuck:"What good looks like: the agent interrogates the fuzzy bits — scope, edge cases, behavior — instead of assuming. You leave with a design you both agree on.",
+    learn:"Start every real change with an agreed design. Ambiguity dies here, cheaply."
+  },
+  {
+    id:"worktree", phase:3, emoji:"🌿", title:"Belt test ②: isolate it", time:"4 min",
+    desc:"Take that same change onto an <strong>isolated branch or worktree</strong>, and confirm the tests are green <em>before</em> you touch anything. A clean baseline means any breakage you see later is yours — not pre-existing.",
+    toggle:"My change lives on its own branch with a green baseline ✓",
+    skill:{label:"using-git-worktrees",name:"skills/using-git-worktrees",href:REPO+"/blob/main/skills/using-git-worktrees/SKILL.md"},
+    copies:[
+      {label:"💬 Paste into Copilot",text:"Set up an isolated worktree/branch for this change and confirm the test baseline is green before we start."},
+      {label:"Or do it yourself",text:"git worktree add ../dojo-feat -b feat/my-change"},
+    ],
+    stuck:"What good looks like: a fresh branch off main and a baseline test run that passes. Never build on red — you won't know what you broke.",
+    learn:"Isolate every change; verify a green baseline first. Never commit straight to main."
+  },
+  {
+    id:"plan", phase:3, emoji:"🗺️", title:"Belt test ③: plan it", time:"3 min",
+    desc:"Turn the agreed design into <strong>bite-sized, checkable tasks</strong> in <code>tasks/todo.md</code> and approve them. This is your map for the rest of the test — each task small enough to verify on its own.",
+    toggle:"My change is broken into approved, checkable tasks ✓",
+    skill:{label:"plan-before-code",name:"skills/plan-before-code",href:REPO+"/blob/main/skills/plan-before-code/SKILL.md"},
+    copies:[{label:"💬 Paste into Copilot",text:"Break the agreed design into small, checkable tasks in tasks/todo.md, then wait for my approval."}],
+    stuck:"What good looks like: a short list where every item is independently verifiable. If a task is too big to verify in one go, split it.",
+    learn:"A good plan is a checklist of verifiable steps. Approve it, then execute."
+  },
+  {
+    id:"execute", phase:3, emoji:"⚙️", title:"Belt test ④: build it task by task", time:"5 min",
+    desc:"Work the plan <strong>one task at a time</strong>. After each, the agent verifies and commits before moving on. No big-bang commits — when you're done, the git history should read like your plan.",
+    toggle:"I executed the plan one verified task at a time ✓",
+    skill:{label:"executing-plans",name:"skills/executing-plans",href:REPO+"/blob/main/skills/executing-plans/SKILL.md"},
+    copies:[{label:"💬 Paste into Copilot",text:"Work tasks/todo.md one task at a time. Verify and commit each before starting the next. Don't batch them."}],
+    stuck:"What good looks like: tidy, sequential commits — one per checkable item. Finish-and-verify task N before touching N+1.",
+    learn:"One task at a time, verify each, commit per unit. The history mirrors the plan."
+  },
+  {
+    id:"test", phase:3, emoji:"🧪", title:"Belt test ⑤: prove it with tests", time:"5 min",
+    desc:"For each behavior you change, drive <strong>RED → GREEN → REFACTOR</strong>: a failing test first, then make it pass, then tidy. Aim at the target — assert behavior and invariants, using the repo's existing test tooling.",
+    toggle:"Every behavior change in my task is backed by a real test ✓",
+    skill:{label:"test-writing",name:"skills/test-writing",href:REPO+"/blob/main/skills/test-writing/SKILL.md"},
+    copies:[
+      {label:"💬 Paste into Copilot",text:"Write a failing test for this behavior first, then make it pass. Assert the behavior, not a snapshot of current data."},
+      {label:"Run the suite",text:"bash scripts/verify.sh tests"},
+    ],
+    stuck:"What good looks like: tests that would catch a real regression. Avoid change-detectors that snapshot counts or lists — they break on every legit edit.",
+    learn:"RED→GREEN→REFACTOR. Test invariants and behavior, never a snapshot of today's data."
+  },
+  {
+    id:"review", phase:3, emoji:"🔍", title:"Belt test ⑥: self-review", time:"4 min",
+    desc:"Before anyone else sees it, have the agent <strong>self-review the diff against the plan</strong> — every changed line, hunting leftovers, debug prints, and scope creep. Then make it act on what it finds.",
+    toggle:"I had my agent self-review the diff against the plan ✓",
+    skill:{label:"requesting-code-review",name:"skills/requesting-code-review",href:REPO+"/blob/main/skills/requesting-code-review/SKILL.md"},
+    copies:[{label:"💬 Paste into Copilot",text:"Self-review this diff against tasks/todo.md. Flag leftovers, debug code, and anything outside the plan — then fix them."}],
+    stuck:"What good looks like: the agent catches its own stray console logs, half-done edits, and scope creep <em>before</em> you do. A magnifier on every line.",
+    learn:"Self-review against the plan, line by line, before sign-off. Catch it before review does."
+  },
+  {
+    id:"finish", phase:3, emoji:"🏁", title:"Belt test ⑦: ship it & raise the banner", time:"4 min",
+    desc:"Run the gate, open a clean PR, merge, and tear down the worktree. Your first real change has gone through the <strong>entire pipeline</strong> — brainstorm to ship. Raise the nobori: 茶帯 brown belt earned.",
+    toggle:"I took a real change through the whole pipeline and shipped it ✓",
+    skill:{label:"finishing-a-development-branch",name:"skills/finishing-a-development-branch",href:REPO+"/blob/main/skills/finishing-a-development-branch/SKILL.md"},
+    copies:[
+      {label:"💬 Paste into Copilot",text:"Run the gate, summarize the change, and prepare a clean PR. After it merges, remove the worktree and leave no temp files."},
+      {label:"The gate",text:"bash scripts/verify.sh"},
+    ],
+    stuck:"What good looks like: gate green, a reviewable PR, and no stale branches or scratch files left behind. Finished means tidied, not just \"works on my machine.\"",
+    learn:"Finish = verify + clean PR + cleanup. A real change, start to ship, on the rails."
+  },
+
+  /* ── Phase 4 · 黒帯 Black Belt — Make the Dojo yours: rituals that compound ── */
+  {
+    id:"single-gate", phase:4, emoji:"🚪", title:"Make the gate a reflex", time:"4 min",
+    desc:"Black belt is about <strong>habits that compound</strong>. Start here: make <code>scripts/verify.sh</code> your single gate — run it before every PR, and wire it into CI. One command stands between you and a messy merge.",
+    toggle:"verify.sh is now my reflex before every PR ✓",
+    skill:{label:"The enforcement workflow",name:".github/workflows/dojo-enforce.yml",href:REPO+"/blob/main/.github/workflows/dojo-enforce.yml"},
+    copies:[
+      {label:"Before every PR",text:"bash scripts/verify.sh"},
+      {label:"In CI — fail on any drift",text:"bash scripts/verify.sh --check"},
+    ],
+    stuck:"What good looks like: you stop hand-checking things — the gate does it. Wire it into CI so it runs on every push, not just when you remember. (Windows: <code>scripts/run-checks.ps1</code>.)",
+    learn:"One gate, every PR. Make verify.sh a reflex and let CI enforce it."
+  },
+  {
+    id:"memory-vault", phase:4, emoji:"🧠", title:"Teach it something that sticks", time:"5 min",
+    desc:"Correct the agent once — then make the lesson <strong>persist</strong>. Have it log the correction to <code>tasks/lessons.md</code>, and capture a real design decision in the memory vault. Next session it reads them back, so you never explain the same thing twice.",
+    toggle:"I taught my agent a lesson that survives to the next session ✓",
+    skill:{label:"Memory vault docs",name:"docs/memory-mcp.md",href:REPO+"/blob/main/docs/memory-mcp.md"},
+    copies:[
+      {label:"💬 Paste into Copilot",text:"Log what you just got wrong as a lesson in tasks/lessons.md so you don't repeat it next time."},
+      {label:"Rebuild the link graph",text:"bash scripts/link-index.sh"},
+    ],
+    stuck:"What good looks like: a correction today becomes a rule the agent recalls tomorrow. The point isn't the files — it's the loop. Have it read <code>memory/INDEX.md</code> when your next session starts.",
+    learn:"Capture corrections and decisions so they persist. The repo gets smarter every session."
+  },
+  {
+    id:"self-improve", phase:4, emoji:"📈", title:"Climb: turn lessons into rules", time:"5 min",
+    desc:"When the same lesson shows up <strong>three or more times</strong>, promote it into a standing rule the agent always follows. That's how a white-belt agent becomes a black-belt one — a steady climb, not one big leap. The curator quietly ages skills you no longer use, and <strong>never deletes</strong>.",
+    toggle:"I promoted a recurring lesson into a standing rule ✓",
+    skill:{label:"self-improvement",name:"skills/self-improvement",href:REPO+"/blob/main/skills/self-improvement/SKILL.md"},
+    copies:[
+      {label:"Scan lessons for patterns",text:"bash scripts/lesson-updater.sh"},
+      {label:"Preview a curator run (safe)",text:"bash scripts/curator-tick.sh --force --dry-run"},
+    ],
+    stuck:"What good looks like: your agent stops repeating the same mistakes because the pattern is now a rule. The curator only ever <em>archives</em> (after a backup) — bundled, human-made, and pinned skills are exempt.",
+    learn:"Promote 3×-seen lessons into rules. Mastery compounds — review, promote, repeat."
+  },
+  {
+    id:"mcp", phase:4, emoji:"🔌", title:"Power-up: memory across sessions", time:"5 min",
+    desc:"Optional power-up. Wire the <strong>MCP memory server</strong> so sessions auto-resume: the agent recalls recent work and active decisions the moment it starts, and writes a summary when it finishes. Continuity, without you re-explaining context.",
+    toggle:"My agent remembers across sessions — or I know how to wire it ✓",
+    skill:{label:"Memory MCP guide",name:"docs/memory-mcp.md",href:REPO+"/blob/main/docs/memory-mcp.md"},
+    skill2:{label:"using-mcp (verify it)",name:"optional-skills/using-mcp",href:REPO+"/blob/main/optional-skills/using-mcp/SKILL.md"},
+    copies:[{label:"💬 Paste into Copilot",text:"Help me wire up the MCP memory server from the example config, then confirm you can read the memory vault."}],
+    stuck:"What good looks like: a new session that already knows where you left off. Use the installer's MCP toggle or an example config under <code>control-plane/packages/mcp-memory/examples/</code>. Skip it if you're keeping things lightweight.",
+    learn:"Wire MCP for session auto-resume — recall on start, summary on finish. Optional but potent."
+  },
+  {
+    id:"black-belt", phase:4, emoji:"⚫", title:"黒帯: extend your dojo", time:"6 min",
+    desc:"The final test of mastery: <strong>teach the Dojo a new move.</strong> Take a workflow you keep repeating and capture it as your own skill — from <code>template/SKILL.md</code>, passing the gate. The agent will discover and follow it forever after. Fill in the daruma's eye — your goal is met. 🙇",
+    toggle:"I extended my dojo with a custom skill — 黒帯 earned ✓",
+    skill:{label:"writing-skills",name:"optional-skills/writing-skills",href:REPO+"/blob/main/optional-skills/writing-skills/SKILL.md"},
+    skill2:{label:"The skill spec (v1)",name:"spec/copilot-skills-spec.md",href:REPO+"/blob/main/spec/copilot-skills-spec.md"},
+    copies:[
+      {label:"💬 Paste into Copilot",text:"I keep repeating <this workflow>. Capture it as a new skill from template/SKILL.md, then run the gate to prove it's valid."},
+      {label:"Start from the template",text:"cp template/SKILL.md skills/my-skill/SKILL.md"},
+      {label:"Regenerate + prove",text:"bash scripts/regen-skills-index.sh && bash scripts/verify.sh"},
+    ],
+    stuck:"What good looks like: a tight, repeatable play written down — the agent now performs it on cue. Keep the skill small, reference real Copilot tools in backticks, and pass the gate. Then go run a whole task with zero hand-holding.",
+    learn:"Black belt = teach the Dojo new moves. Capture your repeatable plays as skills that compound."
+  },
+];
+
+/* ───────────────────────── State ───────────────────────── */
+const STORE_KEY="dojo-belt-quest-v1";
+let done = loadState();
+const total = CHECKPOINTS.length;
+
+function loadState(){
+  try{
+    const v=JSON.parse(localStorage.getItem(STORE_KEY)||"{}");
+    return (v && typeof v==="object" && !Array.isArray(v)) ? v : {};
+  }catch(e){ return {}; }
+}
+function saveState(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(done)); }catch(e){} }
+
+function isComplete(id){ return !!done[id]; }
+function indexOf(id){ return CHECKPOINTS.findIndex(c=>c.id===id); }
+function isUnlocked(i){ if(i===0) return true; return isComplete(CHECKPOINTS[i-1].id); }
+function completedCount(){ return CHECKPOINTS.filter(c=>isComplete(c.id)).length; }
+
+function currentBelt(){
+  // Completion is a contiguous prefix, so the belt you're training in is the
+  // phase of the first incomplete checkpoint (or Black if all are done).
+  const firstIncomplete=CHECKPOINTS.find(c=>!isComplete(c.id));
+  return firstIncomplete?firstIncomplete.phase:4;
+}
+
+/* ───────────────────────── Layout (desktop serpentine path) ─────────── */
+function nodePositions(){
+  // Distribute nodes within their phase column; serpentine vertically.
+  const byPhase={1:[],2:[],3:[],4:[]};
+  CHECKPOINTS.forEach((c,i)=>byPhase[c.phase].push({c,i}));
+  const colCenters={1:13.5,2:38,3:63,4:88}; // % of width
+  const pos={};
+  Object.keys(byPhase).forEach(p=>{
+    const arr=byPhase[p];
+    const n=arr.length;
+    const topPad=24, botPad=16; // % of map height
+    arr.forEach((o,k)=>{
+      const t = n===1?0.5:(k/(n-1));
+      const y = topPad + t*(100-topPad-botPad);
+      // gentle horizontal wave around the column center
+      const wave = Math.sin(k*1.15 + (+p))*4.2;
+      pos[o.c.id]={x:colCenters[p]+wave, y, idx:o.i};
+    });
+  });
+  return pos;
+}
+
+/* ───────────────────────── Render: desktop map ───────────────────────── */
+function renderMap(){
+  const map=document.getElementById("questMap");
+  // clear old nodes (keep svg + torii)
+  map.querySelectorAll(".node,.phase-label,.phase-divider").forEach(e=>e.remove());
+  document.querySelectorAll(".phase-label,.phase-divider").forEach(e=>e.remove());
+
+  // phase labels + dividers
+  for(let p=1;p<=4;p++){
+    const b=BELTS[p];
+    const lab=document.createElement("div");
+    lab.className="phase-label p"+p;
+    lab.innerHTML=`<span class="kanji">${b.kanji}</span><span class="en"><span class="swatch" style="background:${b.color}"></span>${b.emoji} ${b.en} · ${b.label}</span>`;
+    document.body.appendChild(lab);
+  }
+  ["d1","d2","d3"].forEach(d=>{const el=document.createElement("div");el.className="phase-divider "+d;document.body.appendChild(el);});
+
+  const pos=nodePositions();
+  const rect=map.getBoundingClientRect();
+
+  // draw serpentine path through nodes in order
+  const svg=document.getElementById("pathSvg");
+  svg.setAttribute("viewBox",`0 0 ${rect.width} ${rect.height}`);
+  let d="";
+  CHECKPOINTS.forEach((c,i)=>{
+    const x=pos[c.id].x/100*rect.width;
+    const y=pos[c.id].y/100*rect.height;
+    if(i===0){ d=`M ${x} ${y}`; }
+    else{
+      const px=pos[CHECKPOINTS[i-1].id].x/100*rect.width;
+      const py=pos[CHECKPOINTS[i-1].id].y/100*rect.height;
+      const mx=(px+x)/2;
+      d+=` C ${mx} ${py}, ${mx} ${y}, ${x} ${y}`;
+    }
+  });
+  const completedFrac=completedCount()/total;
+  svg.innerHTML=`
+    <defs>
+      <linearGradient id="pathGrad" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#e6edf3"/><stop offset="33%" stop-color="#1f6feb"/>
+        <stop offset="66%" stop-color="#a16838"/><stop offset="100%" stop-color="#f59e0b"/>
+      </linearGradient>
+    </defs>
+    <path d="${d}" fill="none" stroke="#2b3340" stroke-width="3" stroke-dasharray="2 9" stroke-linecap="round"/>
+    <path d="${d}" fill="none" stroke="url(#pathGrad)" stroke-width="3.5" stroke-linecap="round"
+          pathLength="1" stroke-dasharray="1" stroke-dashoffset="${1-completedFrac}" style="transition:stroke-dashoffset .6s"/>
+  `;
+
+  // nodes
+  CHECKPOINTS.forEach((c,i)=>{
+    const node=document.createElement("div");
+    const state=isComplete(c.id)?"complete":(isUnlocked(i)?"active":"locked");
+    node.className=`node belt${c.phase} ${state}`;
+    node.style.left=pos[c.id].x+"%";
+    node.style.top=pos[c.id].y+"%";
+    node.innerHTML=`
+      <div class="ring"></div>
+      <div class="inner">
+        <span class="emoji">${iconFor(c.id)}</span>
+        <span class="check-icon">✓</span>
+        ${state==="locked"?'<span class="lock">🔒</span>':''}
+      </div>
+      <div class="label">${c.title}</div>`;
+    node.onclick=()=>{ if(state==="locked"){ shake(node); return; } openPanel(c.id); };
+    map.appendChild(node);
+  });
+}
+
+function shake(el){ el.animate([{transform:'translate(-50%,-50%)'},{transform:'translate(calc(-50% - 5px),-50%)'},{transform:'translate(calc(-50% + 5px),-50%)'},{transform:'translate(-50%,-50%)'}],{duration:260}); }
+
+/* ───────────────────────── Render: mobile list ───────────────────────── */
+function renderMobile(){
+  const list=document.getElementById("mobileList");
+  list.innerHTML="";
+  let lastPhase=0;
+  CHECKPOINTS.forEach((c,i)=>{
+    if(c.phase!==lastPhase){
+      lastPhase=c.phase;
+      const b=BELTS[c.phase];
+      const h=document.createElement("div");
+      h.className="m-phase-header";
+      h.innerHTML=`<span class="sw" style="background:${b.color}"></span><span class="kanji">${b.kanji}</span> ${b.emoji} ${b.en} — ${b.label}`;
+      list.appendChild(h);
+    }
+    const state=isComplete(c.id)?"complete":(isUnlocked(i)?"active":"locked");
+    const item=document.createElement("div");
+    item.className="m-item "+state;
+    item.innerHTML=`
+      <div class="m-node">${isComplete(c.id)?'<span class="m-check-done">✓</span>':iconFor(c.id)}</div>
+      <div class="m-text"><div class="m-title">${c.title}</div><div class="m-time">${c.time}</div></div>
+      <div class="m-check">✓</div>`;
+    item.onclick=()=>{ if(state==="locked") return; openPanel(c.id); };
+    list.appendChild(item);
+  });
+}
+
+/* ───────────────────────── Progress + belt pill ───────────────────────── */
+function updateProgress(){
+  const c=completedCount();
+  const fill=document.getElementById("progressFill");
+  fill.style.width=(c/total*100)+"%";
+  const belt=currentBelt();
+  fill.style.background=`linear-gradient(90deg,#e6edf3,${BELTS[belt].color})`;
+  document.getElementById("progressLabel").textContent=`${c} / ${total}`;
+  const b=BELTS[belt];
+  document.getElementById("beltName").textContent=`${b.kanji} ${b.en}`;
+  document.getElementById("beltSwatch").style.background=b.color;
+}
+
+/* ───────────────────────── Panel ───────────────────────── */
+let activeId=null;
+function openPanel(id){
+  const c=CHECKPOINTS.find(x=>x.id===id); if(!c) return;
+  activeId=id;
+  const b=BELTS[c.phase];
+  document.getElementById("panelBeltBar").style.background=b.color;
+  document.getElementById("panelEmoji").innerHTML=iconFor(c.id);
+  document.getElementById("panelKicker").innerHTML=`<span style="color:${b.color}">${b.kanji} ${b.en}</span> · ${b.label}`;
+  document.getElementById("panelTitle").textContent=c.title;
+  document.getElementById("panelTime").textContent="⏱ "+c.time;
+
+  const body=document.getElementById("panelBody");
+  body.innerHTML="";
+
+  const desc=document.createElement("div"); desc.className="desc"; desc.innerHTML=c.desc; body.appendChild(desc);
+
+  if(c.copies&&c.copies.length){
+    const g=document.createElement("div"); g.className="copy-group";
+    c.copies.forEach(cp=>{
+      const wrap=document.createElement("div");
+      wrap.innerHTML=`<div class="copy-label">${cp.label}</div>`;
+      const block=document.createElement("div"); block.className="copy-block"; block.textContent=cp.text;
+      const btn=document.createElement("button"); btn.className="copy-btn"; btn.title="Copy"; btn.innerHTML="⧉";
+      btn.onclick=()=>copyText(cp.text,btn);
+      block.appendChild(btn); wrap.appendChild(block); g.appendChild(wrap);
+    });
+    body.appendChild(g);
+  }
+
+  [c.skill,c.skill2].forEach(s=>{ if(!s) return;
+    const a=document.createElement("a"); a.className="skill-card"; a.href=s.href; a.target="_blank"; a.rel="noopener";
+    a.innerHTML=`<div class="ico">🥋</div><div class="info"><div class="l">${s.label}</div><div class="n">${s.name}</div></div><div class="arrow">↗</div>`;
+    body.appendChild(a);
+  });
+
+  if(c.stuck){
+    const st=document.createElement("button"); st.className="stuck-toggle"; st.innerHTML="🤔 Stuck? Show a hint";
+    const sc=document.createElement("div"); sc.className="stuck-content"; sc.innerHTML=`<p>${c.stuck}</p>`;
+    st.onclick=()=>{ sc.classList.toggle("open"); st.innerHTML=sc.classList.contains("open")?"🤔 Hide hint":"🤔 Stuck? Show a hint"; };
+    body.appendChild(st); body.appendChild(sc);
+  }
+
+  const tog=document.createElement("button");
+  tog.className="toggle-done"+(isComplete(id)?" checked":"");
+  tog.innerHTML=`<span class="dot">${isComplete(id)?'✓':''}</span><span>${c.toggle}</span>`;
+  tog.onclick=()=>toggleDone(id,tog);
+  body.appendChild(tog);
+
+  if(c.learn){
+    const learn=document.createElement("div");
+    learn.style.cssText="font-size:12.5px;color:var(--text-muted);border-left:3px solid var(--teal);padding:8px 12px;background:var(--ink2);border-radius:0 8px 8px 0;line-height:1.5";
+    learn.innerHTML=`<strong style="color:var(--teal)">帯 Belt wisdom:</strong> ${c.learn}`;
+    body.appendChild(learn);
+  }
+
+  document.getElementById("overlay").classList.add("open");
+  document.getElementById("panel").classList.add("open");
+}
+function closePanel(){
+  document.getElementById("overlay").classList.remove("open");
+  document.getElementById("panel").classList.remove("open");
+  activeId=null;
+}
+
+function copyText(text,btn){
+  const ok=()=>{ btn.classList.add("copied"); btn.innerHTML="✓"; setTimeout(()=>{btn.classList.remove("copied");btn.innerHTML="⧉";},1400); };
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(ok).catch(()=>fallbackCopy(text,ok)); }
+  else fallbackCopy(text,ok);
+}
+function fallbackCopy(text,ok){ const ta=document.createElement("textarea");ta.value=text;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");ok();}catch(e){}document.body.removeChild(ta); }
+
+/* ───────────────────────── Completion logic ───────────────────────── */
+function toggleDone(id,tog){
+  const wasComplete=isComplete(id);
+  const c=CHECKPOINTS.find(x=>x.id===id);
+  const i=indexOf(id);
+  const phaseBefore=phaseComplete(c.phase);
+  if(wasComplete){
+    // Keep completion a contiguous prefix: clearing one clears everything after it.
+    for(let k=i;k<CHECKPOINTS.length;k++){ delete done[CHECKPOINTS[k].id]; }
+  } else {
+    done[id]=Date.now();
+  }
+  saveState();
+  tog.classList.toggle("checked",!wasComplete);
+  tog.querySelector(".dot").textContent=!wasComplete?'✓':'';
+  renderAll();
+
+  if(!wasComplete){
+    burstConfetti();
+    const phaseAfter=phaseComplete(c.phase);
+    if(!phaseBefore && phaseAfter){
+      if(c.phase===4 && completedCount()===total) showBlackBelt();
+      else showBeltPromotion(c.phase);
+    }
+  }
+}
+function phaseComplete(p){ return CHECKPOINTS.filter(c=>c.phase===p).every(c=>isComplete(c.id)); }
+
+function renderAll(){ renderMap(); renderMobile(); updateProgress(); }
+
+/* ───────────────────────── Celebration ───────────────────────── */
+function burstConfetti(){
+  const colors=["#e6edf3","#1f6feb","#a16838","#f59e0b","#3fb950","#8b5cf6","#14b8a6"];
+  for(let i=0;i<70;i++){
+    const el=document.createElement("div"); el.className="confetti";
+    el.style.background=colors[i%colors.length];
+    el.style.left=(45+Math.random()*10)+"vw"; el.style.top="50vh";
+    document.body.appendChild(el);
+    const ang=Math.random()*Math.PI*2, dist=120+Math.random()*340;
+    el.animate([
+      {transform:`translate(0,0) rotate(0deg)`,opacity:1},
+      {transform:`translate(${Math.cos(ang)*dist}px,${Math.sin(ang)*dist+260}px) rotate(${Math.random()*720}deg)`,opacity:0}
+    ],{duration:1100+Math.random()*900,easing:"cubic-bezier(.2,.6,.3,1)"}).onfinish=()=>el.remove();
+  }
+}
+
+function showBeltPromotion(phase){
+  const next=BELTS[phase+1]||BELTS[4];
+  const earned=BELTS[phase];
+  const banner=document.getElementById("banner");
+  banner.innerHTML=`
+    <div class="belt-emoji" style="color:${earned.color}">${ICONS.belt}</div>
+    <div class="jp">${earned.kanji} 昇級</div>
+    <h1>${earned.en} earned!</h1>
+    <p>You've mastered <strong>${earned.label}</strong>.<br>Next: <strong>${next.kanji} ${next.en}</strong> — ${next.label}.</p>
+    <div class="cert-actions"><button class="cta" onclick="hideBanner()">続ける · Continue</button></div>`;
+  showBanner();
+}
+
+function showBlackBelt(){
+  const banner=document.getElementById("banner");
+  banner.innerHTML=`
+    <div class="belt-emoji" style="color:var(--amber)">${ICONS.daruma}</div>
+    <div class="jp">黒帯 — 免許皆伝</div>
+    <h1>Black Belt — Dojo Master!</h1>
+    <p>You've walked the full path: install → core kata → the mandatory workflow → mastery.<br>Your Copilot agents now build with discipline. 🏯</p>
+    <canvas id="certCanvas" width="640" height="360"></canvas>
+    <div class="cert-actions">
+      <button class="cta" onclick="downloadCert()">⬇ Download certificate</button>
+      <button class="cta ghost" onclick="hideBanner()">閉じる · Close</button>
+    </div>`;
+  showBanner();
+  drawCert();
+}
+function showBanner(){ const b=document.getElementById("banner"); b.classList.add("show"); }
+function hideBanner(){ document.getElementById("banner").classList.remove("show"); }
+
+function drawCert(){
+  const cv=document.getElementById("certCanvas"); if(!cv) return;
+  const x=cv.getContext("2d"), W=cv.width, H=cv.height;
+  const g=x.createLinearGradient(0,0,W,H); g.addColorStop(0,"#0d1117"); g.addColorStop(1,"#161b22");
+  x.fillStyle=g; x.fillRect(0,0,W,H);
+  x.strokeStyle="#f59e0b"; x.lineWidth=4; x.strokeRect(16,16,W-32,H-32);
+  x.strokeStyle="#2b3340"; x.lineWidth=1; x.strokeRect(26,26,W-52,H-52);
+  x.textAlign="center";
+  x.fillStyle="#f59e0b"; x.font="600 26px 'Segoe UI',sans-serif"; x.fillText("黒帯 · 免許皆伝", W/2, 84);
+  x.fillStyle="#e6edf3"; x.font="700 30px 'Segoe UI',sans-serif"; x.fillText("Copilot Agents Dojo", W/2, 140);
+  x.font="400 16px 'Segoe UI',sans-serif"; x.fillStyle="#9aa7b4"; x.fillText("certifies the bearer has earned the rank of", W/2, 174);
+  x.fillStyle="#fff"; x.font="800 38px 'Segoe UI',sans-serif"; x.fillText("BLACK BELT 🥋", W/2, 222);
+  x.fillStyle="#9aa7b4"; x.font="400 14px 'Segoe UI',sans-serif";
+  x.fillText("Install · Core Kata · Mandatory Workflow · Mastery", W/2, 262);
+  x.fillStyle="#3fb950"; x.font="600 15px 'Segoe UI',sans-serif";
+  x.fillText("All "+total+" checkpoints complete", W/2, 296);
+  x.fillStyle="#57606a"; x.font="400 12px 'Segoe UI',sans-serif";
+  x.fillText(new Date().toISOString().slice(0,10)+"  ·  github.com/andreaswasita/copilot-agents-dojo", W/2, 326);
+}
+function downloadCert(){
+  const cv=document.getElementById("certCanvas"); if(!cv) return;
+  const a=document.createElement("a"); a.download="dojo-black-belt.png"; a.href=cv.toDataURL("image/png"); a.click();
+}
+
+/* ───────────────────────── Reset ───────────────────────── */
+function resetProgress(){
+  if(!confirm("Reset all belt progress? This clears your saved checkpoints.")) return;
+  done={}; saveState(); hideBanner(); closePanel(); renderAll();
+}
+
+/* ───────────────────────── Init ───────────────────────── */
+document.getElementById("toriiBg").innerHTML=ICONS.torii;
+window.addEventListener("resize", ()=>{ renderMap(); });
+document.addEventListener("keydown", e=>{ if(e.key==="Escape"){ closePanel(); hideBanner(); } });
+renderAll();
+</script>
+</body>
+</html>

@@ -1,105 +1,119 @@
 ---
 name: verify-before-done
-description: >-
-  Ensures the agent proves its work before declaring a task complete. Use this skill
-  before marking any task as done, before submitting code for review, when running
-  pre-PR checks, or when the agent is about to close out a task without demonstrating
-  correctness. No kata is complete without demonstration — tests, logs, diffs, or it
-  didn't happen.
+description: Proves work with tests, diffs, and logs before sign-off.
+tier: core
+category: discipline
+created_by: human
+platforms: [windows, macos, linux]
+tags: [verification, testing, quality]
+author: Andreas Wasita (@andreaswasita)
 ---
 
-# Verify Before Done
+# Verify Before Done Skill
 
-No kata is complete without demonstration. Tests, logs, diffs — show your work or it didn't happen.
+Refuses to mark a task complete without concrete evidence: green tests, reviewed diff, clean tree, and a recorded result block in `tasks/todo.md`. Does NOT replace `scripts/verify.sh` — it tells the agent *when* to run it and what to do with the output.
 
 ## When to Use
 
-- Before marking any task complete in `tasks/todo.md`
-- Before creating a pull request
-- After implementing a fix or feature
-- When the agent is about to say "done" without evidence
+- Before flipping any step in `tasks/todo.md` from `- [ ]` to `- [x]`.
+- Before opening a pull request.
+- After any fix or feature implementation.
+- Any time the agent is about to say "done" or "ready" without evidence.
 
-## How to Use
+## Prerequisites
 
-### The Verification Checklist
+- A test runner installed for the stack (pytest, vitest, go test, etc.).
+- `scripts/verify.sh` (or `scripts/run-checks.ps1` on Windows) executable.
+- The `powershell` tool to invoke runners and `git`.
+- `git` available so diffs can be inspected.
 
-Before declaring any task complete, run through this checklist:
+## How to Run
 
-1. **Tests pass** — Run the full test suite, not just "it compiles"
-   ```bash
-   # Use the project's test command, e.g.:
-   npm test          # Node.js
-   pytest            # Python
-   go test ./...     # Go
-   dotnet test       # .NET
-   mvn test          # Java
-   ```
-
-2. **No regressions** — Diff behavior between main and your changes
-   ```bash
-   git diff main --stat
-   ```
-
-3. **Clean tree** — No untracked files that should be committed, no debug artifacts left behind
-
-4. **Demonstrate correctness** — Show concrete evidence:
-   - Test output showing green
-   - Before/after screenshots for UI changes
-   - Log output showing the fix works
-   - API response showing correct behavior
-
-5. **Staff engineer test** — Ask yourself: "Would a staff engineer approve this?"
-
-### Automated Verification
-
-When available, use `scripts/verify.sh` to automate:
-```bash
-bash scripts/verify.sh
+```text
+1. Run the project's test command via the `powershell` tool.
+2. Run `bash scripts/verify.sh` (or `pwsh scripts/run-checks.ps1`) for the dojo gate.
+3. Inspect the diff with `git diff main --stat` and `git diff main`.
+4. Confirm the working tree is clean (`git status --porcelain`).
+5. Append a Verification Results block to `tasks/todo.md`.
+6. Only then mark the step `- [x]`.
 ```
 
-This script:
-- Runs tests
-- Checks for uncommitted changes
-- Validates that `tasks/todo.md` has a plan
-- Reports pass/fail
+## Quick Reference
 
-### Documenting Results
+| Check | Command (run via `powershell`) | Pass criterion |
+|---|---|---|
+| Tests pass | `pytest` / `npm test` / `go test ./...` / `dotnet test` / `mvn test` | exit 0, no failures reported |
+| Dojo gate | `bash scripts/verify.sh --check` | exit 0 |
+| Diff summary | `git diff main --stat` | matches plan in `tasks/todo.md` |
+| No regressions | `git diff main -- <touched paths>` | only intended changes |
+| Clean tree | `git status --porcelain` | empty output (or expected untracked) |
+| Evidence captured | `edit tasks/todo.md` | Verification Results block added |
 
-Add a review section to `tasks/todo.md`:
+## Procedure
+
+### Step 1: Run the Full Test Suite
+
+Run via the `powershell` tool — not "it compiles", not "the unit test I wrote". The full suite catches regressions in adjacent code.
+
+If the area you changed has no tests, write one as part of the task. An untested change is unverified by definition.
+
+### Step 2: Run the Dojo Gate
+
+```bash
+bash scripts/verify.sh --check
+```
+
+This wraps the spec/plan/actions/tests checks in CI parity mode. If it fails locally, it will fail in CI.
+
+### Step 3: Diff Against Main
+
+```bash
+git diff main --stat
+git diff main
+```
+
+The change set must match the plan in `tasks/todo.md`. Unexpected files in the diff are a red flag — either the plan is stale or you've leaked scope.
+
+### Step 4: Clean Tree Check
+
+```bash
+git status --porcelain
+```
+
+Output must be empty (or contain only deliberately-untracked files). Debug prints, leftover scratch files, and stray `.tmp` artifacts all surface here.
+
+### Step 5: Record Evidence
+
+Append to `tasks/todo.md` under the current task:
 
 ```markdown
 ### Verification Results
-- [x] Tests: 47 passed, 0 failed
-- [x] No regressions: diff reviewed, 3 files changed
-- [x] Clean tree: no untracked files
-- [x] Evidence: test output attached below
+- [x] Tests: 47 passed, 0 failed (`pytest tests/`)
+- [x] Dojo gate: `verify.sh --check` PASS
+- [x] Diff: 3 files changed, +84/-12 (matches plan)
+- [x] Clean tree
+- [x] Evidence: <paste relevant test output, log snippet, or screenshot ref>
 ```
 
-## Examples
+Only after this block exists do you flip the step to `- [x]`.
 
-**Bad — Declaring Victory Without Proof:**
-> "I've fixed the authentication bug. The code looks correct."
+### Step 6: Staff-Engineer Sniff Test
 
-**Good — Showing Your Work:**
-> "I've fixed the authentication bug. Here's the evidence:
-> - Root cause: Token expiry check was using `<` instead of `<=`
-> - Fix: Changed comparison in `auth/token.ts:47`
-> - Tests: All 23 auth tests pass, including the new edge case test I added
-> - Regression check: No other files affected
-> - Manual verification: Tested with expired token — correctly returns 401"
+Final question: "Would a senior reviewer approve this on the evidence alone?" If no, add the missing evidence before claiming done.
 
-## Guidelines
+## Pitfalls
 
-- Never mark a task complete without proving it works
-- Automated verification is better than manual ("trust, but verify" becomes "verify, then trust")
-- If tests don't exist for the area you changed, write them as part of the task
-- Diff behavior between main and your changes when relevant
-- When in doubt, over-verify rather than under-verify
+- **DO NOT** say "done" without a Verification Results block. Verbal claims don't count.
+- **DO NOT** skip tests because "it's a small change." Small changes cause big outages.
+- **DO NOT** test only the happy path. Edge cases are where bugs live.
+- **DO NOT** ignore flaky tests. A flaky test is a test that sometimes catches bugs — fix it, don't ignore it.
+- **DO NOT** trust "it compiles." Compilation is the lowest possible bar.
+- **DO NOT** mark a step done before `scripts/verify.sh --check` exits 0.
 
-## Anti-Patterns
+## Verification
 
-- **"It compiles, ship it"** — Compilation is the lowest bar. Prove behavior.
-- **Skipping tests because "it's a small change"** — Small changes cause big outages
-- **Testing only the happy path** — Edge cases are where bugs live
-- **Declaring done verbally** — Write it down with evidence, or it didn't happen
-- **Ignoring flaky tests** — A flaky test is a test that sometimes catches bugs. Fix it, don't ignore it.
+- [ ] Test suite ran to completion with exit 0.
+- [ ] `scripts/verify.sh --check` (or `run-checks.ps1 -Check`) passed.
+- [ ] `git diff main --stat` matches the plan.
+- [ ] `git status --porcelain` is empty.
+- [ ] `tasks/todo.md` has a Verification Results block under the task.

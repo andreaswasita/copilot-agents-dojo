@@ -16,9 +16,9 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(dirname "$SCRIPT_DIR")"
-LESSONS_FILE="$REPO_ROOT/tasks/lessons.md"
-PATTERNS_DIR="$REPO_ROOT/memory/patterns"
+DOJO_ROOT="${DOJO_ROOT:-$(dirname "$SCRIPT_DIR")}"
+LESSONS_FILE="$DOJO_ROOT/tasks/lessons.md"
+PATTERNS_DIR="$DOJO_ROOT/memory/patterns"
 TODAY=$(date -u +%Y-%m-%d)
 
 if [ ! -f "$LESSONS_FILE" ]; then

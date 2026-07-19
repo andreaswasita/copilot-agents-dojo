@@ -1,0 +1,23 @@
+{
+  "name": "dojo",
+  "description": "Copilot Agents Dojo: the disciplined, governed core skill library for GitHub Copilot agents - autonomous bug fix, code review, debugging, planning, security review, and more. Installs the 28 core dojo skills; optional tiers stay opt-in via the dojo installer.",
+  "version": "1.3.0",
+  "author": {
+    "name": "Andreas Wasita",
+    "url": "https://github.com/andreaswasita"
+  },
+  "homepage": "https://github.com/andreaswasita/copilot-agents-dojo",
+  "repository": "https://github.com/andreaswasita/copilot-agents-dojo",
+  "license": "MIT",
+  "keywords": [
+    "dojo",
+    "agents",
+    "skills",
+    "copilot",
+    "discipline",
+    "governance"
+  ],
+  "skills": [
+    "skills/"
+  ]
+}

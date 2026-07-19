@@ -1,153 +1,145 @@
 ---
 name: pr-workflow
-description: >-
-  Guides the agent through a complete pull request workflow — from branch creation to
-  merge-ready state. Use this skill when creating a PR, preparing changes for review,
-  writing PR descriptions, or structuring commits for clean git history. Also use when
-  the user asks to "submit this" or "get this ready for review."
+description: Prepares branches and PRs for clean, reviewable merges.
+tier: practical
+category: workflow
+created_by: human
+platforms: [windows, macos, linux]
+tags: [git, pr, review]
+author: Andreas Wasita (@andreaswasita)
 ---
 
-# PR Workflow
+# PR Workflow Skill
 
-A disciplined pull request workflow turns messy changes into reviewable, mergeable work.
+Takes a working branch from "the code works" to "this is ready for a human reviewer": pre-flight checks, clean commits, a real description, self-review, and disciplined handling of feedback. Does NOT create draft "WIP" PRs that sit open for days.
 
 ## When to Use
 
-- Preparing changes for review
-- Creating a pull request
-- Writing PR descriptions
-- Structuring commits for clean git history
-- User says "submit this" or "get this ready for review"
+- Preparing a feature branch for review.
+- Opening a pull request.
+- Writing or rewriting a PR description.
+- Restructuring commits before review.
+- The user says "submit this" or "get this ready for review".
 
-## How to Use
+## Prerequisites
 
-### Step 1: Pre-Flight Checks
+- `git` configured with author identity.
+- `gh` CLI authenticated for PR creation (or web access to the host).
+- The `powershell` tool to run `git`, the test suite, and `scripts/verify.sh`.
+- A green test suite on the branch.
 
-Before creating a PR, run through the verify-before-done checklist:
+## How to Run
+
+```text
+1. Pre-flight: tests green, working tree clean, scope reviewed.
+2. Clean up commits with interactive rebase if needed.
+3. Push the branch.
+4. Open the PR with a structured description.
+5. Self-review the diff (use the `code-review` skill).
+6. Address feedback in new commits — do not force-push during active review.
+```
+
+## Quick Reference
+
+| Step | Command (run via `powershell`) | Notes |
+|---|---|---|
+| Pre-flight tests | `npm test` / `pytest` / `go test ./...` | Must exit 0 |
+| Dojo gate | `bash scripts/verify.sh --check` | Must exit 0 |
+| Clean tree | `git status --porcelain` | Empty |
+| Review scope | `git diff main --stat` | Matches plan |
+| Tidy history | `git rebase -i main` | Optional, before push |
+| Push | `git push -u origin <branch>` | First push of branch |
+| Open PR | `gh pr create --fill` then edit body | Or use the GitHub UI |
+
+## Procedure
+
+### Step 1: Pre-Flight
+
+Run via the `powershell` tool:
 
 ```bash
-# Run automated verification if available
-bash scripts/verify.sh
-
-# Manual checks
-git status                    # Clean working tree
-git diff main --stat          # Review scope of changes
-npm test                      # (or equivalent) All tests pass
+bash scripts/verify.sh --check
+git status --porcelain
+git diff main --stat
 ```
+
+If anything fails, fix it before proceeding. A PR opened on a red branch wastes reviewer time.
 
 ### Step 2: Clean Up Commits
 
-Good PRs tell a story through their commits:
+Interactive rebase if the history is noisy:
 
 ```bash
-# Interactive rebase to clean up history
 git rebase -i main
+```
 
-# Commit message format
+Squash fixups. Reword unclear messages. Aim for a sequence that reads like a story:
+
+```text
+feat: add rate limiting middleware
+test: cover rate limit burst traffic
+docs: document rate limit configuration
+```
+
+Commit message format:
+
+```text
 <type>: <short description>
 
 <body — what and why, not how>
 
-# Types: feat, fix, refactor, test, docs, chore
-```
-
-**Good commit history:**
-```
-feat: add rate limiting middleware
-test: add rate limit tests for burst traffic
-docs: document rate limit configuration
-```
-
-**Bad commit history:**
-```
-wip
-fix stuff
-more fixes
-actually fix it this time
+Types: feat, fix, refactor, test, docs, chore
 ```
 
 ### Step 3: Write the PR Description
 
-Every PR needs context for reviewers:
-
 ```markdown
 ## What
-
-Brief description of the change.
+<Brief description.>
 
 ## Why
-
-What problem does this solve? Link to issue if applicable.
+<Problem solved. Link the issue.>
 
 ## How
-
-High-level approach. What are the key design decisions?
+<High-level approach. Key design decisions.>
 
 ## Testing
-
-How was this tested? What should reviewers verify?
+<How was this tested? What should the reviewer verify?>
 
 ## Checklist
-
 - [ ] Tests pass
 - [ ] No regressions
-- [ ] Documentation updated (if applicable)
+- [ ] Docs updated (if applicable)
 - [ ] `tasks/todo.md` reflects completion
 ```
 
 ### Step 4: Self-Review
 
-Before requesting review:
-1. Read the full diff on GitHub/in your tool
-2. Use the code-review skill on your own changes
-3. Check for debug artifacts (console.log, TODO comments, commented-out code)
-4. Verify file changes match the stated scope
+Before requesting a human reviewer:
 
-### Step 5: Address Review Feedback
+1. Open the PR on GitHub and read the diff in the web UI (different lens than local).
+2. Run the `code-review` skill on your own change.
+3. Check for debug artifacts: `console.log`, `print()`, `TODO`, commented-out code.
+4. Confirm the file list matches the stated scope.
 
-When feedback comes in:
-- Address each comment explicitly
-- Push fixes as new commits (don't force-push during review)
-- Squash fixup commits before merge
+### Step 5: Handle Review Feedback
 
-## Examples
+- Address every comment (use the `receiving-code-review` skill).
+- Push fixes as new commits during active review.
+- Squash fixup commits just before merge.
 
-**Minimal PR Description:**
-> "Fixed the thing"
+## Pitfalls
 
-**Complete PR Description:**
-> ## What
-> Add JWT token refresh for long-lived sessions.
->
-> ## Why
-> Users on the mobile app lose their session after 15 minutes (#234).
-> The current JWT expiry is fixed at 15min with no refresh mechanism.
->
-> ## How
-> - Added `/auth/refresh` endpoint that accepts a valid refresh token
-> - Refresh tokens have 7-day expiry, stored in HttpOnly cookies
-> - Access tokens now have 1-hour expiry (up from 15min)
->
-> ## Testing
-> - 12 new tests covering refresh flow, expiry, and token reuse prevention
-> - Manual testing with mobile app confirmed session persists
->
-> ## Checklist
-> - [x] Tests pass (47 total, 12 new)
-> - [x] No regressions
-> - [x] API docs updated
+- **DO NOT** open mega PRs (>400 lines changed across many files). Split them.
+- **DO NOT** force-push during active review — reviewers lose context.
+- **DO NOT** mix refactoring and feature work in one PR — separate them.
+- **DO NOT** omit the description. Reviewers should not have to reverse-engineer intent.
+- **DO NOT** leave WIP PRs open. Either it is ready for review or it is a draft you actively work on.
 
-## Guidelines
+## Verification
 
-- One concern per PR — don't bundle unrelated changes
-- Keep PRs small (<400 lines changed) when possible
-- The PR description is for the reviewer's context, not yours — write for someone who doesn't know what you know
-- Link to issues, design docs, or conversations that provide context
-
-## Anti-Patterns
-
-- **Mega PRs** — 2000 lines changed across 40 files. Nobody can review this effectively.
-- **"WIP" PRs that stay WIP** — If it's not ready, don't request review
-- **Mixing refactoring and features** — Separate PRs. Always.
-- **Force-pushing during review** — Reviewers lose context when history is rewritten
-- **No description** — Forcing reviewers to reverse-engineer intent from code
+- [ ] `scripts/verify.sh --check` exits 0 locally before push.
+- [ ] PR description has What / Why / How / Testing sections.
+- [ ] Commit history is readable (no `wip`, no `fix stuff`).
+- [ ] Diff scope matches the stated intent.
+- [ ] Self-review was run via the `code-review` skill before requesting human review.

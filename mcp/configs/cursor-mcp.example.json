@@ -1,0 +1,15 @@
+// .cursor/mcp.json — Cursor IDE
+// Same shape as Claude Code. Copy to <project>/.cursor/mcp.json.
+{
+  "mcpServers": {
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github@0.6"],
+      "env": { "GITHUB_PERSONAL_ACCESS_TOKEN": "${GH_PAT}" }
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem@0.6", "."]
+    }
+  }
+}

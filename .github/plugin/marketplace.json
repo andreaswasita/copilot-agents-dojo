@@ -1,0 +1,19 @@
+{
+  "name": "copilot-agents-dojo",
+  "owner": {
+    "name": "Andreas Wasita",
+    "url": "https://github.com/andreaswasita"
+  },
+  "metadata": {
+    "description": "The Copilot Agents Dojo marketplace - a disciplined, governed skill library for GitHub Copilot agents.",
+    "version": "1.3.0"
+  },
+  "plugins": [
+    {
+      "name": "dojo",
+      "description": "The 28 core Copilot Agents Dojo skills: autonomous bug fix, code review, debugging, planning, security review, and more.",
+      "version": "1.3.0",
+      "source": "."
+    }
+  ]
+}

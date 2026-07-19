@@ -1,119 +1,100 @@
 ---
 name: refactoring
-description: >-
-  Guides the agent through safe, systematic code refactoring — improving structure
-  without changing behavior. Use this skill when asked to clean up code, reduce
-  duplication, simplify complexity, extract components or functions, reorganize file
-  structure, or improve maintainability. Also use when the demand-elegance skill
-  identifies a hacky solution that needs restructuring.
+description: Safe, test-backed code restructuring in small steps.
+tier: practical
+category: workflow
+created_by: human
+platforms: [windows, macos, linux]
+tags: [refactoring, quality, debt]
+author: Andreas Wasita (@andreaswasita)
 ---
 
-# Refactoring
+# Refactoring Skill
 
-Improve the structure of existing code without changing its behavior. Every refactoring is a series of small, safe transformations.
+Restructures existing code without changing behavior, in small atomic steps each backed by a green test suite. Does NOT add features in the same change — refactoring and feature work travel in separate PRs.
 
 ## When to Use
 
-- Codebase has accumulated technical debt
-- Duplication across multiple files or functions
-- A function or class has grown too large
-- Naming doesn't reflect current purpose
-- The demand-elegance skill flagged a hacky solution
-- Before adding new features to a messy area of code
+- A function, class, or file has grown unmanageable.
+- Duplication is spreading across modules.
+- The `demand-elegance` skill flagged a hacky solution.
+- Names no longer reflect purpose after a domain shift.
+- Before adding a new feature into a messy area.
+- NOT when there is no test coverage and the change is high-risk — write tests first.
 
-## How to Use
+## Prerequisites
 
-### Principle: Behavior Preservation
+- Working test suite (or willingness to write characterization tests first).
+- `git` for atomic commits per transformation.
+- The `view`, `edit`, `grep`, and `glob` Copilot tools.
+- A baseline run of the test suite passing (proven, not assumed).
 
-The golden rule of refactoring: **tests pass before and after every step**. If you don't have tests, write them first.
+## How to Run
 
-### Step 1: Establish a Safety Net
+```text
+1. Run the full test suite. Confirm green baseline.
+2. If no tests cover the target, write characterization tests; commit separately.
+3. Apply one named transformation.
+4. Re-run tests. If red, revert.
+5. Commit. Repeat for next transformation.
+6. Final pass: full suite + review of the whole diff.
+```
 
-Before changing anything:
-1. **Identify existing tests** that cover the code you're about to change
-2. **Run them** — confirm they pass on the current code
-3. **If no tests exist**, write characterization tests that capture current behavior
-4. **Commit the tests** separately from the refactoring
-
-### Step 2: Identify the Smell
-
-Common code smells and their refactoring:
+## Quick Reference
 
 | Smell | Refactoring |
-|-------|-------------|
-| **Long function** (>30 lines) | Extract smaller, named functions |
-| **Duplicate code** | Extract shared function or module |
-| **Deep nesting** (>3 levels) | Early returns, extract conditions |
-| **God class/file** | Split by responsibility |
-| **Primitive obsession** | Introduce domain types |
-| **Feature envy** | Move logic to the class that owns the data |
-| **Long parameter list** (>4 params) | Introduce parameter object |
-| **Dead code** | Delete it. That's what version control is for. |
+|---|---|
+| Long function (>30 lines) | Extract smaller, named functions |
+| Duplicate code | Extract shared function or module |
+| Deep nesting (>3 levels) | Early returns, extract conditions |
+| God class / file | Split by responsibility |
+| Primitive obsession | Introduce domain types |
+| Feature envy | Move logic to the class that owns the data |
+| Long parameter list (>4) | Introduce parameter object |
+| Dead code | Delete it — version control remembers |
 
-### Step 3: Small Steps
+## Procedure
 
-Make one transformation at a time:
+### Step 1: Establish the Safety Net
 
-1. **Make the change** — One refactoring move
-2. **Run tests** — Confirm behavior is preserved
-3. **Commit** — Small, atomic commits with clear messages
-4. **Repeat** — Next transformation
+Identify tests covering the target with `grep` / `glob`. Run them via the `powershell` tool. If they fail or do not exist, write characterization tests first and commit them in a separate commit before any refactor.
 
-```
-Refactoring commit messages:
-  refactor: extract validateInput() from handleRequest()
-  refactor: rename UserManager to UserRepository
-  refactor: move email logic to NotificationService
-  refactor: remove unused formatLegacyDate()
+### Step 2: Name the Transformation
+
+Each step in the refactor must have a name from the rubric above ("extract method", "introduce parameter object", "rename for clarity"). If you cannot name it, you are freelancing — stop.
+
+### Step 3: One Transformation, One Commit
+
+For each step:
+
+1. Apply the change with the `edit` tool.
+2. Run the full test suite.
+3. If red, revert immediately.
+4. If green, commit with message `refactor: <named transformation>`.
+
+```text
+refactor: extract validateInput() from handleRequest()
+refactor: rename UserManager to UserRepository
+refactor: move email logic to NotificationService
+refactor: delete unused formatLegacyDate()
 ```
 
 ### Step 4: Verify the Whole
 
-After all transformations:
-- Run the complete test suite
-- Review the full diff — does the result look cleaner?
-- Check that no behavior changed (same inputs → same outputs)
+Run the full suite a final time. Review the cumulative diff (`git diff main`). Ask: is the result actually clearer, or just rearranged? If not clearer, revert.
 
-## Examples
+## Pitfalls
 
-**Before — Nested Mess:**
-```python
-def process_order(order):
-    if order:
-        if order.items:
-            if order.customer:
-                if order.customer.verified:
-                    for item in order.items:
-                        if item.in_stock:
-                            # actual business logic buried 5 levels deep
-                            ...
-```
+- **DO NOT** refactor without a green test baseline. You are gambling, not refactoring.
+- **DO NOT** mix refactor and feature work in one PR. Reviewers cannot tell signal from noise.
+- **DO NOT** rename a symbol without searching every reference first (`grep` on the symbol).
+- **DO NOT** rewrite for a hypothetical future ("we might need this pluggable"). Refactor for today.
+- **DO NOT** big-bang refactor across the whole repo in one commit — small atomic steps, always.
 
-**After — Early Returns:**
-```python
-def process_order(order):
-    if not order or not order.items:
-        return
-    if not order.customer or not order.customer.verified:
-        raise UnverifiedCustomerError()
+## Verification
 
-    in_stock_items = [item for item in order.items if item.in_stock]
-    # business logic at the top level, clear and readable
-    ...
-```
-
-## Guidelines
-
-- Write tests before refactoring, not after
-- One transformation per commit — makes it easy to bisect if something breaks
-- The goal is clarity, not cleverness
-- If a refactoring makes the code harder to understand, revert it
-- Don't refactor and add features in the same PR
-
-## Anti-Patterns
-
-- **Refactoring without tests** — You're just rearranging code and hoping for the best
-- **Big bang refactoring** — Rewriting everything at once. Small steps, always.
-- **Refactoring for hypothetical futures** — "We might need this to be pluggable someday" — no, just make it clear
-- **Mixing refactoring with feature work** — Separate PRs. Always.
-- **Renaming without search** — Rename a function and forget the 5 other files that call it
+- [ ] Test suite is green before the first transformation.
+- [ ] Test suite is green after every commit.
+- [ ] Each commit is named `refactor: <transformation>`.
+- [ ] No public API changed (or, if it did, callers were updated in the same PR).
+- [ ] Final diff is meaningfully clearer than the starting code.

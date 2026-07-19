@@ -1,0 +1,7 @@
+# Python caches (skills/ scripts, test runs, etc.)
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# OS / editor cruft
+.DS_Store

@@ -1,0 +1,5 @@
+{
+  "type": "stdio",
+  "command": "npx",
+  "args": ["-y", "@modelcontextprotocol/server-filesystem@0.6", "${workspaceFolder}"]
+}

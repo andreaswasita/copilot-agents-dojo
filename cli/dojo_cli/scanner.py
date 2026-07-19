@@ -149,12 +149,41 @@ def scan_skills(dojo_root: Path) -> dict[str, list[SkillInfo]]:
 
 
 def scan_agents(dojo_root: Path) -> list[AgentInfo]:
-    """Scan the agents/ directory and return agent metadata."""
+    """Scan agents/ and return metadata.
+
+    Prefers `agents/registry.yaml` as the single source of truth (Phase 5).
+    Falls back to per-file frontmatter parsing if the registry is absent.
+    """
     agents_dir = dojo_root / "agents"
     if not agents_dir.is_dir():
         return []
 
-    agents: list[AgentInfo] = []
+    registry_file = agents_dir / "registry.yaml"
+    if registry_file.is_file():
+        try:
+            data = yaml.safe_load(registry_file.read_text(encoding="utf-8")) or {}
+            agents: list[AgentInfo] = []
+            for entry in data.get("personas", []):
+                slug = entry.get("slug") or ""
+                rel_path = entry.get("file") or f"agents/{slug}.md"
+                path = (dojo_root / rel_path).resolve()
+                agents.append(
+                    AgentInfo(
+                        name=entry.get("name", slug),
+                        slug=slug,
+                        description=entry.get("description", "No description").strip(),
+                        agent_type=entry.get("type", "general"),
+                        activation=entry.get("activation_hint", entry.get("activation", "manual")),
+                        path=path,
+                        apply_to=entry.get("apply_to", []) or [],
+                    )
+                )
+            if agents:
+                return agents
+        except (yaml.YAMLError, OSError):
+            pass  # fall through to legacy scan
+
+    agents = []
     for agent_file in sorted(agents_dir.glob("*.md")):
         meta = _parse_frontmatter(agent_file)
         agents.append(

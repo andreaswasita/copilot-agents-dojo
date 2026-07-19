@@ -1,161 +1,140 @@
 ---
 name: finishing-a-development-branch
-description: >-
-  Final verification, merge decision, and cleanup for a completed development
-  branch or worktree. Use this skill when all planned tasks are complete, when
-  the user says "merge this," "we're done," or "finish up," when a feature
-  branch is ready for integration, or when wrapping up a worktree session. This
-  is the last skill in the mandatory workflow.
+description: Verifies, summarises, and closes a development branch.
+tier: practical
+category: workflow
+created_by: human
+platforms: [windows, macos, linux]
+tags: [git, merge, lifecycle]
+author: Andreas Wasita (@andreaswasita)
 ---
 
-# Finishing a Development Branch
+# Finishing a Development Branch Skill
 
-All tasks done? Prove it. Then decide: merge, PR, keep, or discard. Clean up after yourself.
+Runs the closing ritual for a completed branch or worktree: final verification, full diff review, options presented to the user, chosen action executed, cleanup, and a logged retrospective. Does NOT merge without explicit user consent.
 
 ## When to Use
 
-- All tasks in `tasks/todo.md` are marked complete
-- User says "merge," "we're done," "ship it," or "finish up"
-- A feature branch or worktree is ready for integration
-- End of a development session that produced completed work
+- All tasks in `tasks/todo.md` are marked complete.
+- User says "merge", "we're done", "ship it", or "finish up".
+- A feature branch or worktree is ready for integration.
+- Ending a session that produced completed work.
 
-## How to Use
+## Prerequisites
+
+- All planned tasks complete with Verification Results blocks.
+- `git` configured with author identity and remote access.
+- `gh` CLI authenticated (for PR option).
+- The `powershell` tool to run gates and `git`.
+- A clean working tree.
+
+## How to Run
+
+```text
+1. Run the dojo gate + full test suite. All green.
+2. Review the full diff against main.
+3. Present options: merge / PR / keep / discard.
+4. Wait for the user to choose.
+5. Execute the chosen action.
+6. Clean up worktree, branch, and tasks/todo.md.
+7. Log the retrospective in tasks/lessons.md.
+```
+
+## Quick Reference
+
+| Option | Commands |
+|---|---|
+| Merge | `git checkout main && git merge --squash <branch> && git commit && git branch -d <branch>` |
+| PR | `git push -u origin <branch> && gh pr create --fill` |
+| Keep | (no-op) leave the branch as-is |
+| Discard | `git checkout main && git branch -D <branch>` |
+
+| Verification check | Command |
+|---|---|
+| Dojo gate | `bash scripts/verify.sh --check` |
+| Full tests | `npm test` / `pytest` / `go test ./...` / `dotnet test` |
+| Clean tree | `git status --porcelain` |
+| Full diff | `git diff main --stat` then `git diff main` |
+| Commit log | `git log main..HEAD --oneline` |
+
+## Procedure
 
 ### Step 1: Final Verification
 
-Run the complete verification suite — no shortcuts:
+Run via the `powershell` tool:
 
 ```bash
-# Automated verification
-bash scripts/verify.sh
-
-# Manual verification if no script
-git status                    # Clean working tree
-git diff main --stat          # Review full scope of changes
-# Run the project's full test suite
+bash scripts/verify.sh --check
+git status --porcelain
+git log main..HEAD --oneline
+git diff main --stat
 ```
 
-All checks must pass. If anything fails, fix it before proceeding.
+All checks must pass. Anything failing → fix it, do not force-merge.
 
 ### Step 2: Review the Full Diff
 
-Look at everything that changed:
+Walk the cumulative diff. Ask:
 
-```bash
-git log main..HEAD --oneline   # All commits
-git diff main --stat           # Files changed
-git diff main                  # Full diff
-```
+- Does the total change match the original plan?
+- Are there commits that should not be here?
+- Is the history readable end-to-end?
 
-Ask:
-- Does the total diff match the original plan?
-- Are there any commits that shouldn't be here?
-- Is the commit history clean and readable?
-
-### Step 3: Present Options to the User
-
-**Never merge without explicit user consent.** Present the options:
+### Step 3: Present Options
 
 ```markdown
 ## Branch Complete: feature/add-search
 
-**Summary:** Added full-text search to the API with 3 new endpoints,
-Elasticsearch integration, and 24 tests.
-
-**Stats:** 8 commits, 12 files changed, +420 / -30 lines
+**Summary:** Full-text search with 3 endpoints, Elasticsearch integration, 24 new tests.
+**Stats:** 8 commits, 12 files changed, +420 / -30 lines.
 
 **Options:**
-1. **Merge to main** — Squash-merge and delete branch
-2. **Open a PR** — Create a pull request for team review
-3. **Keep the branch** — Leave it for later; don't merge yet
-4. **Discard** — Delete the branch and all changes
+1. Merge to main (squash + delete branch)
+2. Open a PR
+3. Keep the branch as-is
+4. Discard the branch and all changes
 ```
 
-Wait for the user to choose.
+Wait for the user's explicit choice.
 
 ### Step 4: Execute the Chosen Option
 
-**Merge:**
-```bash
-git checkout main
-git merge --squash feature/add-search
-git commit -m "feat: add full-text search with Elasticsearch"
-git branch -d feature/add-search
-```
+Run the commands from the Quick Reference table for the chosen option. Confirm completion with the user.
 
-**PR:**
-```bash
-git push origin feature/add-search
-# Create PR via GitHub CLI or web
-gh pr create --title "feat: add full-text search" --body "..."
-```
+### Step 5: Cleanup
 
-**Keep:**
-```bash
-# Nothing to do — branch stays as-is
-echo "Branch feature/add-search preserved for later."
-```
+- Remove worktree if used: `git worktree remove ../<workdir>`.
+- Reset or archive `tasks/todo.md`.
+- Confirm `git status` on `main` is clean.
 
-**Discard:**
-```bash
-git checkout main
-git branch -D feature/add-search
-```
+### Step 6: Retrospective
 
-### Step 5: Clean Up
-
-After the chosen action:
-
-1. **Clean up the worktree** (if used):
-   ```bash
-   git worktree remove ../project-search
-   ```
-2. **Update `tasks/lessons.md`** — Log what went well and what didn't
-3. **Reset `tasks/todo.md`** — Clear completed plan or archive it
-4. **Verify main is clean** — `git status` on main
-
-### Step 6: Capture Lessons
-
-Every completed branch teaches something. Update `tasks/lessons.md`:
+Append to `tasks/lessons.md`:
 
 ```yaml
-- date: 2026-03-24
+- date: 2026-05-19
   type: session-retrospective
   feature: "full-text search"
-  went_well: "TDD approach caught 2 edge cases before they shipped"
-  went_poorly: "Elasticsearch config was underestimated — took 2x planned time"
+  went_well: "TDD caught 2 edge cases before they shipped"
+  went_poorly: "Underestimated Elasticsearch config — took 2x planned time"
   lesson: "Account for infrastructure setup in time estimates for new services"
 ```
 
-## Examples
+Without the retrospective, the dojo does not learn from this branch.
 
-**Bad — Silent Merge:**
-> Agent: *merges to main without telling the user, leaves worktree orphaned*
+## Pitfalls
 
-**Good — Structured Finish:**
-> Agent: "All 5 tasks complete. Running final verification...
-> ✅ 47 tests pass (24 new)
-> ✅ Clean working tree
-> ✅ Diff matches plan scope
->
-> Options: merge / PR / keep / discard?"
->
-> User: "Open a PR"
->
-> Agent: "PR created. Cleaning up worktree. Lessons logged."
+- **DO NOT** merge without an explicit user choice. Always present options.
+- **DO NOT** force-merge past a failing gate. Fix the failure or back out.
+- **DO NOT** leave orphaned worktrees behind.
+- **DO NOT** skip the retrospective. Every branch teaches something — capture it.
+- **DO NOT** discard a branch without confirmation. Deletion is irreversible to the user.
 
-## Guidelines
+## Verification
 
-- Never merge without user consent — always present options
-- Full test suite must pass before any merge decision
-- Clean up worktrees and branches after the decision is made
-- Always log lessons — every branch teaches something
-- If verification fails, go back to implementation, don't force-merge
-
-## Anti-Patterns
-
-- **Merging without testing** — "It worked in development" is not verification
-- **Leaving orphaned worktrees** — Clean up after yourself
-- **Skipping the retrospective** — The lessons log is how the dojo improves over time
-- **Force-merging past failures** — If tests fail, the branch isn't done
-- **Discarding without confirmation** — Deleting someone's work requires explicit consent
+- [ ] `verify.sh --check` exits 0.
+- [ ] Full test suite is green.
+- [ ] User explicitly chose the closing option.
+- [ ] Branch action executed and confirmed.
+- [ ] Worktree (if any) is removed; `tasks/todo.md` reset or archived.
+- [ ] Retrospective entry exists in `tasks/lessons.md`.

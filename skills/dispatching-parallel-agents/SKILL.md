@@ -1,121 +1,140 @@
 ---
 name: dispatching-parallel-agents
-description: >-
-  Runs multiple sub-agents concurrently when a task has independent parts that
-  benefit from parallel execution. Use this skill when a complex task has clearly
-  independent subtasks, when multiple investigations or implementations can run
-  simultaneously, when the user says "do these in parallel" or "speed this up,"
-  or when the plan contains tasks with no dependencies between them.
+description: Runs independent subtasks concurrently via sub-agents.
+tier: practical
+category: delegation
+created_by: human
+platforms: [windows, macos, linux]
+tags: [delegation, parallel, sub-agents]
+author: Andreas Wasita (@andreaswasita)
 ---
 
-# Dispatching Parallel Agents
+# Dispatching Parallel Agents Skill
 
-Throw more compute at the problem. When subtasks are independent, run them concurrently.
+Runs multiple sub-agents concurrently when a plan contains independent subtasks with non-overlapping file boundaries. Each sub-agent receives a self-contained spec. Does NOT parallelize work with dependencies or shared mutable state — that path silently corrupts results.
 
 ## When to Use
 
-- A task has clearly independent subtasks with no shared state
-- Multiple research investigations can run simultaneously
-- Multiple test suites or verifications can run in parallel
-- The implementation plan shows independent phases
-- User explicitly asks for parallel execution
+- The plan contains 2+ tasks with no dependency edges between them.
+- Multiple research investigations or codebase explorations can run side-by-side.
+- Multiple verification runs (lint, test, type-check) can run in parallel.
+- User explicitly asks for parallel execution or to "speed this up".
+- NOT for debugging (parallel agents mask timing bugs).
+- NOT when tasks edit overlapping files or share mutable state.
 
-## When NOT to Use
+## Prerequisites
 
-- Tasks have dependencies (B needs A's output)
-- Shared mutable state would cause conflicts (same files being edited)
-- The task is simple enough for one agent to handle in minutes
-- Debugging — parallel agents can mask timing-dependent bugs
+- An approved plan in `tasks/todo.md` with task IDs and explicit dependencies.
+- The `task` Copilot tool available (or equivalent sub-agent mechanism).
+- Each candidate task has a precise file-boundary scope ("owns" a directory or file set).
+- Integration test or verification step that exercises the combined result.
+- The `view`, `edit`, `grep`, and `powershell` Copilot tools.
 
-## How to Use
+## How to Run
 
-### Step 1: Identify Independent Subtasks
+```text
+1. From `tasks/todo.md`, pick tasks with no dependency edges between them.
+2. Confirm each has a non-overlapping file scope.
+3. Write a self-contained spec per agent (goal, files, DO NOT touch, verification).
+4. Dispatch all sub-agents in one tool-call batch.
+5. Collect each result; integrate.
+6. Run an integration verification on the merged result.
+7. Log failures and reasons in `tasks/lessons.md`.
+```
 
-From the plan in `tasks/todo.md`, identify tasks that:
-- Don't read from each other's output
-- Don't modify the same files
-- Can be verified independently
+## Quick Reference
+
+| Parallel-safe | Sequential-only |
+|---|---|
+| Independent API modules in different folders | Task B reads Task A's output |
+| Separate research questions | Shared config edits |
+| Per-package builds in a monorepo | Same-file mutations |
+| Per-file lint or type-check passes | Migration scripts that order-depend |
+
+| Spec field | Required |
+|---|---|
+| Goal | One sentence |
+| Files owned | Directory or explicit list |
+| Files forbidden | "DO NOT touch" list |
+| Verification | Tests this agent must pass before returning |
+| Return format | What the agent reports back |
+
+## Procedure
+
+### Step 1: Identify Independents
+
+Use `view` on `tasks/todo.md`. List tasks with empty or already-satisfied dependency sets. Cross-check file scopes: any overlap → sequential, not parallel.
 
 ```markdown
-## Parallelizable:
-- [ ] Task A: Add user API endpoints (src/api/users/)
-- [ ] Task B: Add product API endpoints (src/api/products/)
-- [ ] Task C: Write migration scripts (src/db/migrations/)
+## Parallelizable
+- [ ] Task A: User API endpoints (`src/api/users/`)
+- [ ] Task B: Product API endpoints (`src/api/products/`)
+- [ ] Task C: Migration scripts (`src/db/migrations/`)
 
-## Sequential (depends on A+B+C):
+## Sequential (depends on A+B+C)
 - [ ] Task D: Integration tests for all endpoints
 ```
 
-### Step 2: Create Clear Specs per Agent
+### Step 2: Write Per-Agent Specs
 
-Each sub-agent needs a self-contained specification:
+Each spec is self-contained — no agent should need to ask "what do I do?":
 
 ```markdown
 ### Agent 1 Spec: User API Endpoints
-**Goal:** Implement CRUD endpoints for users
-**Files to modify:** src/api/users/ (create new), src/routes/index.ts (add route)
-**DO NOT touch:** src/api/products/, src/db/
-**Tests:** Write unit tests in src/api/users/__tests__/
-**Verification:** All new tests pass, existing tests unaffected
+Goal: Implement CRUD endpoints for users.
+Files owned: src/api/users/ (create new); src/routes/index.ts (add one route line).
+DO NOT touch: src/api/products/, src/db/.
+Verification: All new tests in src/api/users/__tests__/ pass; existing tests unaffected.
+Return: list of files created + test result summary.
 ```
 
-### Step 3: Dispatch and Monitor
+### Step 3: Dispatch in One Batch
 
-Launch sub-agents with clear boundaries:
+Issue the sub-agent calls in a single tool-calling batch so they execute in parallel, not sequentially. Use the `task` tool with `mode: background` for any agent expected to take more than a few seconds.
 
-1. **Spawn** one agent per independent task with its spec
-2. **Set boundaries** — which files/modules each agent owns
-3. **Monitor** — check for completion or blockers
-4. **Collect results** — gather output from each agent
+### Step 4: Collect and Integrate
 
-### Step 4: Integrate Results
+For each returned agent:
 
-After all parallel agents complete:
+- Confirm it reports verification PASS.
+- Inspect the diff with `view` and `git diff --stat`.
+- Merge changes into the current worktree if the agents wrote to separate worktrees.
 
-1. **Merge outputs** — Combine code changes from each agent
-2. **Resolve any conflicts** — If agents touched shared configuration files
-3. **Run integration verification** — Full test suite on the combined result
-4. **Use `verification-before-completion` checklist** on the merged output
+### Step 5: Integration Verification
 
-### Step 5: Handle Failures
+After all agents complete, run the full test suite and `bash scripts/verify.sh --check` on the combined result. Per-agent green does not imply combined green.
 
-If one parallel agent fails:
-- **Don't block the others** — Let successful agents complete
-- **Diagnose the failure** — Was the spec unclear? Were there hidden dependencies?
-- **Re-dispatch** the failed task with a revised spec
-- **Log the failure** in `tasks/lessons.md`
+### Step 6: Handle Partial Failure
 
-## Examples
+If one agent fails:
 
-**Bad — Serial When Parallel is Better:**
-> 3 independent API modules, each taking 15 minutes.
-> Agent does them one by one: 45 minutes total.
+1. Do not block the others — let successes complete.
+2. Diagnose: was the spec ambiguous? Hidden dependency missed?
+3. Re-dispatch the failed task with a revised spec, or finish it sequentially.
+4. Append to `tasks/lessons.md`:
 
-**Good — Parallel Dispatch:**
-> Agent: "The plan has 3 independent API modules. Dispatching parallel agents:
-> - Agent 1: User endpoints (src/api/users/)
-> - Agent 2: Product endpoints (src/api/products/)
-> - Agent 3: Order endpoints (src/api/orders/)
->
-> Each has non-overlapping file boundaries. Collecting results..."
-> Total time: ~15 minutes.
+   ```yaml
+   - date: 2026-05-19
+     error_type: parallel-dispatch-failure
+     trigger: "Agent 2 needed Agent 1's output; was dispatched in parallel"
+     root_cause: "Implicit dependency not surfaced in tasks/todo.md"
+     fix: "Re-ran Agent 2 after Agent 1 completed"
+     rule: "Every parallel-eligible task must declare its dependencies explicitly"
+   ```
 
-**Bad — Parallel When Serial is Needed:**
-> Task B reads Task A's output. Agent runs them in parallel.
-> Task B fails because Task A's output doesn't exist yet.
+## Pitfalls
 
-## Guidelines
+- **DO NOT** parallelize tasks with dependencies. They will race and one will silently produce wrong output.
+- **DO NOT** dispatch 20 agents at once. 3–5 is manageable; more is chaos and tool-budget exhaustion.
+- **DO NOT** skip integration verification. Per-agent green ≠ combined green.
+- **DO NOT** write vague specs ("handle the user stuff"). They produce vague output.
+- **DO NOT** ignore partial failures. One failure can invalidate downstream work that already merged.
 
-- Parallel agents should have non-overlapping file boundaries
-- Every agent gets a self-contained spec — no agent should need to ask "what do I do?"
-- Always run integration verification after combining parallel results
-- Better to over-specify boundaries than to deal with merge conflicts
-- Log which tasks ran in parallel for the retrospective
+## Verification
 
-## Anti-Patterns
-
-- **Parallelizing dependent tasks** — If B needs A, they must be sequential
-- **Vague agent specs** — "Handle the user stuff" produces garbage
-- **Skipping integration verification** — Each agent passed alone ≠ combined passes
-- **Too many parallel agents** — 3–5 is manageable; 20 is chaos
-- **Ignoring partial failures** — One agent failing might invalidate another's work
+- [ ] Dependency check ran on `tasks/todo.md` — only zero-dep tasks dispatched in parallel.
+- [ ] File scopes verified non-overlapping before dispatch.
+- [ ] Each agent received a self-contained spec including DO NOT list.
+- [ ] All agents reported back; failures logged.
+- [ ] Integration test suite + `scripts/verify.sh --check` passed on the combined result.
+- [ ] If a failure occurred, `tasks/lessons.md` was updated with the root cause.

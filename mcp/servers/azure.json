@@ -1,0 +1,6 @@
+{
+  "type": "stdio",
+  "command": "npx",
+  "args": ["-y", "@azure/mcp@latest"],
+  "env": { "AZURE_SUBSCRIPTION_ID": "${env:AZURE_SUBSCRIPTION_ID}" }
+}

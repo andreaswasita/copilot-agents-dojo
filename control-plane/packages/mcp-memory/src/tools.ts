@@ -225,6 +225,53 @@ export function registerTools(server: McpServer, store: Store): void {
   );
 
   server.registerTool(
+    "memory_recall",
+    {
+      title: "Recall prior memory for planning",
+      description:
+        "Surface prior decisions, patterns, and recent sessions relevant to a planning topic, ranked and de-duped into a compact brief. Call this BEFORE writing a plan to compound past knowledge and avoid repeating mistakes. Topic is optional; if omitted, returns active decisions plus recent context.",
+      inputSchema: {
+        topic: z
+          .string()
+          .optional()
+          .describe("Free-text description of the work being planned"),
+        language: z.string().optional().describe("e.g. typescript, python, go"),
+        fileType: z.string().optional().describe("e.g. test, route, schema"),
+        limit: z
+          .number()
+          .int()
+          .min(1)
+          .max(50)
+          .optional()
+          .describe("Max items to return (default 10)"),
+      },
+    },
+    async ({ topic, language, fileType, limit }) => {
+      try {
+        const result = await store.recall(topic ?? "", { language, fileType, limit });
+        if (result.items.length === 0) {
+          return toText(
+            result.topic
+              ? `No prior memory found for "${result.topic}".`
+              : "No memory entries yet.",
+          );
+        }
+        const header = result.topic
+          ? `Recall for "${result.topic}" — ${result.items.length} item(s):`
+          : `Recall — ${result.items.length} item(s):`;
+        const lines = result.items.map((i) => {
+          const why = `    why: ${i.reasons.join(", ")}`;
+          const excerpt = i.excerpt ? `\n    ${i.excerpt}` : "";
+          return `- [${i.type}] ${i.slug} — ${i.title}\n${why}${excerpt}`;
+        });
+        return toText(`${header}\n${lines.join("\n")}`);
+      } catch (err) {
+        return toError(err);
+      }
+    },
+  );
+
+  server.registerTool(
     "memory_supersede",
     {
       title: "Supersede a decision",

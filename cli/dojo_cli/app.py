@@ -159,51 +159,49 @@ def cmd_preview(dojo_root: Path, profile: dict) -> None:
 
 
 def main() -> None:
-    dojo_root = _find_dojo_root()
     args = sys.argv[1:]
+
+    # ── --profile <name> activates a multi-instance dojo root ────────
+    profile_name: str | None = None
+    cleaned: list[str] = []
+    i = 0
+    while i < len(args):
+        if args[i] == "--profile" and i + 1 < len(args):
+            profile_name = args[i + 1]
+            i += 2
+            continue
+        if args[i].startswith("--profile="):
+            profile_name = args[i].split("=", 1)[1]
+            i += 1
+            continue
+        cleaned.append(args[i])
+        i += 1
+    args = cleaned
+
+    if profile_name:
+        from dojo_cli.profiles import resolve_dojo_root
+        try:
+            dojo_root = resolve_dojo_root(profile_name)
+        except FileNotFoundError as e:
+            console.print(f"[red]{e}[/red]")
+            sys.exit(1)
+    else:
+        dojo_root = _find_dojo_root()
 
     show_banner()
 
-    # ── Simple subcommand routing ─────────────────────────────────────
-    if not args or args[0] in ("marketplace", "menu"):
+    from dojo_cli.registry import find_command
+
+    if not args:
         _interactive_menu(dojo_root)
-    elif args[0] == "skills":
-        cmd_skills(dojo_root)
-    elif args[0] == "agents":
-        cmd_agents(dojo_root)
-    elif args[0] == "select":
-        profile = cmd_select(dojo_root)
-        show_current_profile(profile)
-        if confirm_action("Save this profile?"):
-            target = Path(args[1]) if len(args) > 1 else Path.cwd()
-            save_profile(target, profile)
-            console.print(f"[green]✓ Profile saved to {target / '.dojo-profile.yml'}[/green]")
-    elif args[0] == "install":
-        target = Path(args[1]) if len(args) > 1 else Path.cwd()
-        profile = load_profile(target) or load_profile(Path.cwd())
-        if not profile:
-            console.print("[yellow]No profile found. Run `dojo select` first or use interactive mode.[/yellow]")
-            profile = cmd_select(dojo_root)
-        cmd_install(dojo_root, target, profile)
-    elif args[0] == "preview":
-        target = Path(args[1]) if len(args) > 1 else Path.cwd()
-        profile = load_profile(target) or load_profile(Path.cwd())
-        if not profile:
-            console.print("[yellow]No profile found. Starting selection...[/yellow]\n")
-            profile = cmd_select(dojo_root)
-        cmd_preview(dojo_root, profile)
-    elif args[0] == "profile":
-        target = Path(args[1]) if len(args) > 1 else Path.cwd()
-        profile = load_profile(target)
-        if profile:
-            show_current_profile(profile)
-        else:
-            console.print("[dim]No profile found. Run `dojo select` to create one.[/dim]")
-    elif args[0] in ("help", "--help", "-h"):
-        _show_help()
-    else:
+        return
+
+    cmd = find_command(args[0])
+    if cmd is None:
         console.print(f"[red]Unknown command: {args[0]}[/red]\n")
         _show_help()
+        return
+    cmd.handler(dojo_root, args[1:])
 
 
 def _interactive_menu(dojo_root: Path) -> None:
@@ -280,18 +278,15 @@ def _interactive_menu(dojo_root: Path) -> None:
 
 
 def _show_help() -> None:
+    from dojo_cli.registry import help_commands
+
     help_table = Table(title="dojo — Copilot Agents Dojo CLI", border_style="cyan")
     help_table.add_column("Command", style="bold green", width=25)
     help_table.add_column("Description", width=55)
 
     help_table.add_row("dojo", "Interactive marketplace menu")
-    help_table.add_row("dojo skills", "List all available skills")
-    help_table.add_row("dojo agents", "List all available agents")
-    help_table.add_row("dojo select", "Interactive skill/agent selection")
-    help_table.add_row("dojo install [path]", "Install selected skills to a project")
-    help_table.add_row("dojo preview [path]", "Preview generated instructions")
-    help_table.add_row("dojo profile [path]", "View saved profile")
-    help_table.add_row("dojo help", "Show this help")
+    for cmd in help_commands():
+        help_table.add_row(cmd.usage or f"dojo {cmd.name}", cmd.summary)
 
     console.print(help_table)
     console.print("\n[dim]Examples:[/dim]")

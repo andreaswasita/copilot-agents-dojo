@@ -1,0 +1,183 @@
+# Persona registry — single source of truth for agent metadata.
+#
+# Source of truth for: cli/dojo_cli/scanner.py, the marketplace flow, and any
+# tooling that needs to enumerate agents without parsing five separate
+# markdown files.
+#
+# When you add or rename a persona, update BOTH:
+#   1. The markdown file in agents/<slug>.md (the runtime brief)
+#   2. The entry below (the metadata index)
+#
+# `bash scripts/verify.sh spec` will warn if the two drift.
+
+version: 1
+generated_at: 2026-05-20
+
+personas:
+
+  - slug: architect
+    name: Architect
+    type: design
+    file: agents/architect.md
+    description: >-
+      Generalist design persona — coordinates across the TOGAF cascade
+      when a more specialised architect persona (business / solution /
+      platform) is not warranted. Prefer the specialised personas for
+      red-thread work.
+    activation: triggered
+    activation_hint: >-
+      Designing systems, refactoring architecture, strategic technical
+      decisions, impact analysis, current/future-state process modelling.
+    apply_to: ["**/*"]
+    tags: [design, requirements, architecture, traceability]
+    default_skills:
+      - plan-before-code
+      - demand-elegance
+      - requirements-elicitation
+      - codebase-onboarding
+      - refactoring
+
+  - slug: business-architect
+    name: Business Architect
+    type: design
+    file: agents/business-architect.md
+    description: >-
+      Owns TOGAF Phase A/B. Eliciting agent — authors and ratifies
+      business drivers (BRs). The only persona allowed to author the
+      root layer of the requirement cascade. Stays naive of learned
+      derivation patterns by design.
+    activation: triggered
+    activation_hint: >-
+      Engagement kickoff, Phase A (Architecture Vision), Phase B
+      (Business Architecture), eliciting business drivers, ratifying BRs
+      at the architecture review board.
+    apply_to: ["**/*"]
+    tags: [togaf, phase-a, phase-b, requirements, elicitation, business]
+    default_skills:
+      - requirements-elicitation
+      - brainstorming
+      - traceability-gate
+      - self-improvement
+
+  - slug: solution-architect
+    name: Solution Architect
+    type: design
+    file: agents/solution-architect.md
+    description: >-
+      Owns TOGAF Phase C. Deriving agent at the solution layer —
+      authors FRs and NFRs from ratified BRs. Never authors BRs;
+      enforces the traceability gate at Phase C → D handoff.
+    activation: triggered
+    activation_hint: >-
+      Phase C (Information Systems / Data and Application Architecture),
+      deriving FRs and NFRs from ratified BRs, expressing NFRs as SLOs,
+      defining data contracts and flows.
+    apply_to: ["**/*"]
+    tags: [togaf, phase-c, requirements, fr, nfr, data]
+    default_skills:
+      - derive-nfr-from-driver
+      - requirements-elicitation
+      - traceability-gate
+      - plan-before-code
+      - self-improvement
+
+  - slug: platform-architect
+    name: Platform Architect
+    type: design
+    file: agents/platform-architect.md
+    description: >-
+      Owns TOGAF Phase D and E. Deriving agent at the technology layer
+      — authors IRs and TRs from ratified FRs/NFRs/SRs. Never authors
+      upstream requirements; enforces the traceability gate at Phase
+      D → F handoff.
+    activation: triggered
+    activation_hint: >-
+      Phase D (Technology Architecture), Phase E (Opportunities and
+      Solutions), deriving integration and technical requirements,
+      runtime topology decisions, cost and capacity anchoring.
+    apply_to: ["**/*"]
+    tags: [togaf, phase-d, phase-e, requirements, ir, tr, topology]
+    default_skills:
+      - traceability-gate
+      - derive-nfr-from-driver
+      - plan-before-code
+      - demand-elegance
+      - self-improvement
+
+  - slug: technical-program-manager
+    name: Technical Program Manager
+    type: coordination
+    file: agents/technical-program-manager.md
+    description: >-
+      Plans projects, coordinates timelines, and owns the business half of
+      requirements engineering — stakeholder elicitation, user stories,
+      acceptance criteria, scope, and the Definition of Ready gate.
+    activation: triggered
+    activation_hint: >-
+      Sprint planning, task coordination, requirements gathering, user
+      stories, acceptance criteria, PRDs and feature briefs.
+    apply_to: ["**/*"]
+    tags: [planning, coordination, requirements, stakeholders]
+    default_skills:
+      - plan-before-code
+      - requirements-elicitation
+      - brainstorming
+      - self-improvement
+
+  - slug: software-engineer
+    name: Software Engineer
+    type: development
+    file: agents/software-engineer.md
+    description: >-
+      Primary development agent. Implements features, fixes bugs, and ships
+      production-quality code.
+    activation: always
+    activation_hint: Always active — primary development agent.
+    apply_to: ["**/*"]
+    tags: [development, implementation, default]
+    default_skills:
+      - plan-before-code
+      - executing-plans
+      - verify-before-done
+      - test-writing
+      - autonomous-bug-fix
+
+  - slug: test-engineer
+    name: Test Engineer
+    type: quality
+    file: agents/test-engineer.md
+    description: >-
+      Designs and implements test strategy, ensures code reliability,
+      coverage, and quality across the testing pyramid.
+    activation: triggered
+    activation_hint: Test design, test planning, quality assurance work.
+    apply_to: ["**/*"]
+    tags: [testing, quality, qa]
+    default_skills:
+      - test-writing
+      - verify-before-done
+      - debugging
+      - code-review
+
+  - slug: security-engineer
+    name: Security Engineer
+    type: security
+    file: agents/security-engineer.md
+    description: >-
+      Cross-cutting security persona — threads through TOGAF Phases B–E.
+      Authors SRs via `derive-security-from-risk`, runs threat modelling,
+      and gates any control that does not name an obligation or threat.
+    activation: triggered
+    activation_hint: >-
+      Security review, threat modelling, deriving SRs from named
+      threats or compliance obligations, ratifying controls, vuln
+      remediation, secure feature design.
+    apply_to: ["**/*"]
+    tags: [security, compliance, vulnerabilities, togaf, sr, threat-modelling]
+    default_skills:
+      - derive-security-from-risk
+      - traceability-gate
+      - code-review
+      - debugging
+      - verify-before-done
+      - demand-elegance
