@@ -3,7 +3,7 @@ type: index
 description: >-
   Map of Content for the agent memory vault. Auto-updated by scripts/link-index.sh.
   Agents read this file at session start to understand what knowledge exists.
-last-updated: 2026-05-13T14:27:29Z
+last-updated: 2026-07-19T04:48:28Z
 ---
 
 # Memory Vault — Map of Content
@@ -44,8 +44,8 @@ Template: `sessions/_template.md`
 <!-- Auto-updated by scripts/link-index.sh -->
 | Metric | Count |
 |--------|-------|
-| Total files | 10 |
-| Decisions | 2 |
+| Total files | 11 |
+| Decisions | 3 |
 | Patterns | 3 |
 | Preferences | 2 |
 | Sessions | 3 |
