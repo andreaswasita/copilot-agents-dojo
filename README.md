@@ -594,3 +594,12 @@ See [AGENTS.md](./AGENTS.md) for the contributor guide and [CONTRIBUTING.md](./C
 ## License
 
 [MIT](./LICENSE)
+
+### Third-party attribution
+
+The `architecture-sketching` workflow and the competitive-design and
+real-artifact-verification improvements draw from
+[pstack](https://github.com/cursor/plugins/tree/main/pstack), created by
+**Lauren Tan** and released under the MIT license. The dojo implementation is
+an independent adaptation for GitHub Copilot agents; it does not vendor
+pstack's source files.
