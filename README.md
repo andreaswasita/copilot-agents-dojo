@@ -19,7 +19,7 @@
 ![license](https://img.shields.io/badge/license-MIT-1f6feb?style=flat-square)
 ![version](https://img.shields.io/badge/version-1.3-3fb950?style=flat-square)
 ![spec](https://img.shields.io/badge/spec-v1-1f6feb?style=flat-square)
-![skills](https://img.shields.io/badge/skills-32-1f6feb?style=flat-square)
+![skills](https://img.shields.io/badge/skills-33-1f6feb?style=flat-square)
 ![tiers](https://img.shields.io/badge/tiers-core%20%2F%20practical%20%2F%20optional-8b5cf6?style=flat-square)
 ![agents](https://img.shields.io/badge/personas-8-14b8a6?style=flat-square)
 ![curator](https://img.shields.io/badge/curator-self--improving-f59e0b?style=flat-square)
@@ -39,7 +39,7 @@ Drop `skills/` + `optional-skills/` + `.github/copilot-instructions.md` into any
 
 **What's inside:**
 
-- **32 production skills** across `core / practical / optional` tiers (28 always-discoverable + 4 optional) — see the auto-generated [`skills.md`](./skills.md) index for the canonical list
+- **33 production skills** across `core / practical / optional` tiers (29 always-discoverable + 4 optional) — see the auto-generated [`skills.md`](./skills.md) index for the canonical list
 - **8 specialized agent personas** — generalist `architect`, three TOGAF specialists (business / solution / platform), plus `security-engineer`, `software-engineer`, `technical-program-manager`, `test-engineer`
 - Mandatory **BRAINSTORM → PLAN → TDD → REVIEW → FINISH** pipeline
 - **Self-improving curator** — state machine, backups, idle-based trigger, per-run audit trail
@@ -582,6 +582,7 @@ The Copilot Agents Dojo distills field-tested patterns from shipping production 
 - **[hermes-agent](https://github.com/andreaswasita/hermes-agent)** — The reference build for spec v1, the curator pattern (state machine, backups, idle trigger), durable boards, and the registry-driven CLI.
 - **[Copilot Cowork Dojo](https://github.com/andreaswasita/copilot-cowork-dojo)** — The sibling project for AI **coworkers**; this one trains AI **builders**.
 - **[obra/superpowers](https://github.com/obra/superpowers)** — The mandatory orchestration pipeline (BRAINSTORM → WORKTREE → … → LEARN) proving disciplined agents outperform freestyle ones.
+- **[pstack](https://github.com/cursor/plugins/tree/main/pstack) by Lauren Tan** — Architecture sketching, competitive design exploration, and real-artifact verification patterns adapted to the dojo's portable skill specification and governance model. pstack is MIT licensed.
 - **[Anthropic Claude](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering)** — Structured prompting, progressive disclosure, explicit verification gates.
 
 ---

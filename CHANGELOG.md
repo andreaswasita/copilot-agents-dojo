@@ -4,7 +4,22 @@ All notable changes to the Copilot Agents Dojo are documented here. Format loose
 
 ## [Unreleased]
 
-_Nothing yet._
+### Added
+
+- **`architecture-sketching` practical skill:** defines data shapes, public
+  signatures, module ownership, alternatives, verification, and redesign
+  signals before cross-boundary implementation. Adapted from architecture
+  exploration patterns in Lauren Tan's MIT-licensed
+  [pstack](https://github.com/cursor/plugins/tree/main/pstack).
+
+### Changed
+
+- **`subagent-strategy`:** distinguishes ordinary workstream decomposition from
+  competitive design exploration with isolated candidates, a model-blind judge,
+  and lead synthesis.
+- **`verify-before-done`:** adds explicit `VERIFIED`, `NOT VERIFIED`, and
+  `INCONCLUSIVE` verdicts plus baseline and real-artifact evidence.
+- Skill inventory increases from 32 to 33 (29 always-discoverable + 4 optional).
 
 ## [1.3.0] — 2026-06-28 — "Green-Belt Dojo"
 

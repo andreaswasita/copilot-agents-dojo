@@ -1,10 +1,11 @@
+architecture-sketching
 autonomous-bug-fix
 behavioral-foundation
 brainstorming
 building-mcp-servers
 calling-mcp-tools-via-subprocess
-codebase-onboarding
 code-review
+codebase-onboarding
 debugging
 demand-elegance
 derive-nfr-from-driver
