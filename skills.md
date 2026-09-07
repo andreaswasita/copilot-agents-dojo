@@ -1,6 +1,6 @@
 # Copilot Agents Dojo — Skills Index
 
-A skills & discipline framework for GitHub Copilot agents. 32 production skills across three tiers. Mandatory workflow. Self-improving. Built from field-tested patterns — [Anthropic Claude](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering) prompt engineering, [obra/superpowers](https://github.com/obra/superpowers) orchestration, and the [hermes-agent](https://github.com/andreaswasita/hermes-agent) reference build.
+A skills & discipline framework for GitHub Copilot agents. 33 production skills across three tiers. Mandatory workflow. Self-improving. Built from field-tested patterns — [Anthropic Claude](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering) prompt engineering, [obra/superpowers](https://github.com/obra/superpowers) orchestration, and the [hermes-agent](https://github.com/andreaswasita/hermes-agent) reference build.
 
 > **Auto-generated.** Do not edit by hand — run `bash scripts/regen-skills-index.sh` (or `pwsh scripts/regen-skills-index.ps1` on Windows).
 
@@ -68,9 +68,10 @@ Loaded on-demand. Task-specific skills that teach the agent *how to do* particul
 
 ### 🔄 Workflow
 
+- [`architecture-sketching`](skills/architecture-sketching/SKILL.md) — Defines types and boundaries before implementation.
 - [`brainstorming`](skills/brainstorming/SKILL.md) — Refines rough ideas into approved designs before code.
-- [`codebase-onboarding`](skills/codebase-onboarding/SKILL.md) — Maps an unfamiliar repo before touching its code.
 - [`code-review`](skills/code-review/SKILL.md) — Reviews diffs by severity to produce actionable feedback.
+- [`codebase-onboarding`](skills/codebase-onboarding/SKILL.md) — Maps an unfamiliar repo before touching its code.
 - [`debugging`](skills/debugging/SKILL.md) — Systematic root-cause investigation for hard bugs.
 - [`derive-nfr-from-driver`](skills/derive-nfr-from-driver/SKILL.md) — Derives measurable NFRs from a parent business driver.
 - [`derive-security-from-risk`](skills/derive-security-from-risk/SKILL.md) — Derives security requirements from a named threat.

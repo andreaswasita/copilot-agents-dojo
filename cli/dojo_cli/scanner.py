@@ -43,6 +43,7 @@ CATEGORIES = {
         "icon": "⚔️",
         "description": "Task-specific skills for common engineering workflows",
         "dirs": [
+            "architecture-sketching",
             "code-review",
             "refactoring",
             "test-writing",
